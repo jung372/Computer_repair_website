@@ -1,0 +1,56 @@
+import { getAdminUser } from "@/lib/admin-auth";
+import {
+  changeRequestStatus,
+  removeRequestPersonalData,
+  retryRequestNotification,
+} from "@/lib/logic/admin-service";
+import { processPendingNotifications } from "@/infrastructure/telegram";
+import { assertSameOrigin } from "@/lib/security/request-guard";
+
+export async function POST(
+  request: Request,
+  { params }: { params: Promise<{ publicId: string }> },
+) {
+  try {
+    assertSameOrigin(request);
+    const admin = await getAdminUser();
+    if (!admin) return Response.json({ error: "운영자 권한이 필요합니다." }, { status: 403 });
+    const { publicId } = await params;
+    const payload = (await request.json()) as {
+      action?: string;
+      status?: unknown;
+      publicNote?: unknown;
+      internalNote?: unknown;
+    };
+
+    if (payload.action === "update") {
+      await changeRequestStatus(publicId, payload, admin.email);
+      return Response.json({ message: "처리 상태를 저장했습니다." });
+    }
+    if (payload.action === "retry-notification") {
+      const found = await retryRequestNotification(publicId);
+      if (!found) return Response.json({ error: "신청을 찾을 수 없습니다." }, { status: 404 });
+      await processPendingNotifications(new URL(request.url).origin);
+      return Response.json({ message: "텔레그램 알림을 다시 처리했습니다." });
+    }
+    if (payload.action === "anonymize") {
+      const removed = await removeRequestPersonalData(publicId, admin.email);
+      if (!removed) return Response.json({ error: "신청을 찾을 수 없습니다." }, { status: 404 });
+      return Response.json({ message: "개인정보를 삭제했습니다." });
+    }
+    return Response.json({ error: "지원하지 않는 작업입니다." }, { status: 400 });
+  } catch (error) {
+    const code = error instanceof Error ? error.message : "UNKNOWN";
+    const messages: Record<string, string> = {
+      INVALID_ORIGIN: "요청 출처가 올바르지 않습니다.",
+      NOT_FOUND: "신청을 찾을 수 없습니다.",
+      INVALID_STATUS: "올바른 상태를 선택해 주세요.",
+      INVALID_TRANSITION: "현재 상태에서 변경할 수 없는 단계입니다.",
+      REOPEN_REASON_REQUIRED: "완료된 접수를 다시 열 때 고객 공개 사유가 필요합니다.",
+    };
+    return Response.json(
+      { error: messages[code] ?? "작업을 처리하지 못했습니다." },
+      { status: code === "INVALID_ORIGIN" ? 403 : 400 },
+    );
+  }
+}
