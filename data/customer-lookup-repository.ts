@@ -20,7 +20,7 @@ export async function findKeyedLookupCandidates(
     .prepare(`
       SELECT id, public_id, access_password_hash
       FROM service_requests
-      WHERE lookup_key = ? AND phone = ? AND deleted_at IS NULL
+      WHERE lookup_key = ? AND REPLACE(phone, '-', '') = ? AND deleted_at IS NULL
       ORDER BY created_at DESC
       LIMIT ?
     `)
@@ -35,7 +35,7 @@ export async function findLegacyLookupCandidates(phone: string, limit = 21) {
     .prepare(`
       SELECT id, public_id, access_password_hash
       FROM service_requests
-      WHERE lookup_key IS NULL AND phone = ? AND access_password_hash IS NOT NULL
+      WHERE lookup_key IS NULL AND REPLACE(phone, '-', '') = ? AND access_password_hash IS NOT NULL
         AND deleted_at IS NULL
       ORDER BY created_at DESC
       LIMIT ?

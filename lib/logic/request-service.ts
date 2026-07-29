@@ -13,7 +13,8 @@ import {
   type ServiceRequestRecord,
 } from "@/lib/domain";
 import { getInitialNotificationStatus } from "@/lib/notification-config";
-import { createLookupKey, normalizePhone } from "@/lib/security/lookup-key";
+import { formatPhone, normalizePhone } from "@/lib/phone";
+import { createLookupKey } from "@/lib/security/lookup-key";
 import { hashPassword, verifyPassword } from "@/lib/security/password";
 
 const PRIVACY_VERSION = "2026-07-29.v2";
@@ -103,7 +104,8 @@ export async function createServiceRequest(input: unknown) {
     id: crypto.randomUUID(),
     publicId: createPublicId(now),
     name,
-    phone,
+    // Stored in canonical hyphenated form; lookup_key above still uses digits.
+    phone: formatPhone(phone),
     postalCode: "",
     address1,
     address2,

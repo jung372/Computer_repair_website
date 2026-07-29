@@ -1,11 +1,11 @@
+import { normalizePhone } from "@/lib/phone";
 import { getRuntimeString, isDevelopment } from "@/lib/runtime-config";
 import { hmacSha256, lengthDelimited } from "@/lib/security/keyed-hash";
 
 const DEVELOPMENT_LOOKUP_SECRET = "local-request-lookup-secret-change-me";
 
-export function normalizePhone(value: string) {
-  return value.replace(/\D/g, "");
-}
+// Re-exported so existing importers keep a single normalization implementation.
+export { normalizePhone };
 
 export function getLookupSecret() {
   const secret = getRuntimeString("REQUEST_LOOKUP_SECRET");

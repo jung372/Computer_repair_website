@@ -210,8 +210,9 @@ export async function listAdminRequestRecords(
       sr.public_id LIKE ? OR sr.name LIKE ? OR sr.phone LIKE ? OR sr.address1 LIKE ?
       OR sr.symptom LIKE ? OR sr.description LIKE ? OR operations.title LIKE ?
       OR operations.invoice_content LIKE ? OR sr.internal_note LIKE ?
+      OR REPLACE(sr.phone, '-', '') LIKE ?
     )`);
-    values.push(...Array(9).fill(pattern));
+    values.push(...Array(10).fill(pattern));
   }
   if (filters.receiptType) {
     clauses.push("operations.receipt_type = ?");
