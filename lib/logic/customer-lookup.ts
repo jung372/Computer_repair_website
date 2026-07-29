@@ -14,7 +14,7 @@ import { assertLookupSecretReady } from "@/data/security-settings-repository";
 import { createLookupKey, normalizePhone } from "@/lib/security/lookup-key";
 import { hashPassword, verifyPassword } from "@/lib/security/password";
 
-const MAX_CANDIDATES = 20;
+const MAX_CANDIDATES = 10;
 let dummyHash: Promise<string> | undefined;
 
 export class CustomerLookupError extends Error {

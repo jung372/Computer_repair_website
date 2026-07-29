@@ -1,11 +1,11 @@
-import { argon2idAsync } from "@noble/hashes/argon2.js";
-
-const ARGON_OPTIONS = {
-  m: 19 * 1024,
-  t: 2,
-  p: 1,
-  dkLen: 32,
-};
+const FORMAT_ALGORITHM = "pbkdf2-sha256";
+const FORMAT_VERSION = "v=1";
+const PBKDF2_ITERATIONS = 210_000;
+const PBKDF2_MAX_ITERATIONS = 400_000;
+const HASH_ALGORITHM = "SHA-256";
+const SALT_LENGTH = 16;
+const KEY_LENGTH = 32;
+const encoder = new TextEncoder();
 
 function bytesToBase64(bytes: Uint8Array) {
   let binary = "";
@@ -27,13 +27,34 @@ function constantTimeEqual(left: Uint8Array, right: Uint8Array) {
   return difference === 0;
 }
 
+async function deriveBits(
+  password: string,
+  salt: Uint8Array,
+  iterations: number,
+  keyLength: number,
+) {
+  const key = await crypto.subtle.importKey(
+    "raw",
+    encoder.encode(password),
+    "PBKDF2",
+    false,
+    ["deriveBits"],
+  );
+  const bits = await crypto.subtle.deriveBits(
+    { name: "PBKDF2", salt, iterations, hash: HASH_ALGORITHM },
+    key,
+    keyLength * 8,
+  );
+  return new Uint8Array(bits);
+}
+
 export async function hashPassword(password: string) {
-  const salt = crypto.getRandomValues(new Uint8Array(16));
-  const hash = await argon2idAsync(password, salt, ARGON_OPTIONS);
+  const salt = crypto.getRandomValues(new Uint8Array(SALT_LENGTH));
+  const hash = await deriveBits(password, salt, PBKDF2_ITERATIONS, KEY_LENGTH);
   return [
-    "argon2id",
-    "v=19",
-    `m=${ARGON_OPTIONS.m},t=${ARGON_OPTIONS.t},p=${ARGON_OPTIONS.p}`,
+    FORMAT_ALGORITHM,
+    FORMAT_VERSION,
+    `i=${PBKDF2_ITERATIONS}`,
     bytesToBase64(salt),
     bytesToBase64(hash),
   ].join("$");
@@ -41,21 +62,32 @@ export async function hashPassword(password: string) {
 
 export async function verifyPassword(password: string, encoded: string) {
   const [algorithm, version, parameters, saltValue, hashValue] = encoded.split("$");
-  if (algorithm !== "argon2id" || version !== "v=19" || !parameters || !saltValue || !hashValue) {
+  if (
+    algorithm !== FORMAT_ALGORITHM ||
+    version !== FORMAT_VERSION ||
+    !parameters?.startsWith("i=") ||
+    !saltValue ||
+    !hashValue
+  ) {
     return false;
   }
 
-  const parsed = Object.fromEntries(
-    parameters.split(",").map((part) => part.split("=")),
-  );
-  const options = {
-    m: Number(parsed.m),
-    t: Number(parsed.t),
-    p: Number(parsed.p),
-    dkLen: base64ToBytes(hashValue).length,
-  };
-  if (!options.m || !options.t || !options.p || !options.dkLen) return false;
+  const iterations = Number(parameters.slice(2));
+  if (!Number.isInteger(iterations) || iterations < 1 || iterations > PBKDF2_MAX_ITERATIONS) {
+    return false;
+  }
 
-  const actual = await argon2idAsync(password, base64ToBytes(saltValue), options);
-  return constantTimeEqual(actual, base64ToBytes(hashValue));
+  try {
+    const expected = base64ToBytes(hashValue);
+    if (!expected.length || expected.length > KEY_LENGTH) return false;
+    const actual = await deriveBits(
+      password,
+      base64ToBytes(saltValue),
+      iterations,
+      expected.length,
+    );
+    return constantTimeEqual(actual, expected);
+  } catch {
+    return false;
+  }
 }
