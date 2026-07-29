@@ -11,8 +11,9 @@ export async function POST(
     const { publicId } = await params;
     const payload = (await request.json()) as { password?: unknown };
     const password = typeof payload.password === "string" ? payload.password : "";
-    if (password.length < 8 || password.length > 64) {
-      return Response.json({ error: "비밀번호를 확인해 주세요." }, { status: 400 });
+    const length = Array.from(password).length;
+    if (length < 4 || length > 64) {
+      return Response.json({ error: "입력 정보를 확인해 주세요." }, { status: 400 });
     }
     const result = await verifyPrivateRequestAccess(
       publicId,
@@ -25,7 +26,7 @@ export async function POST(
         {
           error: blocked
             ? "입력 횟수를 초과했습니다. 15분 뒤 다시 시도해 주세요."
-            : "비밀번호가 일치하지 않습니다.",
+            : "입력 정보를 확인해 주세요.",
         },
         { status: blocked ? 429 : 401 },
       );

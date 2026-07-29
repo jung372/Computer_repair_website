@@ -22,7 +22,7 @@ export function SiteFooter() {
         </div>
         <div className="footer-links">
           <Link href="/privacy">개인정보 처리방침</Link>
-          <Link href="/requests">신청 현황</Link>
+          <Link href="/requests">내 신청 조회</Link>
           <Link href="/admin/login">운영자 로그인</Link>
         </div>
       </div>

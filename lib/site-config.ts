@@ -3,7 +3,7 @@ import { getRuntimeString } from "./runtime-config";
 export const siteDefaults = {
   name: "컴박사",
   tagline: "멈춘 컴퓨터, 다시 일상으로.",
-  phone: "010-0000-0000",
+  phone: "010-3388-1597",
   hours: "평일·토요일 09:00–20:00",
   region: "서울·경기 일부 지역 출장",
   email: "contact@example.com",

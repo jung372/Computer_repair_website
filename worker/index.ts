@@ -15,9 +15,14 @@ const worker = {
       if (
         url.pathname.startsWith("/admin") ||
         url.pathname.startsWith("/api/") ||
+        url.pathname === "/requests" ||
+        url.pathname.startsWith("/requests/lookup") ||
         /^\/requests\/R-/.test(url.pathname)
       ) {
         headers.set("Cache-Control", "private, no-store, max-age=0");
+      }
+      if (url.pathname === "/requests" || /^\/requests\/R-/.test(url.pathname)) {
+        headers.set("X-Robots-Tag", "noindex, nofollow");
       }
       if (process.env.NODE_ENV === "production") {
         headers.set(

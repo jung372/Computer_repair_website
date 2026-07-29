@@ -1,6 +1,7 @@
 import { findRequestByPublicId, getRequestById, markNotification, pendingNotifications } from "@/data/request-repository";
 import { DEVICE_LABELS } from "@/lib/domain";
 import { maskName, maskPhone } from "@/lib/logic/request-service";
+import { getInitialNotificationStatus } from "@/lib/notification-config";
 import { getRuntimeString } from "@/lib/runtime-config";
 
 export async function processPendingNotifications(origin: string, limit = 3) {
@@ -20,12 +21,17 @@ async function sendRequestNotification(
   publicId: string,
   origin: string,
 ) {
-  const token = getRuntimeString("TELEGRAM_BOT_TOKEN");
-  const chatId = getRuntimeString("TELEGRAM_CHAT_ID");
-  if (!token || !chatId) {
-    await markNotification(outbox, "CONFIG_REQUIRED", "텔레그램 환경설정이 필요합니다.");
+  const configuredStatus = getInitialNotificationStatus();
+  if (configuredStatus !== "PENDING") {
+    await markNotification(
+      outbox,
+      configuredStatus,
+      configuredStatus === "CONFIG_REQUIRED" ? "텔레그램 환경설정이 필요합니다." : undefined,
+    );
     return;
   }
+  const token = getRuntimeString("TELEGRAM_BOT_TOKEN");
+  const chatId = getRuntimeString("TELEGRAM_CHAT_ID");
 
   const request = await findRequestByPublicId(publicId);
   if (!request) return;

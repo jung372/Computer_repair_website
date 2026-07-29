@@ -40,7 +40,7 @@ export function PrivateUnlock({ publicId }: { publicId: string }) {
             id="unlock-password"
             name="password"
             type="password"
-            minLength={8}
+            minLength={4}
             maxLength={64}
             autoComplete="current-password"
             required
@@ -51,7 +51,7 @@ export function PrivateUnlock({ publicId }: { publicId: string }) {
           {submitting ? "확인 중..." : "내 신청 확인하기"}
         </button>
       </form>
-      <small>5회 연속 실패하면 15분간 입력이 제한됩니다.</small>
+      <small>기존 신청은 최대 64자 비밀번호를 지원하며, 5회 실패 시 15분간 제한됩니다.</small>
     </div>
   );
 }

@@ -14,6 +14,14 @@ export const REQUEST_STATUSES = [
   "CONSULTING",
   "SCHEDULED",
   "REPAIRING",
+  "SHIPPED",
+  "ONSITE_COMPLETED",
+  "COMPANY_UNPAID",
+  "PREVISIT_CANCELED",
+  "ONSITE_CANCELED",
+  "INSHOP_CANCELED",
+  "TECH_PERSONAL_CALL",
+  "COMPANY_PERSONAL_CALL",
   "COMPLETED",
   "ON_HOLD",
   "CANCELED",
@@ -22,24 +30,45 @@ export const REQUEST_STATUSES = [
 export type RequestStatus = (typeof REQUEST_STATUSES)[number];
 
 export const STATUS_LABELS: Record<RequestStatus, string> = {
-  RECEIVED: "접수완료",
-  CONSULTING: "상담중",
-  SCHEDULED: "방문·입고예정",
-  REPAIRING: "수리중",
-  COMPLETED: "완료",
+  RECEIVED: "접수중",
+  CONSULTING: "진행중",
+  SCHEDULED: "예약",
+  REPAIRING: "입고기사수리",
+  SHIPPED: "출고완료",
+  ONSITE_COMPLETED: "현장완료",
+  COMPANY_UNPAID: "미입금(회사)",
+  PREVISIT_CANCELED: "방문전취소",
+  ONSITE_CANCELED: "현장취소",
+  INSHOP_CANCELED: "입고취소",
+  TECH_PERSONAL_CALL: "개인처리콜(기사)",
+  COMPANY_PERSONAL_CALL: "개인처리콜(회사)",
+  COMPLETED: "완료(기존)",
   ON_HOLD: "보류",
-  CANCELED: "취소",
+  CANCELED: "취소(기존)",
 };
 
-export const STATUS_TRANSITIONS: Record<RequestStatus, RequestStatus[]> = {
-  RECEIVED: ["RECEIVED", "CONSULTING", "CANCELED"],
-  CONSULTING: ["CONSULTING", "SCHEDULED", "ON_HOLD", "CANCELED"],
-  SCHEDULED: ["SCHEDULED", "REPAIRING", "ON_HOLD", "CANCELED"],
-  REPAIRING: ["REPAIRING", "COMPLETED", "ON_HOLD"],
-  COMPLETED: ["COMPLETED", "REPAIRING"],
-  ON_HOLD: ["ON_HOLD", "CONSULTING", "SCHEDULED", "CANCELED"],
-  CANCELED: ["CANCELED", "CONSULTING"],
-};
+export const ADMIN_OPERATIONAL_STATUSES = [
+  "RECEIVED",
+  "CONSULTING",
+  "REPAIRING",
+  "SHIPPED",
+  "ONSITE_COMPLETED",
+  "SCHEDULED",
+  "COMPANY_UNPAID",
+  "PREVISIT_CANCELED",
+  "ONSITE_CANCELED",
+  "INSHOP_CANCELED",
+  "TECH_PERSONAL_CALL",
+  "COMPANY_PERSONAL_CALL",
+] as const satisfies readonly RequestStatus[];
+
+export const STATUS_TRANSITIONS = Object.fromEntries(
+  REQUEST_STATUSES.map((status) => [status, [...REQUEST_STATUSES]]),
+) as Record<RequestStatus, RequestStatus[]>;
+
+export const RECEIPT_TYPES = ["온라인접수", "관리자접수"] as const;
+export const CUSTOMER_TYPES = ["신규일반고객", "재방문고객"] as const;
+export const PAYMENT_METHODS = ["", "현금결제", "카드결제", "계좌이체"] as const;
 
 export type Visibility = "PUBLIC" | "PRIVATE";
 
@@ -58,6 +87,7 @@ export type ServiceRequestRecord = {
   description: string;
   visibility: Visibility;
   accessPasswordHash: string | null;
+  lookupKey: string | null;
   status: RequestStatus;
   preferredAt: string | null;
   internalNote: string;
@@ -77,29 +107,16 @@ export type StatusHistoryRecord = {
 };
 
 export type CreateRequestInput = {
-  name: string;
+  name?: string;
   phone: string;
-  postalCode: string;
   address1: string;
-  address2: string;
+  address2?: string;
   deviceType: string;
   manufacturerModel?: string;
   symptom: string;
   description: string;
-  visibility: string;
-  password?: string;
+  password: string;
   preferredAt?: string;
   privacyConsent: boolean;
   website?: string;
-};
-
-export type PublicRequestSummary = {
-  publicId: string;
-  maskedName: string;
-  regionPublic: string;
-  deviceType: DeviceType;
-  symptom: string;
-  visibility: Visibility;
-  status: RequestStatus;
-  createdAt: string;
 };

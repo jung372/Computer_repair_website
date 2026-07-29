@@ -31,6 +31,7 @@ async function initializeDatabase() {
         description TEXT NOT NULL,
         visibility TEXT NOT NULL,
         access_password_hash TEXT,
+        lookup_key TEXT,
         status TEXT NOT NULL DEFAULT 'RECEIVED',
         preferred_at TEXT,
         internal_note TEXT NOT NULL DEFAULT '',
@@ -77,9 +78,136 @@ async function initializeDatabase() {
         updated_at TEXT NOT NULL
       )
     `),
+    db.prepare(`
+      CREATE TABLE IF NOT EXISTS customer_lookup_sessions (
+        id TEXT PRIMARY KEY,
+        token_hash TEXT NOT NULL UNIQUE,
+        expires_at TEXT NOT NULL,
+        created_at TEXT NOT NULL
+      )
+    `),
+    db.prepare(`
+      CREATE TABLE IF NOT EXISTS customer_lookup_session_requests (
+        session_id TEXT NOT NULL,
+        request_id TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        PRIMARY KEY (session_id, request_id),
+        FOREIGN KEY (session_id) REFERENCES customer_lookup_sessions(id) ON DELETE CASCADE,
+        FOREIGN KEY (request_id) REFERENCES service_requests(id) ON DELETE CASCADE
+      )
+    `),
+    db.prepare(`
+      CREATE TABLE IF NOT EXISTS security_settings (
+        key TEXT PRIMARY KEY,
+        value TEXT NOT NULL,
+        updated_at TEXT NOT NULL
+      )
+    `),
+    db.prepare(`
+      CREATE TABLE IF NOT EXISTS admins (
+        id TEXT PRIMARY KEY,
+        login_name TEXT NOT NULL UNIQUE,
+        password_hash TEXT NOT NULL,
+        is_active INTEGER NOT NULL DEFAULT 1,
+        session_version INTEGER NOT NULL DEFAULT 1,
+        password_changed_at TEXT NOT NULL,
+        last_login_at TEXT,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL
+      )
+    `),
+    db.prepare(`
+      CREATE TABLE IF NOT EXISTS admin_audit_logs (
+        id TEXT PRIMARY KEY,
+        admin_id TEXT,
+        event_type TEXT NOT NULL,
+        client_hash TEXT,
+        metadata TEXT,
+        created_at TEXT NOT NULL
+      )
+    `),
+    db.prepare(`
+      CREATE TABLE IF NOT EXISTS request_serials (
+        serial_no INTEGER PRIMARY KEY AUTOINCREMENT,
+        request_id TEXT NOT NULL UNIQUE,
+        FOREIGN KEY (request_id) REFERENCES service_requests(id) ON DELETE CASCADE
+      )
+    `),
+    db.prepare(`
+      CREATE TABLE IF NOT EXISTS request_operations (
+        request_id TEXT PRIMARY KEY,
+        receipt_type TEXT NOT NULL DEFAULT '온라인접수',
+        assignee TEXT NOT NULL DEFAULT '',
+        assignee_phone TEXT NOT NULL DEFAULT '',
+        customer_type TEXT NOT NULL DEFAULT '신규일반고객',
+        landline TEXT NOT NULL DEFAULT '',
+        invoice_date TEXT,
+        invoice_content TEXT NOT NULL DEFAULT '',
+        title TEXT NOT NULL DEFAULT '수리요청',
+        request_category TEXT NOT NULL DEFAULT '',
+        received_date TEXT NOT NULL,
+        visit_timing TEXT NOT NULL DEFAULT '협의',
+        visit_date TEXT,
+        completed_date TEXT,
+        payment_method TEXT NOT NULL DEFAULT '',
+        total_amount INTEGER NOT NULL DEFAULT 0,
+        material_cost INTEGER NOT NULL DEFAULT 0,
+        vat_amount INTEGER NOT NULL DEFAULT 0,
+        technician_income INTEGER NOT NULL DEFAULT 0,
+        office_deposit INTEGER NOT NULL DEFAULT 0,
+        updated_at TEXT NOT NULL,
+        FOREIGN KEY (request_id) REFERENCES service_requests(id) ON DELETE CASCADE
+      )
+    `),
     db.prepare("CREATE INDEX IF NOT EXISTS service_requests_created_idx ON service_requests(created_at)"),
     db.prepare("CREATE INDEX IF NOT EXISTS service_requests_status_idx ON service_requests(status)"),
     db.prepare("CREATE INDEX IF NOT EXISTS request_history_request_idx ON request_status_history(request_id)"),
     db.prepare("CREATE INDEX IF NOT EXISTS notification_outbox_status_idx ON notification_outbox(status)"),
+    db.prepare("CREATE INDEX IF NOT EXISTS customer_lookup_request_idx ON customer_lookup_session_requests(request_id)"),
+    db.prepare("CREATE INDEX IF NOT EXISTS admin_audit_created_idx ON admin_audit_logs(created_at)"),
+    db.prepare("CREATE INDEX IF NOT EXISTS request_operations_receipt_idx ON request_operations(receipt_type)"),
+    db.prepare("CREATE INDEX IF NOT EXISTS request_operations_assignee_idx ON request_operations(assignee)"),
+    db.prepare("CREATE INDEX IF NOT EXISTS request_operations_dates_idx ON request_operations(received_date, completed_date)"),
   ]);
+
+  await db.batch([
+    db.prepare(`
+      INSERT INTO request_serials (request_id)
+      SELECT requests.id
+      FROM service_requests requests
+      LEFT JOIN request_serials serial ON serial.request_id = requests.id
+      WHERE serial.request_id IS NULL
+      ORDER BY requests.created_at ASC, requests.id ASC
+    `),
+    db.prepare(`
+      INSERT OR IGNORE INTO request_operations (
+        request_id, receipt_type, customer_type, title, received_date, updated_at
+      )
+      SELECT
+        id, '온라인접수', '신규일반고객',
+        CASE WHEN symptom = '' THEN '수리요청' ELSE symptom END,
+        substr(created_at, 1, 10), updated_at
+      FROM service_requests
+    `),
+  ]);
+
+  const columns = await db.prepare("PRAGMA table_info(service_requests)").all<{ name: string }>();
+  if (!columns.results.some((column) => column.name === "lookup_key")) {
+    await db.prepare("ALTER TABLE service_requests ADD COLUMN lookup_key TEXT").run();
+  }
+  const operationColumns = await db
+    .prepare("PRAGMA table_info(request_operations)")
+    .all<{ name: string }>();
+  if (!operationColumns.results.some((column) => column.name === "visit_timing")) {
+    await db
+      .prepare(
+        "ALTER TABLE request_operations ADD COLUMN visit_timing TEXT NOT NULL DEFAULT '협의'",
+      )
+      .run();
+  }
+  await db
+    .prepare(
+      "CREATE INDEX IF NOT EXISTS service_requests_lookup_phone_idx ON service_requests(lookup_key, phone)",
+    )
+    .run();
 }

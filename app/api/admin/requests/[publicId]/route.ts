@@ -6,6 +6,10 @@ import {
 } from "@/lib/logic/admin-service";
 import { processPendingNotifications } from "@/infrastructure/telegram";
 import { assertSameOrigin } from "@/lib/security/request-guard";
+import {
+  AdminRecordValidationError,
+  saveAdminRequestRecord,
+} from "@/lib/logic/admin-record-service";
 
 export async function POST(
   request: Request,
@@ -23,6 +27,10 @@ export async function POST(
       internalNote?: unknown;
     };
 
+    if (payload.action === "save-record") {
+      await saveAdminRequestRecord(publicId, payload, admin.email);
+      return Response.json({ message: "접수 내역을 저장했습니다." });
+    }
     if (payload.action === "update") {
       await changeRequestStatus(publicId, payload, admin.email);
       return Response.json({ message: "처리 상태를 저장했습니다." });
@@ -40,6 +48,12 @@ export async function POST(
     }
     return Response.json({ error: "지원하지 않는 작업입니다." }, { status: 400 });
   } catch (error) {
+    if (error instanceof AdminRecordValidationError) {
+      return Response.json(
+        { error: error.message, fields: error.fields },
+        { status: 400 },
+      );
+    }
     const code = error instanceof Error ? error.message : "UNKNOWN";
     const messages: Record<string, string> = {
       INVALID_ORIGIN: "요청 출처가 올바르지 않습니다.",

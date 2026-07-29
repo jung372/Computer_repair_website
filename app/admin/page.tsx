@@ -1,9 +1,16 @@
 import type { Metadata } from "next";
-import { BellRing, ChevronRight, ClipboardList, Search, Wrench } from "lucide-react";
+import { Search, ShieldCheck } from "lucide-react";
 import Link from "next/link";
-import { listAdminRequests, requestStats } from "@/data/request-repository";
+import { AdminStatusFilter } from "@/components/admin-status-filter";
 import { StatusBadge } from "@/components/status-badge";
-import { DEVICE_LABELS, REQUEST_STATUSES, STATUS_LABELS } from "@/lib/domain";
+import {
+  getAdminRequestFilterOptions,
+  listAdminRequestRecords,
+} from "@/data/admin-request-repository";
+import {
+  CUSTOMER_TYPES,
+  RECEIPT_TYPES,
+} from "@/lib/domain";
 import { requireAdmin } from "@/lib/admin-auth";
 
 export const metadata: Metadata = {
@@ -13,18 +20,48 @@ export const metadata: Metadata = {
 
 export const dynamic = "force-dynamic";
 
+type AdminSearchParams = Record<string, string | string[] | undefined>;
+
+function first(value: string | string[] | undefined) {
+  return Array.isArray(value) ? value[0] ?? "" : value ?? "";
+}
+
+function all(value: string | string[] | undefined) {
+  if (!value) return [];
+  return Array.isArray(value) ? value : [value];
+}
+
+function unique(values: string[]) {
+  return [...new Set(values.filter(Boolean))];
+}
+
 export default async function AdminPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; status?: string }>;
+  searchParams: Promise<AdminSearchParams>;
 }) {
   const admin = await requireAdmin("/admin");
   const query = await searchParams;
-  const [requests, stats] = await Promise.all([
-    listAdminRequests(query.q, query.status),
-    requestStats(),
+  const selectedStatuses = all(query.status);
+  const filters = {
+    q: first(query.q),
+    receiptType: first(query.receiptType),
+    assignee: first(query.assignee),
+    customerType: first(query.customerType),
+    integratedFrom: first(query.integratedFrom),
+    integratedTo: first(query.integratedTo),
+    receivedFrom: first(query.receivedFrom),
+    receivedTo: first(query.receivedTo),
+    completedFrom: first(query.completedFrom),
+    completedTo: first(query.completedTo),
+    statuses: selectedStatuses,
+  };
+  const [requests, filterOptions] = await Promise.all([
+    listAdminRequestRecords(filters),
+    getAdminRequestFilterOptions(),
   ]);
-  const total = Object.values(stats).reduce((sum, value) => sum + Number(value), 0);
+  const receiptTypes = unique([...RECEIPT_TYPES, ...filterOptions.receiptTypes]);
+  const customerTypes = unique([...CUSTOMER_TYPES, ...filterOptions.customerTypes]);
 
   return (
     <main id="main-content" className="admin-shell">
@@ -32,76 +69,191 @@ export default async function AdminPage({
         <div className="container admin-top-inner">
           <div>
             <span className="eyebrow eyebrow-light">Operations</span>
-            <h1>서비스 신청 관리</h1>
-            <p>{admin.displayName}님, 오늘의 접수와 처리 상태를 확인하세요.</p>
+            <h1>서비스 접수 관리</h1>
+            <p>{admin.displayName}님, 검색 조건으로 접수 내역을 빠르게 확인하고 처리하세요.</p>
           </div>
           <div className="admin-account">
             <span className="admin-identity">보안 세션 사용 중</span>
+            <Link className="admin-security-link" href="/admin/settings/security">
+              <ShieldCheck size={15} aria-hidden="true" /> 비밀번호 변경
+            </Link>
             <form action="/api/admin/logout" method="post">
               <button type="submit">로그아웃</button>
             </form>
           </div>
         </div>
       </section>
+
       <section className="container admin-content">
-        <div className="admin-stat-grid">
-          <Link href="/admin">
-            <ClipboardList size={22} /><span><small>전체 신청</small><strong>{total}</strong></span>
-          </Link>
-          <Link href="/admin?status=RECEIVED">
-            <BellRing size={22} /><span><small>신규 접수</small><strong>{stats.RECEIVED ?? 0}</strong></span>
-          </Link>
-          <Link href="/admin?status=REPAIRING">
-            <Wrench size={22} /><span><small>수리중</small><strong>{stats.REPAIRING ?? 0}</strong></span>
-          </Link>
-          <Link href="/admin?status=COMPLETED">
-            <ClipboardList size={22} /><span><small>완료</small><strong>{stats.COMPLETED ?? 0}</strong></span>
-          </Link>
-        </div>
-        <form className="board-filter admin-filter" action="/admin" method="get">
-          <div>
-            <Search size={18} />
-            <label className="sr-only" htmlFor="admin-search">접수 검색</label>
-            <input
-              id="admin-search"
-              name="q"
-              defaultValue={query.q}
-              placeholder="접수번호, 이름, 연락처, 주소, 증상"
+        <form className="admin-search-panel" action="/admin" method="get">
+          <div className="admin-search-heading">
+            <div>
+              <span className="eyebrow">Request search</span>
+              <h2>접수내역 검색</h2>
+            </div>
+            <p>현재 조건에 맞는 접수 <strong>{requests.length}</strong>건</p>
+          </div>
+
+          <div className="admin-search-grid">
+            <label className="admin-search-keyword">
+              <span>검색어</span>
+              <div className="admin-input-with-icon">
+                <Search size={17} aria-hidden="true" />
+                <input
+                  name="q"
+                  defaultValue={filters.q}
+                  placeholder="이름, 제목, 접수번호, 휴대폰 등 키워드"
+                />
+              </div>
+            </label>
+            <label>
+              <span>접수구분</span>
+              <select name="receiptType" defaultValue={filters.receiptType}>
+                <option value="">구분 전체</option>
+                {receiptTypes.map((value) => <option key={value}>{value}</option>)}
+              </select>
+            </label>
+            <label>
+              <span>담당기사</span>
+              <select name="assignee" defaultValue={filters.assignee}>
+                <option value="">담당자 전체</option>
+                {filterOptions.assignees.map((value) => <option key={value}>{value}</option>)}
+              </select>
+            </label>
+            <label>
+              <span>고객구분</span>
+              <select name="customerType" defaultValue={filters.customerType}>
+                <option value="">분류 전체</option>
+                {customerTypes.map((value) => <option key={value}>{value}</option>)}
+              </select>
+            </label>
+          </div>
+
+          <div className="admin-date-search">
+            <DateRange
+              label="통합 날짜검색"
+              fromName="integratedFrom"
+              toName="integratedTo"
+              from={filters.integratedFrom}
+              to={filters.integratedTo}
+              hint="접수일과 완료일을 함께 검색합니다."
+            />
+            <DateRange
+              label="접수일"
+              fromName="receivedFrom"
+              toName="receivedTo"
+              from={filters.receivedFrom}
+              to={filters.receivedTo}
+            />
+            <DateRange
+              label="완료일"
+              fromName="completedFrom"
+              toName="completedTo"
+              from={filters.completedFrom}
+              to={filters.completedTo}
             />
           </div>
-          <label className="sr-only" htmlFor="admin-status-filter">상태</label>
-          <select id="admin-status-filter" name="status" defaultValue={query.status ?? ""}>
-            <option value="">전체 상태</option>
-            {REQUEST_STATUSES.map((status) => (
-              <option value={status} key={status}>{STATUS_LABELS[status]}</option>
-            ))}
-          </select>
-          <button className="button button-secondary">검색</button>
+
+          <AdminStatusFilter selected={selectedStatuses} />
+
+          <div className="admin-search-actions">
+            <Link className="button button-secondary" href="/admin">초기화</Link>
+            <button className="button button-primary" type="submit">
+              <Search size={17} aria-hidden="true" /> 검색
+            </button>
+          </div>
         </form>
+
+        <div className="admin-table-heading">
+          <div>
+            <span className="eyebrow">Request list</span>
+            <h2>접수내역</h2>
+          </div>
+          <small>최신 접수번호 순 · 최대 200건</small>
+        </div>
         <div className="admin-table-wrap">
-          <table className="admin-table">
+          <table className="admin-table admin-operations-table">
             <thead>
               <tr>
-                <th>상태</th><th>접수</th><th>신청자</th><th>연락처</th><th>지역</th><th>알림</th><th />
+                <th>번호</th>
+                <th>접수구분</th>
+                <th>고객명</th>
+                <th>휴대폰</th>
+                <th>담당자</th>
+                <th>고객구분</th>
+                <th>처리상태</th>
+                <th>접수일</th>
               </tr>
             </thead>
             <tbody>
               {requests.map((request) => (
                 <tr key={request.id}>
+                  <td className="admin-serial">{request.serialNumber}</td>
+                  <td>{request.receiptType}</td>
+                  <td>
+                    <Link className="admin-customer-link" href={`/admin/requests/${request.publicId}`}>
+                      {request.name || "미상"}
+                    </Link>
+                  </td>
+                  <td>
+                    <a className="admin-phone" href={`tel:${request.phone}`}>{request.phone}</a>
+                    <a className="admin-sms-link" href={`sms:${request.phone}`}>SMS</a>
+                  </td>
+                  <td>
+                    <span>{request.assignee || "미배정"}</span>
+                    {request.assigneePhone && (
+                      <a className="admin-sms-link" href={`sms:${request.assigneePhone}`}>SMS</a>
+                    )}
+                  </td>
+                  <td>{request.customerType}</td>
                   <td><StatusBadge status={request.status} /></td>
-                  <td><strong>{request.symptom}</strong><small>{request.publicId} · {DEVICE_LABELS[request.deviceType]}</small></td>
-                  <td>{request.name}</td>
-                  <td>{request.phone}</td>
-                  <td>{request.regionPublic}</td>
-                  <td><span className={`notification-state notification-${request.notificationStatus.toLowerCase()}`}>{request.notificationStatus}</span></td>
-                  <td><Link aria-label={`${request.publicId} 상세`} href={`/admin/requests/${request.publicId}`}><ChevronRight /></Link></td>
+                  <td><time dateTime={request.receivedDate}>{request.receivedDate}</time></td>
                 </tr>
               ))}
             </tbody>
           </table>
-          {!requests.length && <div className="empty-state"><strong>조건에 맞는 신청이 없습니다.</strong></div>}
+          {!requests.length && (
+            <div className="empty-state">
+              <strong>조건에 맞는 접수 내역이 없습니다.</strong>
+              <p>검색 조건을 줄이거나 초기화한 뒤 다시 확인해 주세요.</p>
+            </div>
+          )}
         </div>
       </section>
     </main>
+  );
+}
+
+function DateRange({
+  label,
+  fromName,
+  toName,
+  from,
+  to,
+  hint,
+}: {
+  label: string;
+  fromName: string;
+  toName: string;
+  from: string;
+  to: string;
+  hint?: string;
+}) {
+  return (
+    <div className="admin-date-row">
+      <span>{label}</span>
+      <div>
+        <label>
+          <span className="sr-only">{label} 시작일</span>
+          <input name={fromName} type="date" defaultValue={from} />
+        </label>
+        <b aria-hidden="true">~</b>
+        <label>
+          <span className="sr-only">{label} 마침일</span>
+          <input name={toName} type="date" defaultValue={to} />
+        </label>
+        {hint && <small>{hint}</small>}
+      </div>
+    </div>
   );
 }

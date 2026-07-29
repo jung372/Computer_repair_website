@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
-import { KeyRound, LockKeyhole } from "lucide-react";
+import { KeyRound, LockKeyhole, ShieldCheck } from "lucide-react";
+import Link from "next/link";
+import { getPrimaryAdmin } from "@/data/admin-repository";
 
 export const metadata: Metadata = {
   title: "운영자 로그인",
@@ -9,13 +11,16 @@ export const metadata: Metadata = {
 export default async function AdminLoginPage({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string; returnTo?: string }>;
+  searchParams: Promise<{ error?: string; returnTo?: string; setup?: string; changed?: string }>;
 }) {
   const query = await searchParams;
+  const hasAdmin = Boolean(await getPrimaryAdmin());
   const message =
     query.error === "blocked"
       ? "로그인 시도 횟수를 초과했습니다. 15분 뒤 다시 시도해 주세요."
-      : query.error
+      : query.error === "service"
+        ? "보안 설정을 확인한 뒤 다시 시도해 주세요."
+        : query.error
         ? "운영자 비밀번호가 일치하지 않습니다."
         : "";
 
@@ -26,6 +31,22 @@ export default async function AdminLoginPage({
         <span className="eyebrow">Administrator</span>
         <h1>운영자 로그인</h1>
         <p>운영자 비밀번호로 로그인해야 신청자의 전체 정보와 내부 메모를 확인할 수 있습니다.</p>
+        {(query.setup === "done" || query.changed === "done") && (
+          <div className="success-banner login-success-banner">
+            <ShieldCheck size={20} aria-hidden="true" />
+            <div>
+              <strong>{query.setup === "done" ? "운영자 비밀번호를 설정했습니다." : "운영자 비밀번호를 변경했습니다."}</strong>
+              <span>새 비밀번호로 로그인해 주세요.</span>
+            </div>
+          </div>
+        )}
+        {!hasAdmin && (
+          <div className="setup-callout">
+            <strong>아직 운영자 비밀번호가 없습니다.</strong>
+            <span>서비스 소유자라면 보호된 최초 설정 화면에서 비밀번호를 지정하세요.</span>
+            <Link className="text-link" href="/admin/setup">운영자 비밀번호 설정</Link>
+          </div>
+        )}
         <form action="/api/admin/session" method="post">
           <input type="hidden" name="returnTo" value={query.returnTo ?? "/admin"} />
           <label htmlFor="admin-password">운영자 비밀번호</label>
@@ -37,7 +58,7 @@ export default async function AdminLoginPage({
               type="password"
               autoComplete="current-password"
               required
-              minLength={10}
+              maxLength={64}
               autoFocus
             />
           </div>

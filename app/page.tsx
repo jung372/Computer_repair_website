@@ -5,6 +5,7 @@ import {
   ClipboardCheck,
   Gauge,
   Headphones,
+  LockKeyhole,
   MessageSquareText,
   PhoneCall,
   SearchCheck,
@@ -14,15 +15,15 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { DeviceIcon } from "@/components/device-icon";
-import { RequestList } from "@/components/request-list";
-import { getPublicBoard } from "@/lib/logic/request-service";
+import { isTelegramNotificationReady } from "@/lib/notification-config";
 import { serviceGuideList } from "@/lib/service-content";
 import { getSiteConfig } from "@/lib/site-config";
 
 export const dynamic = "force-dynamic";
 
 export default async function Home() {
-  const [recent, config] = await Promise.all([getPublicBoard(), getSiteConfig()]);
+  const config = getSiteConfig();
+  const notificationsReady = isTelegramNotificationReady();
   const phoneHref = `tel:${config.phone.replace(/\D/g, "")}`;
 
   return (
@@ -83,7 +84,10 @@ export default async function Home() {
             </div>
             <div className="hero-floating-card">
               <CalendarCheck2 size={22} aria-hidden="true" />
-              <span><small>빠른 확인</small><strong>접수 즉시 알림</strong></span>
+              <span>
+                <small>{notificationsReady ? "운영자 알림" : "접수 확인"}</small>
+                <strong>{notificationsReady ? "접수 후 자동 전송" : "영업시간 내 연락"}</strong>
+              </span>
             </div>
           </div>
         </div>
@@ -166,7 +170,7 @@ export default async function Home() {
               ["02", "접수 확인", "운영자가 내용을 확인하고 연락드립니다."],
               ["03", "일정·견적 안내", "방문 또는 입고 일정과 점검 기준을 설명합니다."],
               ["04", "점검·수리", "확인한 원인과 수리 선택지를 먼저 안내합니다."],
-              ["05", "완료·확인", "게시판에서 처리 상태와 안내를 확인합니다."],
+              ["05", "완료·확인", "내 신청 조회에서 처리 상태와 안내를 확인합니다."],
             ].map(([number, title, description]) => (
               <li key={number}>
                 <span>{number}</span>
@@ -179,15 +183,21 @@ export default async function Home() {
       </section>
 
       <section className="section request-status-section">
-        <div className="container">
-          <div className="section-heading split-heading">
+        <div className="container private-lookup-promo">
+          <div className="private-lookup-promo-copy">
+            <span className="promo-lock"><LockKeyhole size={26} aria-hidden="true" /></span>
             <div>
-              <span className="eyebrow">Live requests</span>
-              <h2>최근 신청 현황</h2>
+              <span className="eyebrow">Private by default</span>
+              <h2>신청 목록 대신,<br />내 신청만 확인하세요.</h2>
+              <p>휴대전화 번호와 신청 비밀번호가 모두 일치할 때만 접수 내용과 진행 상태를 보여 드립니다.</p>
             </div>
-            <Link className="text-link" href="/requests">전체 신청 현황 <ArrowRight size={16} /></Link>
           </div>
-          <RequestList requests={recent.slice(0, 8)} compact />
+          <div className="private-lookup-promo-actions">
+            <Link className="button button-primary button-large" href="/requests">
+              내 신청 조회 <ArrowRight size={18} aria-hidden="true" />
+            </Link>
+            <small><ShieldCheck size={15} aria-hidden="true" /> 다른 고객의 신청은 공개되지 않습니다.</small>
+          </div>
         </div>
       </section>
 
@@ -201,7 +211,7 @@ export default async function Home() {
           <div className="faq-list">
             {[
               ["출장비와 수리비는 언제 확정되나요?", "접수 내용으로 기본 안내를 드리고, 현장 또는 입고 점검 후 수리 전 최종 비용을 설명합니다."],
-              ["비공개 신청은 어떻게 확인하나요?", "신청 현황에서 접수번호를 찾고, 신청 시 설정한 비밀번호를 입력하면 됩니다."],
+              ["내 신청은 어떻게 확인하나요?", "내 신청 조회에서 신청할 때 사용한 휴대전화 번호와 비밀번호를 입력하면 됩니다."],
               ["중요한 자료가 있어도 수리할 수 있나요?", "가능합니다. 데이터가 중요한 경우 접수 내용에 반드시 적고, 초기화나 재설치를 먼저 하지 마세요."],
               ["접수하면 바로 방문하나요?", "온라인 접수는 방문 확정이 아닙니다. 운영자가 연락해 증상, 지역, 가능한 시간을 확인한 뒤 일정을 확정합니다."],
             ].map(([question, answer]) => (

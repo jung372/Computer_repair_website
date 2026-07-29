@@ -1,12 +1,12 @@
 import type {
-  PublicRequestSummary,
   RequestStatus,
   ServiceRequestRecord,
   StatusHistoryRecord,
 } from "@/lib/domain";
+import { getInitialNotificationStatus } from "@/lib/notification-config";
 import { ensureDatabase, getD1 } from "./database";
 
-type RequestRow = {
+export type RequestRow = {
   id: string;
   public_id: string;
   name: string;
@@ -21,6 +21,7 @@ type RequestRow = {
   description: string;
   visibility: ServiceRequestRecord["visibility"];
   access_password_hash: string | null;
+  lookup_key: string | null;
   status: RequestStatus;
   preferred_at: string | null;
   internal_note: string;
@@ -36,7 +37,7 @@ type OutboxRow = {
   attempts: number;
 };
 
-function mapRequest(row: RequestRow): ServiceRequestRecord {
+export function mapRequest(row: RequestRow): ServiceRequestRecord {
   return {
     id: row.id,
     publicId: row.public_id,
@@ -52,6 +53,7 @@ function mapRequest(row: RequestRow): ServiceRequestRecord {
     description: row.description,
     visibility: row.visibility,
     accessPasswordHash: row.access_password_hash,
+    lookupKey: row.lookup_key,
     status: row.status,
     preferredAt: row.preferred_at,
     internalNote: row.internal_note,
@@ -78,10 +80,10 @@ export async function insertRequest(
         INSERT INTO service_requests (
           id, public_id, name, phone, postal_code, address1, address2, region_public,
           device_type, manufacturer_model, symptom, description, visibility,
-          access_password_hash, status, preferred_at, internal_note,
+          access_password_hash, lookup_key, status, preferred_at, internal_note,
           notification_status, privacy_consent_version, privacy_consented_at,
           created_at, updated_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, '', 'PENDING', ?, ?, ?, ?)
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, '', ?, ?, ?, ?, ?)
       `)
       .bind(
         request.id,
@@ -98,8 +100,10 @@ export async function insertRequest(
         request.description,
         request.visibility,
         request.accessPasswordHash,
+        request.lookupKey,
         request.status,
         request.preferredAt,
+        request.notificationStatus,
         request.privacyConsentVersion,
         request.privacyConsentedAt,
         now,
@@ -113,12 +117,22 @@ export async function insertRequest(
       `)
       .bind(crypto.randomUUID(), request.id, now),
     db
+      .prepare("INSERT INTO request_serials (request_id) VALUES (?)")
+      .bind(request.id),
+    db
+      .prepare(`
+        INSERT INTO request_operations (
+          request_id, receipt_type, customer_type, title, received_date, updated_at
+        ) VALUES (?, '온라인접수', '신규일반고객', ?, ?, ?)
+      `)
+      .bind(request.id, request.symptom || "수리요청", now.slice(0, 10), now),
+    db
       .prepare(`
         INSERT INTO notification_outbox
           (id, request_id, channel, status, attempts, next_attempt_at, created_at, updated_at)
-        VALUES (?, ?, 'TELEGRAM', 'PENDING', 0, ?, ?, ?)
+        VALUES (?, ?, 'TELEGRAM', ?, 0, ?, ?, ?)
       `)
-      .bind(outboxId, request.id, now, now, now),
+      .bind(outboxId, request.id, request.notificationStatus, now, now, now),
   ]);
 }
 
@@ -157,42 +171,6 @@ export async function listStatusHistory(requestId: string) {
     changedBy: row.changed_by,
     createdAt: row.created_at,
   }));
-}
-
-export async function listPublicRequests(search = "", status = "", limit = 20) {
-  await ensureDatabase();
-  const clauses = ["deleted_at IS NULL"];
-  const values: unknown[] = [];
-  if (search) {
-    clauses.push("(public_id LIKE ? OR device_type LIKE ? OR symptom LIKE ?)");
-    const pattern = `%${search}%`;
-    values.push(pattern, pattern, pattern);
-  }
-  if (status) {
-    clauses.push("status = ?");
-    values.push(status);
-  }
-  values.push(limit);
-  const result = await getD1()
-    .prepare(`
-      SELECT public_id, name, region_public, device_type, symptom, visibility, status, created_at
-      FROM service_requests
-      WHERE ${clauses.join(" AND ")}
-      ORDER BY created_at DESC
-      LIMIT ?
-    `)
-    .bind(...values)
-    .all<{
-      public_id: string;
-      name: string;
-      region_public: string;
-      device_type: PublicRequestSummary["deviceType"];
-      symptom: string;
-      visibility: PublicRequestSummary["visibility"];
-      status: PublicRequestSummary["status"];
-      created_at: string;
-    }>();
-  return result.results;
 }
 
 export async function listAdminRequests(search = "", status = "", limit = 100) {
@@ -269,7 +247,7 @@ export async function pendingNotifications(limit = 3) {
     .prepare(`
       SELECT id, request_id, attempts
       FROM notification_outbox
-      WHERE status IN ('PENDING', 'FAILED', 'CONFIG_REQUIRED')
+      WHERE status IN ('PENDING', 'FAILED')
         AND attempts < 5
         AND next_attempt_at <= ?
       ORDER BY created_at ASC
@@ -282,7 +260,7 @@ export async function pendingNotifications(limit = 3) {
 
 export async function markNotification(
   outbox: OutboxRow,
-  status: "SENT" | "FAILED" | "CONFIG_REQUIRED",
+  status: "SENT" | "FAILED" | "CONFIG_REQUIRED" | "DISABLED",
   error?: string,
 ) {
   const now = new Date();
@@ -298,7 +276,7 @@ export async function markNotification(
       `)
       .bind(
         status,
-        outbox.attempts + (status === "CONFIG_REQUIRED" ? 0 : 1),
+        outbox.attempts + (status === "CONFIG_REQUIRED" || status === "DISABLED" ? 0 : 1),
         next.toISOString(),
         error?.slice(0, 240) ?? null,
         status === "SENT" ? now.toISOString() : null,
@@ -324,26 +302,42 @@ export async function getRequestById(id: string) {
   return row ? mapRequest(row) : null;
 }
 
+export async function listRequestsByIds(ids: string[]) {
+  if (!ids.length) return [];
+  await ensureDatabase();
+  const placeholders = ids.map(() => "?").join(", ");
+  const result = await getD1()
+    .prepare(`
+      SELECT * FROM service_requests
+      WHERE id IN (${placeholders}) AND deleted_at IS NULL
+      ORDER BY created_at DESC
+    `)
+    .bind(...ids)
+    .all<RequestRow>();
+  return result.results.map(mapRequest);
+}
+
 export async function resetNotification(publicId: string) {
   await ensureDatabase();
   const request = await findRequestByPublicId(publicId);
   if (!request) return false;
   const now = new Date().toISOString();
+  const status = getInitialNotificationStatus();
   await getD1().batch([
     getD1()
       .prepare(`
         UPDATE notification_outbox
-        SET status = 'PENDING', attempts = 0, next_attempt_at = ?, last_error = NULL, updated_at = ?
+        SET status = ?, attempts = 0, next_attempt_at = ?, last_error = NULL, updated_at = ?
         WHERE request_id = ?
       `)
-      .bind(now, now, request.id),
+      .bind(status, now, now, request.id),
     getD1()
       .prepare(`
         UPDATE service_requests
-        SET notification_status = 'PENDING', notification_error = NULL, updated_at = ?
+        SET notification_status = ?, notification_error = NULL, updated_at = ?
         WHERE id = ?
       `)
-      .bind(now, request.id),
+      .bind(status, now, request.id),
   ]);
   return true;
 }
@@ -351,14 +345,17 @@ export async function resetNotification(publicId: string) {
 export async function getAccessAttempt(key: string) {
   await ensureDatabase();
   return getD1()
-    .prepare("SELECT failures, blocked_until FROM access_attempts WHERE key = ?")
+    .prepare("SELECT failures, blocked_until, updated_at FROM access_attempts WHERE key = ?")
     .bind(key)
-    .first<{ failures: number; blocked_until: string | null }>();
+    .first<{ failures: number; blocked_until: string | null; updated_at: string }>();
 }
 
-export async function recordAccessFailure(key: string, currentFailures: number) {
+export async function recordAccessFailure(key: string) {
   const now = new Date();
-  const failures = currentFailures + 1;
+  const attempt = await getAccessAttempt(key);
+  const withinWindow =
+    attempt && now.getTime() - new Date(attempt.updated_at).getTime() < 15 * 60 * 1000;
+  const failures = (withinWindow ? Number(attempt.failures) : 0) + 1;
   const blockedUntil =
     failures >= 5 ? new Date(now.getTime() + 15 * 60 * 1000).toISOString() : null;
   await getD1()
@@ -391,7 +388,8 @@ export async function anonymizeRequest(publicId: string, changedBy: string) {
         SET name = '삭제된 신청자', phone = '', postal_code = '', address1 = '',
             address2 = '', region_public = '삭제됨', manufacturer_model = '',
             symptom = '삭제된 신청', description = '[개인정보 삭제 완료]',
-            access_password_hash = NULL, internal_note = '', deleted_at = ?, updated_at = ?
+            access_password_hash = NULL, lookup_key = NULL, internal_note = '',
+            deleted_at = ?, updated_at = ?
         WHERE id = ?
       `)
       .bind(now, now, request.id),

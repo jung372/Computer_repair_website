@@ -3,20 +3,20 @@ import {
   findRequestByPublicId,
   getAccessAttempt,
   insertRequest,
-  listPublicRequests,
   listStatusHistory,
   recordAccessFailure,
 } from "@/data/request-repository";
+import { assertLookupSecretReady } from "@/data/security-settings-repository";
 import {
   DEVICE_TYPES,
   type DeviceType,
-  type PublicRequestSummary,
-  type RequestStatus,
   type ServiceRequestRecord,
 } from "@/lib/domain";
+import { getInitialNotificationStatus } from "@/lib/notification-config";
+import { createLookupKey, normalizePhone } from "@/lib/security/lookup-key";
 import { hashPassword, verifyPassword } from "@/lib/security/password";
 
-const PRIVACY_VERSION = "2026-07-28.v1";
+const PRIVACY_VERSION = "2026-07-29.v2";
 
 export class RequestValidationError extends Error {
   constructor(public fields: Record<string, string>) {
@@ -60,61 +60,40 @@ export function maskPhone(phone: string) {
   return `${phone.slice(0, 3)}-****-${phone.slice(-4)}`;
 }
 
-export function toPublicSummary(row: {
-  public_id: string;
-  name: string;
-  region_public: string;
-  device_type: DeviceType;
-  symptom: string;
-  visibility: ServiceRequestRecord["visibility"];
-  status: RequestStatus;
-  created_at: string;
-}): PublicRequestSummary {
-  return {
-    publicId: row.public_id,
-    maskedName: maskName(row.name),
-    regionPublic: row.region_public,
-    deviceType: row.device_type,
-    symptom: row.symptom,
-    visibility: row.visibility,
-    status: row.status,
-    createdAt: row.created_at,
-  };
-}
-
 export async function createServiceRequest(input: unknown) {
   const values = isRecord(input) ? input : {};
   const fields: Record<string, string> = {};
-  const name = clean(values.name, 30);
-  const phone = clean(values.phone, 30).replace(/\D/g, "");
-  const postalCode = clean(values.postalCode, 12);
+  const name = clean(values.name, 30) || "미상";
+  const phone = normalizePhone(clean(values.phone, 30));
   const address1 = clean(values.address1, 160);
   const address2 = clean(values.address2, 160);
   const manufacturerModel = clean(values.manufacturerModel, 100);
   const symptom = clean(values.symptom, 120);
   const description = clean(values.description, 2_000);
   const preferredAt = clean(values.preferredAt, 40) || null;
-  const visibility = values.visibility === "PUBLIC" ? "PUBLIC" : "PRIVATE";
   const password = typeof values.password === "string" ? values.password : "";
+  const passwordLength = Array.from(password).length;
   const deviceType = DEVICE_TYPES.includes(values.deviceType as DeviceType)
     ? (values.deviceType as DeviceType)
     : null;
 
   if (values.website) fields.website = "자동 신청으로 판단되었습니다.";
-  if (name.length < 2) fields.name = "이름을 2자 이상 입력해 주세요.";
   if (phone.length < 10 || phone.length > 11) fields.phone = "연락처 10~11자리를 확인해 주세요.";
-  if (!postalCode) fields.postalCode = "우편번호를 입력해 주세요.";
   if (!address1) fields.address1 = "기본 주소를 입력해 주세요.";
-  if (!address2) fields.address2 = "상세 주소를 입력해 주세요.";
   if (!deviceType) fields.deviceType = "기기 종류를 선택해 주세요.";
   if (!symptom) fields.symptom = "대표 증상을 입력해 주세요.";
   if (description.length < 10) fields.description = "접수 내용을 10자 이상 입력해 주세요.";
-  if (visibility === "PRIVATE" && (password.length < 8 || password.length > 64)) {
-    fields.password = "비공개 비밀번호는 8~64자로 입력해 주세요.";
+  if (passwordLength < 4 || passwordLength > 20) {
+    fields.password = "신청 조회 비밀번호는 4~20자로 입력해 주세요.";
   }
   if (values.privacyConsent !== true) fields.privacyConsent = "개인정보 수집·이용 동의가 필요합니다.";
   if (Object.keys(fields).length) throw new RequestValidationError(fields);
 
+  await assertLookupSecretReady();
+  const [accessPasswordHash, lookupKey] = await Promise.all([
+    hashPassword(password),
+    createLookupKey(phone, password),
+  ]);
   const now = new Date();
   const timestamp = now.toISOString();
   const request: ServiceRequestRecord & {
@@ -125,7 +104,7 @@ export async function createServiceRequest(input: unknown) {
     publicId: createPublicId(now),
     name,
     phone,
-    postalCode,
+    postalCode: "",
     address1,
     address2,
     regionPublic: publicRegion(address1),
@@ -133,12 +112,13 @@ export async function createServiceRequest(input: unknown) {
     manufacturerModel,
     symptom,
     description,
-    visibility,
-    accessPasswordHash: visibility === "PRIVATE" ? await hashPassword(password) : null,
+    visibility: "PRIVATE",
+    accessPasswordHash,
+    lookupKey,
     status: "RECEIVED",
     preferredAt,
     internalNote: "",
-    notificationStatus: "PENDING",
+    notificationStatus: getInitialNotificationStatus(),
     notificationError: null,
     createdAt: timestamp,
     updatedAt: timestamp,
@@ -147,13 +127,6 @@ export async function createServiceRequest(input: unknown) {
   };
   await insertRequest(request);
   return request;
-}
-
-export async function getPublicBoard(search = "", status = "") {
-  const safeSearch = clean(search, 80);
-  const safeStatus = clean(status, 30);
-  const rows = await listPublicRequests(safeSearch, safeStatus);
-  return rows.map(toPublicSummary);
 }
 
 export async function getRequestDetail(publicId: string) {
@@ -178,7 +151,7 @@ export async function verifyPrivateRequestAccess(
   }
   const valid = await verifyPassword(password, request.accessPasswordHash);
   if (!valid) {
-    await recordAccessFailure(key, Number(attempt?.failures ?? 0));
+    await recordAccessFailure(key);
     return { ok: false, reason: "INVALID" as const };
   }
   await clearAccessFailures(key);

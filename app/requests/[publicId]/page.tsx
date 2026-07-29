@@ -1,10 +1,14 @@
 import type { Metadata } from "next";
 import { CheckCircle2, ChevronRight, Clock3, MapPin, MonitorCog, ShieldCheck } from "lucide-react";
 import Link from "next/link";
-import { headers } from "next/headers";
+import { cookies } from "next/headers";
 import { notFound } from "next/navigation";
 import { PrivateUnlock } from "@/components/private-unlock";
 import { StatusBadge } from "@/components/status-badge";
+import {
+  CUSTOMER_LOOKUP_COOKIE,
+  customerLookupSessionCanAccess,
+} from "@/data/customer-lookup-repository";
 import { DEVICE_LABELS, STATUS_LABELS } from "@/lib/domain";
 import { getRequestDetail, maskName, maskPhone } from "@/lib/logic/request-service";
 import { accessCookieName, verifyAccessToken } from "@/lib/security/signed-access";
@@ -27,20 +31,27 @@ export default async function RequestDetailPage({
   const detail = await getRequestDetail(publicId);
   if (!detail) notFound();
   const { request, history } = detail;
-  const requestHeaders = await headers();
-  const cookieHeader = requestHeaders.get("cookie") ?? "";
-  const token = cookieHeader
-    .split(";")
-    .map((value) => value.trim().split("="))
-    .find(([name]) => name === accessCookieName(publicId))?.[1];
+  const cookieStore = await cookies();
+  const legacyToken = cookieStore.get(accessCookieName(publicId))?.value;
+  const lookupToken = cookieStore.get(CUSTOMER_LOOKUP_COOKIE)?.value;
   const unlocked =
-    request.visibility === "PUBLIC" || (await verifyAccessToken(publicId, token));
+    (await customerLookupSessionCanAccess(lookupToken, request.id)) ||
+    (await verifyAccessToken(publicId, legacyToken));
 
   if (!unlocked) {
     return (
       <main id="main-content" className="unlock-page">
-        <PrivateUnlock publicId={publicId} />
-        <Link className="text-link" href="/requests">신청 현황으로 돌아가기</Link>
+        {request.accessPasswordHash ? (
+          <PrivateUnlock publicId={publicId} />
+        ) : (
+          <div className="unlock-card">
+            <span className="unlock-icon"><ShieldCheck size={30} aria-hidden="true" /></span>
+            <span className="eyebrow">Protected request</span>
+            <h1>신청 정보가 보호되고 있습니다</h1>
+            <p>기존 공개 접수의 상세 내용은 더 이상 공개하지 않습니다. 확인이 필요하면 대표번호로 문의해 주세요.</p>
+          </div>
+        )}
+        <Link className="text-link" href="/requests">내 신청 조회로 돌아가기</Link>
       </main>
     );
   }
@@ -50,7 +61,7 @@ export default async function RequestDetailPage({
       <section className="detail-hero">
         <div className="container">
           <div className="breadcrumbs">
-            <Link href="/">홈</Link><ChevronRight size={14} /><Link href="/requests">신청 현황</Link>
+            <Link href="/">홈</Link><ChevronRight size={14} /><Link href="/requests">내 신청 조회</Link>
           </div>
           {query.submitted === "1" && (
             <div className="success-banner">
@@ -74,7 +85,7 @@ export default async function RequestDetailPage({
             <h2>신청 내용</h2>
             <dl className="detail-data">
               <div><dt><MonitorCog size={17} /> 기기</dt><dd>{DEVICE_LABELS[request.deviceType]}</dd></div>
-              <div><dt><ShieldCheck size={17} /> 공개 범위</dt><dd>{request.visibility === "PRIVATE" ? "비공개" : "공개"}</dd></div>
+              <div><dt><ShieldCheck size={17} /> 정보 보호</dt><dd>본인 확인 완료</dd></div>
               <div><dt><MapPin size={17} /> 지역</dt><dd>{request.regionPublic}</dd></div>
               <div><dt><Clock3 size={17} /> 희망 일정</dt><dd>{request.preferredAt || "운영자와 협의"}</dd></div>
               {request.manufacturerModel && <div><dt>모델명</dt><dd>{request.manufacturerModel}</dd></div>}

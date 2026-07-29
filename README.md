@@ -6,10 +6,11 @@ Next.js 호환 App Router를 vinext로 빌드하고 Cloudflare Workers와 D1에�
 ## 주요 기능
 
 - 컴퓨터·노트북·모니터·애플기기 고장 증상 안내
-- 이름·연락처·주소·접수 내용 기반 서비스 신청
-- 공개·비공개 접수 게시판
-- 비공개 게시글 비밀번호 인증과 접근 횟수 제한
-- 운영자 비밀번호 로그인 및 접수 상태 관리
+- 연락처·기본 주소·접수 내용 기반 비공개 서비스 신청(이름·상세 주소 선택)
+- 휴대전화 번호와 신청 비밀번호 기반 내 신청 조회
+- 비공개 신청 인증, 10분 조회 세션과 접근 횟수 제한
+- 운영자 최초 비밀번호 설정·변경
+- 고정 접수번호, 복합 검색, 담당자·일정·계산서·정산·처리상태 관리대장
 - 텔레그램 신규 접수 알림과 실패 재처리
 - 개인정보 마스킹, 보안 헤더, 모바일 반응형 UI
 
@@ -29,15 +30,31 @@ npm ci
 npm run dev
 ```
 
-로컬 비밀값은 Git에 포함되지 않는 `.dev.vars` 또는 `.env.local`에 설정합니다.
+로컬 비밀값은 Git에 포함되지 않는 `.dev.vars`에 설정합니다.
+`.dev.vars.example`을 복사하고 각 값을 새 무작위 값으로 바꿔 사용하세요.
 
 ```dotenv
-ADMIN_PASSWORD=change-me
 ADMIN_SESSION_SECRET=change-me
+ADMIN_SETUP_TOKEN=change-me
 REQUEST_ACCESS_SECRET=change-me
+REQUEST_LOOKUP_SECRET=change-me
+RATE_LIMIT_SECRET=change-me
+TELEGRAM_NOTIFICATION_ENABLED=false
 TELEGRAM_BOT_TOKEN=
 TELEGRAM_CHAT_ID=
 ```
+
+운영 환경에서는 다음 값들을 `wrangler secret put <이름>`으로 등록합니다.
+
+- `ADMIN_SESSION_SECRET`
+- `ADMIN_SETUP_TOKEN` — 최초 운영자 설정 후 삭제
+- `REQUEST_ACCESS_SECRET`
+- `REQUEST_LOOKUP_SECRET`
+- `RATE_LIMIT_SECRET`
+- `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID` — Telegram을 사용할 때만
+
+최초 배포 후 `/admin/setup`에서 운영자 비밀번호를 설정하고, 로그인 후
+`/admin/settings/security`에서 변경할 수 있습니다.
 
 ## 검증
 

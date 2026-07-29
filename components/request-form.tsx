@@ -1,6 +1,6 @@
 "use client";
 
-import { CheckCircle2, LockKeyhole, Send, ShieldCheck } from "lucide-react";
+import { LockKeyhole, Send, ShieldCheck } from "lucide-react";
 import { useState, type FormEvent } from "react";
 import { DEVICE_LABELS, DEVICE_TYPES } from "@/lib/domain";
 
@@ -10,7 +10,6 @@ type RequestFormProps = {
 };
 
 export function RequestForm({ initialDevice = "", initialSymptom = "" }: RequestFormProps) {
-  const [visibility, setVisibility] = useState<"PRIVATE" | "PUBLIC">("PRIVATE");
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
 
@@ -64,8 +63,14 @@ export function RequestForm({ initialDevice = "", initialSymptom = "" }: Request
           <div><h2>연락받을 정보</h2><p>접수 확인과 방문 상담에만 사용합니다.</p></div>
         </div>
         <div className="form-grid">
-          <Field label="이름 *" name="name" error={errors.name}>
-            <input id="name" name="name" autoComplete="name" maxLength={30} required />
+          <Field label="이름" name="name" error={errors.name}>
+            <input
+              id="name"
+              name="name"
+              autoComplete="name"
+              maxLength={30}
+              placeholder="미입력 시 미상으로 저장"
+            />
           </Field>
           <Field label="연락처 *" name="phone" error={errors.phone}>
             <input
@@ -77,9 +82,6 @@ export function RequestForm({ initialDevice = "", initialSymptom = "" }: Request
               placeholder="010-1234-5678"
               required
             />
-          </Field>
-          <Field label="우편번호 *" name="postalCode" error={errors.postalCode}>
-            <input id="postalCode" name="postalCode" inputMode="numeric" maxLength={12} required />
           </Field>
           <div aria-hidden="true" className="honeypot">
             <label htmlFor="website">웹사이트</label>
@@ -94,12 +96,11 @@ export function RequestForm({ initialDevice = "", initialSymptom = "" }: Request
               required
             />
           </Field>
-          <Field label="상세 주소 *" name="address2" error={errors.address2} wide>
+          <Field label="상세 주소" name="address2" error={errors.address2} wide>
             <input
               id="address2"
               name="address2"
-              placeholder="건물명, 동·호수"
-              required
+              placeholder="건물명, 동·호수 (선택)"
             />
           </Field>
         </div>
@@ -158,59 +159,40 @@ export function RequestForm({ initialDevice = "", initialSymptom = "" }: Request
       <section className="form-section">
         <div className="form-section-heading">
           <span>03</span>
-          <div><h2>공개 범위와 동의</h2><p>기본값은 개인정보 보호에 안전한 비공개입니다.</p></div>
+          <div><h2>조회 비밀번호와 동의</h2><p>모든 신청은 비공개로 저장되며 본인만 조회할 수 있습니다.</p></div>
         </div>
-        <div className="visibility-options">
-          <label className={visibility === "PRIVATE" ? "selected" : ""}>
-            <input
-              type="radio"
-              name="visibility"
-              value="PRIVATE"
-              checked={visibility === "PRIVATE"}
-              onChange={() => setVisibility("PRIVATE")}
-            />
-            <LockKeyhole size={22} aria-hidden="true" />
-            <span><strong>비공개</strong><small>비밀번호를 입력해야 내용을 볼 수 있어요.</small></span>
-          </label>
-          <label className={visibility === "PUBLIC" ? "selected" : ""}>
-            <input
-              type="radio"
-              name="visibility"
-              value="PUBLIC"
-              checked={visibility === "PUBLIC"}
-              onChange={() => setVisibility("PUBLIC")}
-            />
-            <CheckCircle2 size={22} aria-hidden="true" />
-            <span><strong>공개</strong><small>마스킹된 정보와 접수 내용이 공개돼요.</small></span>
-          </label>
+        <div className="private-request-notice">
+          <LockKeyhole size={22} aria-hidden="true" />
+          <span>
+            <strong>신청 내용은 공개되지 않습니다.</strong>
+            <small>휴대전화 번호와 아래 비밀번호가 모두 일치할 때만 조회할 수 있어요.</small>
+          </span>
         </div>
-        {visibility === "PRIVATE" && (
-          <Field label="비공개 글 비밀번호 *" name="password" error={errors.password} wide>
-            <input
-              id="password"
-              name="password"
-              type="password"
-              minLength={8}
-              maxLength={64}
-              autoComplete="new-password"
-              required
-            />
-            <small>8~64자로 입력하고 잊지 않도록 보관해 주세요.</small>
-          </Field>
-        )}
+        <Field label="신청 조회 비밀번호 *" name="password" error={errors.password} wide>
+          <input
+            id="password"
+            name="password"
+            type="password"
+            minLength={4}
+            maxLength={20}
+            autoComplete="new-password"
+            required
+          />
+          <small>4~20자로 입력해 주세요. 보안을 위해 8자 이상을 권장합니다.</small>
+        </Field>
         <label className="consent-check">
           <input type="checkbox" name="privacyConsent" required />
           <ShieldCheck size={20} aria-hidden="true" />
           <span>
             <strong>[필수] 개인정보 수집·이용에 동의합니다.</strong>
-            <small>수리 상담을 위해 이름, 연락처, 주소를 수집하며 서비스 종료 후 1년 보관합니다.</small>
+            <small>수리 상담을 위해 연락처와 주소를 수집하며, 이름은 선택 입력입니다. 서비스 종료 후 1년 보관합니다.</small>
           </span>
         </label>
         {errors.privacyConsent && <p className="field-error">{errors.privacyConsent}</p>}
       </section>
 
       <div className="form-submit">
-        <p>제출 후 접수번호를 꼭 확인해 주세요.</p>
+        <p>휴대전화 번호와 비밀번호로 언제든 내 신청을 확인할 수 있습니다.</p>
         <button className="button button-primary button-large" disabled={submitting}>
           <Send size={19} aria-hidden="true" />
           {submitting ? "안전하게 저장하는 중..." : "서비스 신청하기"}

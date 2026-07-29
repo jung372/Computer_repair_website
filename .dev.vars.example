@@ -1,0 +1,7 @@
+ADMIN_SESSION_SECRET=replace-with-a-long-random-value
+ADMIN_SETUP_TOKEN=replace-with-a-one-time-random-value
+REQUEST_ACCESS_SECRET=replace-with-a-long-random-value
+REQUEST_LOOKUP_SECRET=replace-with-a-long-random-value
+RATE_LIMIT_SECRET=replace-with-a-long-random-value
+TELEGRAM_BOT_TOKEN=
+TELEGRAM_CHAT_ID=
