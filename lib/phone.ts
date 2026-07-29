@@ -48,3 +48,15 @@ export function formatPhoneInput(value: string) {
   const tail = rest.slice(4);
   return tail ? `${head}-${middle}-${tail}` : `${head}-${middle}`;
 }
+
+/**
+ * What an input should show once it loses focus: the canonical form when the
+ * number is complete, the progressive form while it is not. Without the second
+ * branch an unfinished number would collapse back to bare digits.
+ */
+export function formatPhoneOnBlur(value: string) {
+  const digits = normalizePhone(value);
+  return digits.length === 10 || digits.length === 11
+    ? formatPhone(digits)
+    : formatPhoneInput(digits);
+}

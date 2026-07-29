@@ -3,7 +3,7 @@
 import { LockKeyhole, Send, ShieldCheck } from "lucide-react";
 import { useState, type FormEvent } from "react";
 import { DEVICE_LABELS, DEVICE_TYPES } from "@/lib/domain";
-import { formatPhone, formatPhoneInput } from "@/lib/phone";
+import { formatPhoneInput, formatPhoneOnBlur } from "@/lib/phone";
 
 type RequestFormProps = {
   initialDevice?: string;
@@ -82,10 +82,9 @@ export function RequestForm({ initialDevice = "", initialSymptom = "" }: Request
               inputMode="numeric"
               autoComplete="tel"
               placeholder="010-1234-5678"
-              maxLength={13}
               value={phone}
               onChange={(event) => setPhone(formatPhoneInput(event.target.value))}
-              onBlur={(event) => setPhone(formatPhone(event.target.value))}
+              onBlur={(event) => setPhone(formatPhoneOnBlur(event.target.value))}
               required
             />
           </Field>

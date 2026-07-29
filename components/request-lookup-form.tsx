@@ -2,7 +2,7 @@
 
 import { KeyRound, Phone, SearchCheck, ShieldCheck } from "lucide-react";
 import { useState, type FormEvent } from "react";
-import { formatPhone, formatPhoneInput } from "@/lib/phone";
+import { formatPhoneInput, formatPhoneOnBlur } from "@/lib/phone";
 
 export function RequestLookupForm() {
   const [message, setMessage] = useState("");
@@ -57,10 +57,9 @@ export function RequestLookupForm() {
           inputMode="numeric"
           autoComplete="tel"
           placeholder="010-1234-5678"
-          maxLength={13}
           value={phone}
           onChange={(event) => setPhone(formatPhoneInput(event.target.value))}
-          onBlur={(event) => setPhone(formatPhone(event.target.value))}
+          onBlur={(event) => setPhone(formatPhoneOnBlur(event.target.value))}
           required
         />
       </div>
