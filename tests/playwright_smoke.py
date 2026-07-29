@@ -9,6 +9,21 @@ ARTIFACTS = Path("tests/artifacts")
 ARTIFACTS.mkdir(parents=True, exist_ok=True)
 
 
+def dev_var(name: str, fallback: str) -> str:
+    """Reads a value from .dev.vars so the test uses the same secret as the runtime."""
+    env_file = Path(".dev.vars")
+    if not env_file.exists():
+        return fallback
+    for line in env_file.read_text(encoding="utf-8").splitlines():
+        if line.startswith(f"{name}="):
+            return line[len(name) + 1 :].strip() or fallback
+    return fallback
+
+
+# The setup route verifies this token, so it has to match the running worker.
+SETUP_TOKEN = dev_var("ADMIN_SETUP_TOKEN", "setup-token-for-local-e2e")
+
+
 with sync_playwright() as playwright:
     browser = playwright.chromium.launch(headless=True)
     page = browser.new_page(viewport={"width": 1440, "height": 1000})
@@ -40,7 +55,46 @@ with sync_playwright() as playwright:
     assert page.get_by_label("신청 조회 비밀번호 *").get_attribute("minlength") == "4"
     assert page.get_by_label("신청 조회 비밀번호 *").get_attribute("maxlength") == "20"
 
-    page.get_by_label("연락처 *").fill("010-1234-5678")
+    # 연락처는 무엇을 입력하든 정규 형식으로 수렴해야 한다.
+    phone_field = page.get_by_label("연락처 *")
+    # maxlength가 있으면 브라우저가 정규화 전에 원본을 잘라 국제번호 붙여넣기가 깨진다.
+    assert phone_field.get_attribute("maxlength") is None, (
+        "연락처 입력란에 maxlength가 생기면 긴 형식이 정규화 전에 잘린다"
+    )
+
+    for typed, expected in [
+        ("01012345678", "010-1234-5678"),
+        ("010-1234-5678", "010-1234-5678"),
+        ("010 1234.5678", "010-1234-5678"),
+        ("0101234", "010-1234"),
+    ]:
+        phone_field.fill("")
+        phone_field.click()
+        phone_field.press_sequentially(typed)
+        assert phone_field.input_value() == expected, (
+            f"타이핑 {typed!r} -> {phone_field.input_value()!r}, 기대 {expected!r}"
+        )
+
+    for pasted, expected in [
+        ("  +82 10-9999-0000  ", "010-9999-0000"),
+        ("0082 10 9999 0000", "010-9999-0000"),
+        ("(010) 1234-5678", "010-1234-5678"),
+        ("０１０１２３４５６７８", "010-1234-5678"),
+        ("0111234567", "011-123-4567"),
+        ("0212345678", "02-1234-5678"),
+    ]:
+        phone_field.fill("")
+        phone_field.fill(pasted)
+        page.get_by_label("기본 주소 *").click()
+        assert phone_field.input_value() == expected, (
+            f"붙여넣기 {pasted!r} -> {phone_field.input_value()!r}, 기대 {expected!r}"
+        )
+
+    # 숫자만 입력해도 저장은 하이픈 형식이어야 하므로 숫자로 타이핑한다.
+    phone_field.fill("")
+    phone_field.click()
+    phone_field.press_sequentially("01012345678")
+    assert phone_field.input_value() == "010-1234-5678"
     page.get_by_label("기본 주소 *").fill("서울시 강남구 테헤란로")
     page.get_by_label("기기 종류 *").select_option("desktop")
     page.get_by_label("대표 증상 *").fill("전원이 켜지지 않아요")
@@ -54,6 +108,20 @@ with sync_playwright() as playwright:
     page.wait_for_load_state("networkidle")
     assert page.get_by_text("서비스 신청이 완료되었습니다.").is_visible()
     assert page.get_by_text("전원이 켜지지 않아요", exact=True).is_visible()
+    # 숫자만 입력했지만 정규 형식으로 저장되었으므로 마스킹도 하이픈 형식이어야 한다.
+    assert "010-****-5678" in page.locator("body").inner_text(), (
+        f"연락처 마스킹이 정규 형식이 아님: {page.locator('body').inner_text()}"
+    )
+
+    # 폼을 거치지 않는 원본 형식으로도 서버가 같은 접수를 찾아야 한다.
+    raw_lookup = page.request.post(
+        f"{BASE_URL}/api/requests/lookup",
+        data={"phone": "+82 10 1234 5678", "password": "test1234"},
+        headers={"origin": BASE_URL, "referer": f"{BASE_URL}/requests"},
+    )
+    assert raw_lookup.ok, (
+        f"국제번호 형식 조회 실패: {raw_lookup.status} {raw_lookup.text()}"
+    )
 
     page.goto(f"{BASE_URL}/requests", wait_until="networkidle")
     assert page.get_by_text(re.compile(r"확인된 신청 \d+건")).is_visible()
@@ -65,7 +133,11 @@ with sync_playwright() as playwright:
     )
     assert page.get_by_label("휴대전화 번호").is_visible()
 
-    page.get_by_label("휴대전화 번호").fill("010-1234-5678")
+    # 조회 화면도 같은 정규화를 거치므로 하이픈 없이 입력해도 찾아야 한다.
+    lookup_phone = page.get_by_label("휴대전화 번호")
+    lookup_phone.click()
+    lookup_phone.press_sequentially("01012345678")
+    assert lookup_phone.input_value() == "010-1234-5678"
     page.get_by_label("신청 비밀번호").fill("test1234")
     page.get_by_role("button", name="내 신청 조회", exact=True).click()
     page.wait_for_url(re.compile(r"/requests\?unlocked=1"))
@@ -74,7 +146,7 @@ with sync_playwright() as playwright:
 
     page.goto(f"{BASE_URL}/admin/setup", wait_until="networkidle")
     if page.get_by_role("heading", name="운영자 비밀번호 설정").count():
-        page.get_by_label("최초 설정 토큰").fill("setup-token-for-local-e2e")
+        page.get_by_label("최초 설정 토큰").fill(SETUP_TOKEN)
         page.get_by_label("새 운영자 비밀번호", exact=True).fill("StrongLocalAdmin123!")
         page.get_by_label("새 비밀번호 확인", exact=True).fill("StrongLocalAdmin123!")
         page.get_by_role("button", name="운영자 비밀번호 저장").click()
