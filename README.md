@@ -68,4 +68,4 @@ npm run deploy
 4. 프로덕션 빌드와 회귀 테스트
 5. Cloudflare Workers 배포
 
-저장소에는 `CLOUDFLARE_ACCOUNT_ID`, `CLOUDFLARE_API_TOKEN` GitHub Actions Secret이 필요합니다.
+저장소에는 `CLOUDFLARE_API_TOKEN` GitHub Actions Secret이 필요합니다. Account ID는 `wrangler.jsonc`에서 관리합니다.
