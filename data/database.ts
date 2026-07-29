@@ -1,16 +1,15 @@
 import { env } from "cloudflare:workers";
 
-let schemaPromise: Promise<void> | null = null;
-
 export function getD1(): D1Database {
-  const database = (env as unknown as { DB?: D1Database }).DB;
+  const database = env.DB;
   if (!database) throw new Error("D1 binding DB is unavailable");
   return database;
 }
 
-export function ensureDatabase() {
-  if (!schemaPromise) schemaPromise = initializeDatabase();
-  return schemaPromise;
+export async function ensureDatabase() {
+  if (process.env.NODE_ENV !== "production") {
+    await initializeDatabase();
+  }
 }
 
 async function initializeDatabase() {

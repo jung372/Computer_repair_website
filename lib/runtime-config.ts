@@ -1,9 +1,7 @@
 import { env } from "cloudflare:workers";
 
-type RuntimeBindings = Record<string, unknown>;
-
 export function getRuntimeString(name: string): string {
-  const workerValue = (env as unknown as RuntimeBindings)[name];
+  const workerValue: unknown = Reflect.get(env, name);
   if (typeof workerValue === "string" && workerValue.trim()) {
     return workerValue.trim();
   }

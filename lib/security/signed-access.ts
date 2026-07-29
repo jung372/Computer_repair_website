@@ -1,4 +1,5 @@
 import { getRuntimeString, isDevelopment } from "../runtime-config";
+import { constantTimeEqualStrings } from "./constant-time";
 
 const encoder = new TextEncoder();
 
@@ -35,12 +36,7 @@ export async function verifyAccessToken(publicId: string, token?: string) {
   const expires = Number(expiresValue);
   if (!expires || !provided || expires < Math.floor(Date.now() / 1000)) return false;
   const expected = await signature(`${publicId}.${expires}`);
-  if (expected.length !== provided.length) return false;
-  let difference = 0;
-  for (let index = 0; index < expected.length; index += 1) {
-    difference |= expected.charCodeAt(index) ^ provided.charCodeAt(index);
-  }
-  return difference === 0;
+  return constantTimeEqualStrings(expected, provided);
 }
 
 export function accessCookieName(publicId: string) {

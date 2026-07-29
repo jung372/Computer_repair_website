@@ -9,7 +9,6 @@ import {
 } from "@/data/request-repository";
 import {
   DEVICE_TYPES,
-  type CreateRequestInput,
   type DeviceType,
   type PublicRequestSummary,
   type RequestStatus,
@@ -27,6 +26,10 @@ export class RequestValidationError extends Error {
 
 function clean(value: unknown, maximum: number) {
   return typeof value === "string" ? value.trim().slice(0, maximum) : "";
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
 function publicRegion(address: string) {
@@ -79,24 +82,25 @@ export function toPublicSummary(row: {
   };
 }
 
-export async function createServiceRequest(input: CreateRequestInput) {
+export async function createServiceRequest(input: unknown) {
+  const values = isRecord(input) ? input : {};
   const fields: Record<string, string> = {};
-  const name = clean(input.name, 30);
-  const phone = clean(input.phone, 30).replace(/\D/g, "");
-  const postalCode = clean(input.postalCode, 12);
-  const address1 = clean(input.address1, 160);
-  const address2 = clean(input.address2, 160);
-  const manufacturerModel = clean(input.manufacturerModel, 100);
-  const symptom = clean(input.symptom, 120);
-  const description = clean(input.description, 2_000);
-  const preferredAt = clean(input.preferredAt, 40) || null;
-  const visibility = input.visibility === "PUBLIC" ? "PUBLIC" : "PRIVATE";
-  const password = typeof input.password === "string" ? input.password : "";
-  const deviceType = DEVICE_TYPES.includes(input.deviceType as DeviceType)
-    ? (input.deviceType as DeviceType)
+  const name = clean(values.name, 30);
+  const phone = clean(values.phone, 30).replace(/\D/g, "");
+  const postalCode = clean(values.postalCode, 12);
+  const address1 = clean(values.address1, 160);
+  const address2 = clean(values.address2, 160);
+  const manufacturerModel = clean(values.manufacturerModel, 100);
+  const symptom = clean(values.symptom, 120);
+  const description = clean(values.description, 2_000);
+  const preferredAt = clean(values.preferredAt, 40) || null;
+  const visibility = values.visibility === "PUBLIC" ? "PUBLIC" : "PRIVATE";
+  const password = typeof values.password === "string" ? values.password : "";
+  const deviceType = DEVICE_TYPES.includes(values.deviceType as DeviceType)
+    ? (values.deviceType as DeviceType)
     : null;
 
-  if (input.website) fields.website = "자동 신청으로 판단되었습니다.";
+  if (values.website) fields.website = "자동 신청으로 판단되었습니다.";
   if (name.length < 2) fields.name = "이름을 2자 이상 입력해 주세요.";
   if (phone.length < 10 || phone.length > 11) fields.phone = "연락처 10~11자리를 확인해 주세요.";
   if (!postalCode) fields.postalCode = "우편번호를 입력해 주세요.";
@@ -108,7 +112,7 @@ export async function createServiceRequest(input: CreateRequestInput) {
   if (visibility === "PRIVATE" && (password.length < 8 || password.length > 64)) {
     fields.password = "비공개 비밀번호는 8~64자로 입력해 주세요.";
   }
-  if (!input.privacyConsent) fields.privacyConsent = "개인정보 수집·이용 동의가 필요합니다.";
+  if (values.privacyConsent !== true) fields.privacyConsent = "개인정보 수집·이용 동의가 필요합니다.";
   if (Object.keys(fields).length) throw new RequestValidationError(fields);
 
   const now = new Date();

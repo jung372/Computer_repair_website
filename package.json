@@ -1,5 +1,5 @@
 {
-  "name": "site-creator-vinext-starter",
+  "name": "baroon-computer-repair",
   "version": "0.1.0",
   "private": true,
   "engines": {
@@ -9,15 +9,20 @@
     "dev": "vinext dev",
     "build": "vinext build",
     "start": "vinext start",
+    "preview": "npm run build && vite preview",
+    "deploy": "npm run build && wrangler deploy",
     "test": "npm run build && node --test tests/rendered-html.test.mjs",
-    "lint": "eslint . --ignore-pattern dist --ignore-pattern .next",
-    "db:generate": "drizzle-kit generate"
+    "lint": "eslint app components data db examples infrastructure lib tests worker next.config.ts postcss.config.mjs drizzle.config.ts vite.config.ts",
+    "types": "wrangler types",
+    "types:check": "wrangler types --check",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate:remote": "wrangler d1 migrations apply baroon-computer-repair-db --remote"
   },
   "dependencies": {
     "@noble/hashes": "^2.2.0",
     "drizzle-orm": "0.45.2",
     "lucide-react": "^1.27.0",
-    "next": "16.2.6",
+    "next": "^16.2.12",
     "react": "19.2.6",
     "react-dom": "19.2.6"
   },
@@ -37,7 +42,11 @@
     "typescript": "5.9.3",
     "vinext": "0.0.50",
     "vite": "8.0.13",
-    "wrangler": "4.92.0"
+    "wrangler": "^4.115.0"
+  },
+  "overrides": {
+    "postcss": "8.5.24",
+    "sharp": "0.35.3"
   },
   "type": "module"
 }

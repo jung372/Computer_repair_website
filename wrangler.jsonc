@@ -1,0 +1,34 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "baroon-computer-repair",
+  "account_id": "bf8c14ae62dc3368c9a511433d861d89",
+  "main": "./worker/index.ts",
+  "compatibility_date": "2026-07-29",
+  "compatibility_flags": ["nodejs_compat"],
+  "assets": {
+    "binding": "ASSETS"
+  },
+  "vars": {
+    "NEXT_PUBLIC_BUSINESS_EMAIL": "kkyman1947@naver.com"
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "baroon-computer-repair-db",
+      "database_id": "fa1279bd-cfba-4e44-b109-cc30341e47d7",
+      "migrations_dir": "drizzle"
+    }
+  ],
+  "observability": {
+    "enabled": true,
+    "logs": {
+      "enabled": true,
+      "head_sampling_rate": 1,
+      "invocation_logs": true
+    },
+    "traces": {
+      "enabled": true,
+      "head_sampling_rate": 0.05
+    }
+  }
+}

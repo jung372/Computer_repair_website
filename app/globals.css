@@ -1734,7 +1734,8 @@ p {
   color: var(--ink-600);
 }
 
-.unlock-card form {
+.unlock-card form,
+.admin-login-card form {
   margin: 26px 0 20px;
   text-align: left;
 }
@@ -1757,7 +1758,8 @@ p {
   background: transparent;
 }
 
-.unlock-card form .button {
+.unlock-card form .button,
+.admin-login-card form .button {
   width: 100%;
   margin-top: 14px;
 }
@@ -1771,6 +1773,18 @@ p {
 .admin-login-card .button {
   width: 100%;
   margin: 12px 0 18px;
+}
+
+.admin-login-card form > label {
+  display: block;
+  margin-bottom: 8px;
+  color: var(--ink-800);
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.admin-login-card form .field-error {
+  margin: 10px 0 0;
 }
 
 .detail-hero {
@@ -2011,6 +2025,27 @@ p {
   border-radius: 999px;
   color: #a9bdd0;
   font-size: 0.75rem;
+}
+
+.admin-account {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.admin-account form {
+  margin: 0;
+}
+
+.admin-account button {
+  border: 0;
+  background: transparent;
+  color: #d8e3ed;
+  font: inherit;
+  font-size: 0.88rem;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
 
 .admin-content {

@@ -1,98 +1,71 @@
-# vinext-starter
+# 바로온 컴퓨터
 
-A clean full-stack starter running on
-[vinext](https://github.com/cloudflare/vinext), with optional Cloudflare D1 and
-Drizzle support.
+개인 컴퓨터 수리 사업자를 위한 서비스 접수·관리 웹사이트입니다.
+Next.js 호환 App Router를 vinext로 빌드하고 Cloudflare Workers와 D1에서 실행합니다.
 
-## Prerequisites
+## 주요 기능
 
-- Node.js `>=22.13.0`
+- 컴퓨터·노트북·모니터·애플기기 고장 증상 안내
+- 이름·연락처·주소·접수 내용 기반 서비스 신청
+- 공개·비공개 접수 게시판
+- 비공개 게시글 비밀번호 인증과 접근 횟수 제한
+- 운영자 비밀번호 로그인 및 접수 상태 관리
+- 텔레그램 신규 접수 알림과 실패 재처리
+- 개인정보 마스킹, 보안 헤더, 모바일 반응형 UI
 
-## Quick Start
+## 아키텍처
+
+- Presentation: `app/`, `components/`
+- Logic: `lib/logic/`
+- Data: `data/`, `db/`, `drizzle/`
+- Infrastructure: `worker/`, `infrastructure/`
+
+## 로컬 실행
+
+Node.js 22 이상이 필요합니다.
 
 ```bash
-npm install
+npm ci
 npm run dev
-npm run build
 ```
 
-This starter does not use `wrangler.jsonc`.
+로컬 비밀값은 Git에 포함되지 않는 `.dev.vars` 또는 `.env.local`에 설정합니다.
 
-## Included Shape
-
-- edit site code under `app/`
-- `.openai/hosting.json` declares optional Sites D1 and R2 bindings
-- `vite.config.ts` simulates declared bindings for local development
-- `db/schema.ts` starts intentionally empty
-- `examples/d1/` contains an optional D1 example surface
-- `drizzle.config.ts` supports local migration generation when needed
-
-## Workspace Auth Headers
-
-OpenAI workspace sites can read the current user's email from
-`oai-authenticated-user-email`.
-
-SIWC-authenticated workspace sites may also receive
-`oai-authenticated-user-full-name` when the user's SIWC profile has a non-empty
-`name` claim. The full-name value is percent-encoded UTF-8 and is accompanied by
-`oai-authenticated-user-full-name-encoding: percent-encoded-utf-8`.
-
-Treat the full name as optional and fall back to email when it is absent:
-
-```tsx
-import { headers } from "next/headers";
-
-export default async function Home() {
-  const requestHeaders = await headers();
-  const email = requestHeaders.get("oai-authenticated-user-email");
-  const encodedFullName = requestHeaders.get("oai-authenticated-user-full-name");
-  const fullName =
-    encodedFullName &&
-    requestHeaders.get("oai-authenticated-user-full-name-encoding") ===
-      "percent-encoded-utf-8"
-      ? decodeURIComponent(encodedFullName)
-      : null;
-
-  const displayName = fullName ?? email;
-  // ...
-}
+```dotenv
+ADMIN_PASSWORD=change-me
+ADMIN_SESSION_SECRET=change-me
+REQUEST_ACCESS_SECRET=change-me
+TELEGRAM_BOT_TOKEN=
+TELEGRAM_CHAT_ID=
 ```
 
-## Optional Dispatch-Owned ChatGPT Sign-In
+## 검증
 
-Import the ready-to-use helpers from `app/chatgpt-auth.ts` when the site needs
-optional or required ChatGPT sign-in:
+```bash
+npm run lint
+npm run types:check
+npm test
+```
 
-- Use `getChatGPTUser()` for optional signed-in UI.
-- Use `requireChatGPTUser(returnTo)` for server-rendered pages that should send
-  anonymous visitors through Sign in with ChatGPT.
-- Use `chatGPTSignInPath(returnTo)` and `chatGPTSignOutPath(returnTo)` for
-  browser links or actions.
-- Pass a same-origin relative `returnTo` path for the destination after sign-in
-  or sign-out. The helper validates and safely encodes it.
-- Mark protected pages with `export const dynamic = "force-dynamic"` because
-  they depend on per-request identity headers.
+## Cloudflare 배포
 
-Dispatch owns `/signin-with-chatgpt`, `/signout-with-chatgpt`, `/callback`, the
-OAuth cookies, and identity header injection. Do not implement app routes for
-those reserved paths. Routes that do not import and call the helper remain
-anonymous-compatible.
+`wrangler.jsonc`에 Worker와 D1 바인딩이 선언되어 있습니다.
 
-SIWC establishes identity only; it does not prove workspace membership. Use the
-Sites hosting platform's access policy controls for workspace-wide restrictions,
-or enforce explicit server-side membership or allowlist checks.
+```bash
+npm run db:migrate:remote
+npm run deploy
+```
 
-Use SIWC for account pages, user-specific dashboards, saved records, and write
-actions tied to the current ChatGPT user. Leave public content anonymous.
+운영 비밀값은 저장소나 Wrangler 설정에 기록하지 않고 Cloudflare Worker Secret으로 관리합니다.
 
-## Useful Commands
+## GitHub 자동배포
 
-- `npm run dev`: start local development
-- `npm run build`: verify the vinext build output
-- `npm test`: build the starter and verify its rendered loading skeleton
-- `npm run db:generate`: generate Drizzle migrations after schema changes
+`main` 브랜치에 푸시하면 `.github/workflows/deploy.yml`이 다음 작업을 수행합니다.
 
-## Learn More
+1. 의존성 설치와 소스 검사
+2. Worker 바인딩 타입 검증
+3. D1 마이그레이션
+4. 프로덕션 빌드와 회귀 테스트
+5. Cloudflare Workers 배포
 
-- [vinext Documentation](https://github.com/cloudflare/vinext)
-- [Drizzle D1 Guide](https://orm.drizzle.team/docs/get-started/d1-new)
+저장소에는 `CLOUDFLARE_ACCOUNT_ID`, `CLOUDFLARE_API_TOKEN` GitHub Actions Secret이 필요합니다.

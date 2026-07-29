@@ -21,20 +21,23 @@ test("ships the repair-service product instead of the starter preview", async ()
 });
 
 test("includes durable requests, private access, admin and Telegram surfaces", async () => {
-  const [schema, hosting, requestApi, unlockApi, adminApi, telegram] = await Promise.all([
+  const [schema, wrangler, requestApi, unlockApi, adminApi, adminSession, telegram] = await Promise.all([
     readFile(new URL("db/schema.ts", root), "utf8"),
-    readFile(new URL(".openai/hosting.json", root), "utf8"),
+    readFile(new URL("wrangler.jsonc", root), "utf8"),
     readFile(new URL("app/api/requests/route.ts", root), "utf8"),
     readFile(new URL("app/api/requests/[publicId]/unlock/route.ts", root), "utf8"),
     readFile(new URL("app/api/admin/requests/[publicId]/route.ts", root), "utf8"),
+    readFile(new URL("app/api/admin/session/route.ts", root), "utf8"),
     readFile(new URL("infrastructure/telegram.ts", root), "utf8"),
   ]);
 
-  assert.match(hosting, /"d1": "DB"/);
+  assert.match(wrangler, /"binding": "DB"/);
+  assert.match(wrangler, /baroon-computer-repair-db/);
   assert.match(schema, /service_requests/);
   assert.match(schema, /notification_outbox/);
   assert.match(requestApi, /createServiceRequest/);
   assert.match(unlockApi, /createAccessToken/);
   assert.match(adminApi, /getAdminUser/);
+  assert.match(adminSession, /createAdminSessionToken/);
   assert.match(telegram, /sendMessage/);
 });

@@ -35,7 +35,12 @@ export default async function AdminPage({
             <h1>서비스 신청 관리</h1>
             <p>{admin.displayName}님, 오늘의 접수와 처리 상태를 확인하세요.</p>
           </div>
-          <span className="admin-identity">{admin.email}</span>
+          <div className="admin-account">
+            <span className="admin-identity">보안 세션 사용 중</span>
+            <form action="/api/admin/logout" method="post">
+              <button type="submit">로그아웃</button>
+            </form>
+          </div>
         </div>
       </section>
       <section className="container admin-content">
