@@ -1,6 +1,6 @@
 {
   "$schema": "./node_modules/wrangler/config-schema.json",
-  "name": "baroon-computer-repair",
+  "name": "combaksa-computer-repair",
   "account_id": "bf8c14ae62dc3368c9a511433d861d89",
   "main": "./worker/index.ts",
   "compatibility_date": "2026-07-29",
