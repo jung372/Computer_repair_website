@@ -13,8 +13,8 @@ export async function generateMetadata(): Promise<Metadata> {
   return {
     metadataBase: new URL(origin),
     title: {
-      default: "바로온 컴퓨터 | 컴퓨터·노트북 출장 수리",
-      template: "%s | 바로온 컴퓨터",
+      default: "컴박사 | 컴퓨터·노트북 출장 수리",
+      template: "%s | 컴박사",
     },
     description:
       "컴퓨터, 노트북, 모니터, 애플기기의 고장 증상을 확인하고 온라인으로 안전하게 수리를 신청하세요.",
@@ -23,15 +23,15 @@ export async function generateMetadata(): Promise<Metadata> {
       shortcut: "/favicon.svg",
     },
     openGraph: {
-      title: "바로온 컴퓨터",
+      title: "컴박사",
       description: "멈춘 컴퓨터, 다시 일상으로. 온라인 수리 접수와 진행 조회.",
       type: "website",
       locale: "ko_KR",
-      images: [{ url: image, width: 1730, height: 909, alt: "바로온 컴퓨터 수리 서비스" }],
+      images: [{ url: image, width: 1730, height: 909, alt: "컴박사 수리 서비스" }],
     },
     twitter: {
       card: "summary_large_image",
-      title: "바로온 컴퓨터",
+      title: "컴박사",
       description: "컴퓨터 수리 접수부터 진행 확인까지 한 번에.",
       images: [image],
     },

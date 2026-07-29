@@ -1,7 +1,7 @@
 import { getRuntimeString } from "./runtime-config";
 
 export const siteDefaults = {
-  name: "바로온 컴퓨터",
+  name: "컴박사",
   tagline: "멈춘 컴퓨터, 다시 일상으로.",
   phone: "010-0000-0000",
   hours: "평일·토요일 09:00–20:00",

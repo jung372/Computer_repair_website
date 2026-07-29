@@ -1,4 +1,4 @@
-# 바로온 컴퓨터
+# 컴박사
 
 개인 컴퓨터 수리 사업자를 위한 서비스 접수·관리 웹사이트입니다.
 Next.js 호환 App Router를 vinext로 빌드하고 Cloudflare Workers와 D1에서 실행합니다.
