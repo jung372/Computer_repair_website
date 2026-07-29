@@ -559,7 +559,7 @@ adminId.expiry.sessionVersion.signature
 > 2026-07-30 개정: 비밀번호 해시를 Argon2id(`@noble/hashes` 순수 JS 구현)에서 WebCrypto PBKDF2-HMAC-SHA-256으로 교체했다. Argon2id `m=19456, t=2, p=1`이 Cloudflare Workers에서 요청당 약 1,850ms CPU를 소모해 `exceededCpu`로 운영자 로그인·접수 제출·고객 조회가 모두 503으로 실패했기 때문이다. 메모리 하드 특성을 잃는 대신 네이티브 KDF로 CPU 한도 안에 들어오며, 온라인 추측 공격은 D1 `access_attempts` 속도 제한으로 방어한다.
 
 1. 비밀번호는 PBKDF2-HMAC-SHA-256 해시와 요청별 고유 salt로만 저장한다.
-2. 반복 횟수는 210,000회를 최소 기준으로 유지한다. Cloudflare Workers의 요청당 CPU 한도가 상한을 강제하므로, 파라미터를 변경할 때는 `wrangler tail`로 cpuTime을 실측해 근거를 남긴다.
+2. 반복 횟수는 100,000회로 고정한다. Cloudflare Workers 운영 런타임이 PBKDF2 반복을 100,000회로 제한하며(초과 시 `NotSupportedError: Pbkdf2 failed: iteration counts above 100000 are not supported`), 이는 선택이 아니라 플랫폼 제약이다. OWASP 권장치(600,000)에 미치지 못하는 부분은 D1 `access_attempts` 속도 제한과 차단으로 보완한다. 이 한도는 `wrangler dev`의 로컬 workerd에서는 강제되지 않으므로, 해싱 파라미터 변경은 반드시 운영 배포 후 `wrangler tail`로 검증한다.
 3. 설정 토큰, 세션 서명 키, 조회·속도 제한 키와 Telegram 토큰은 Cloudflare Secret으로 관리한다.
 4. 비밀값을 `wrangler.jsonc`, Git, 빌드 결과, Actions 로그에 기록하지 않는다.
 5. `ADMIN_SESSION_SECRET`이 없으면 운영 환경 배포 또는 관리자 로그인을 실패 처리한다.

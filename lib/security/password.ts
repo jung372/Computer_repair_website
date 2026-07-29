@@ -1,7 +1,10 @@
 const FORMAT_ALGORITHM = "pbkdf2-sha256";
 const FORMAT_VERSION = "v=1";
-const PBKDF2_ITERATIONS = 210_000;
-const PBKDF2_MAX_ITERATIONS = 400_000;
+// Cloudflare Workers rejects PBKDF2 above 100,000 iterations with
+// NotSupportedError, so this ceiling is imposed by the runtime, not by choice.
+// Note that `wrangler dev` does not enforce it; only production does.
+const PBKDF2_ITERATIONS = 100_000;
+const PBKDF2_MAX_ITERATIONS = 100_000;
 const HASH_ALGORITHM = "SHA-256";
 const SALT_LENGTH = 16;
 const KEY_LENGTH = 32;
