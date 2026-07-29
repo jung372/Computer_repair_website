@@ -54,7 +54,7 @@ export async function authenticateAdminPassword(password: string, clientHash: st
   let admin = await getPrimaryAdmin();
   if (!admin) {
     const legacy = getRuntimeString("ADMIN_PASSWORD");
-    if (!legacy || !password || !constantTimeEqualStrings(password, legacy)) return null;
+    if (!legacy || !password || !(await constantTimeEqualStrings(password, legacy))) return null;
     try {
       admin = await createPrimaryAdmin(await hashPassword(password), clientHash);
     } catch {
@@ -87,7 +87,7 @@ export async function verifyAdminSessionToken(token?: string) {
     return null;
   }
   const expected = await sign(`${adminId}.${expires}.${sessionVersion}`);
-  if (!constantTimeEqualStrings(expected, provided)) return null;
+  if (!(await constantTimeEqualStrings(expected, provided))) return null;
   return { adminId, expires, sessionVersion };
 }
 

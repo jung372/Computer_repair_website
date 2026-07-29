@@ -54,7 +54,12 @@ export async function POST(request: Request) {
       `${LEGACY_ADMIN_SESSION_COOKIE}=; Path=/; HttpOnly${secureFlag(request)}; SameSite=Strict; Max-Age=0`,
     );
     return response;
-  } catch {
+  } catch (error) {
+    console.error(JSON.stringify({
+      message: "Admin login request failed",
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+    }));
     return loginRedirect(request, "/admin", "invalid");
   }
 }

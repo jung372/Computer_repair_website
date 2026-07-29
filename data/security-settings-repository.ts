@@ -30,7 +30,7 @@ export async function assertLookupSecretReady() {
       .first<{ value: string }>();
   }
 
-  if (!setting || !constantTimeEqualStrings(setting.value, expected)) {
+  if (!setting || !(await constantTimeEqualStrings(setting.value, expected))) {
     throw new Error("REQUEST_LOOKUP_SECRET_MISMATCH");
   }
 }

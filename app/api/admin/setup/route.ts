@@ -30,7 +30,7 @@ export async function POST(request: Request) {
     const length = Array.from(newPassword).length;
     if (
       !setupToken ||
-      !constantTimeEqualStrings(setupToken, expectedToken) ||
+      !(await constantTimeEqualStrings(setupToken, expectedToken)) ||
       length < 12 ||
       length > 64 ||
       newPassword !== confirmPassword
@@ -45,7 +45,12 @@ export async function POST(request: Request) {
     const url = new URL("/admin/login", request.url);
     url.searchParams.set("setup", "done");
     return Response.redirect(url, 303);
-  } catch {
+  } catch (error) {
+    console.error(JSON.stringify({
+      message: "Admin setup request failed",
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+    }));
     if (await getPrimaryAdmin().catch(() => null)) return setupRedirect(request, "conflict");
     await recordAdminAudit("SETUP_FAILED", clientHash || null).catch(() => undefined);
     return setupRedirect(request, "invalid");
