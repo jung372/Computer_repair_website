@@ -1,0 +1,115 @@
+<!doctype html>
+<!--
+  public/og.png(카카오톡·SNS 링크 미리보기 이미지)의 원본입니다.
+  상호나 문구를 바꾼 뒤 아래 순서로 다시 만듭니다.
+
+  1) 배경 아트워크를 이 폴더에 내려받습니다(상호 변경 전 원본이 git 이력에 있습니다):
+     git show c9d3f67^:public/og.png > tools/og-base.png
+  2) 헤드리스 Chrome으로 1730x909 스크린샷을 찍습니다:
+     chrome --headless=new --disable-gpu --hide-scrollbars \
+       --window-size=1730,909 --screenshot=public/og.png tools/og-source.html
+  3) og-base.png는 커밋하지 않습니다(1.5MB, git 이력에서 언제든 복구 가능).
+-->
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { width: 1730px; height: 909px; overflow: hidden; }
+      .canvas {
+        position: relative;
+        width: 1730px;
+        height: 909px;
+        font-family: "Malgun Gothic", "맑은 고딕", sans-serif;
+        /* Repaints the left half in the artwork's dark navy so the previous
+           brand text is gone; the photo half is layered back on top. */
+        background:
+          radial-gradient(600px 460px at 320px 430px, rgba(0, 62, 160, 0.26), rgba(0, 0, 0, 0) 72%),
+          linear-gradient(to right, #00040f 0%, #00060f 26%, #000a18 52%, #000f24 76%, #001238 100%);
+      }
+      .photo {
+        position: absolute;
+        inset: 0;
+        background: url("og-base.png") no-repeat center / 1730px 909px;
+        -webkit-mask-image: linear-gradient(to right, transparent 0 1000px, #000 1064px, #000 100%);
+        mask-image: linear-gradient(to right, transparent 0 1000px, #000 1064px, #000 100%);
+      }
+      /* The screwdriver handle sits left of the photo seam, so bring just that
+         patch back with a soft elliptical mask. */
+      .photo-tool {
+        position: absolute;
+        inset: 0;
+        background: url("og-base.png") no-repeat center / 1730px 909px;
+        -webkit-mask-image: radial-gradient(190px 78px at 952px 770px, #000 45%, transparent 100%);
+        mask-image: radial-gradient(190px 78px at 952px 770px, #000 45%, transparent 100%);
+      }
+      .content { position: absolute; left: 108px; top: 232px; width: 880px; }
+      .brand {
+        font-size: 168px;
+        font-weight: 700;
+        letter-spacing: -2px;
+        line-height: 1;
+        color: #f2f6ff;
+        text-shadow: 0 0 60px rgba(0, 98, 250, 0.45);
+      }
+      .brand em { font-style: normal; color: #1f7bff; }
+      .tagline {
+        margin-top: 34px;
+        font-size: 68px;
+        font-weight: 700;
+        letter-spacing: -1px;
+        color: #eef3fb;
+      }
+      .rule {
+        margin-top: 44px;
+        width: 856px;
+        height: 2px;
+        background: linear-gradient(to right, rgba(0, 98, 250, 0) 0%, #0a6bff 45%, #0a6bff 55%, rgba(0, 98, 250, 0) 100%);
+        position: relative;
+      }
+      .rule::after {
+        content: "";
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        width: 12px;
+        height: 12px;
+        transform: translate(-50%, -50%);
+        border-radius: 50%;
+        background: #4b9bff;
+        box-shadow: 0 0 18px rgba(75, 155, 255, 0.9);
+      }
+      .items {
+        margin-top: 40px;
+        font-size: 44px;
+        font-weight: 700;
+        color: #dbe6f7;
+        display: flex;
+        align-items: center;
+        gap: 22px;
+      }
+      .items i {
+        font-style: normal;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: #1fe3d0;
+        display: inline-block;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="canvas">
+      <div class="photo-tool"></div>
+      <div class="photo"></div>
+      <div class="content">
+        <div class="brand"><em>컴</em>박사</div>
+        <div class="tagline">멈춘 컴퓨터, 다시 일상으로.</div>
+        <div class="rule"></div>
+        <div class="items">
+          <span>컴퓨터</span><i></i><span>노트북</span><i></i><span>모니터</span><i></i><span>애플기기</span>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

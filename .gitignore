@@ -45,3 +45,5 @@ next-env.d.ts
 /outputs/
 /work/
 .sites-dev.*.log
+# local scratch for screenshots, logs and image sources
+/build/
