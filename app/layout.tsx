@@ -38,6 +38,12 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
+// Links shared through messengers carry the #contact fragment of the 고객센터
+// menu, which would open the page scrolled to the footer. Dropping the fragment
+// before the browser resolves the anchor keeps a fresh visit at the top; the
+// in-page 고객센터 link still scrolls because that navigation is client-side.
+const dropFooterAnchor = `if(location.hash==="#contact"){history.replaceState(null,"",location.pathname+location.search);}`;
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -46,6 +52,7 @@ export default function RootLayout({
   return (
     <html lang="ko">
       <body>
+        <script dangerouslySetInnerHTML={{ __html: dropFooterAnchor }} />
         <a className="skip-link" href="#main-content">본문 바로가기</a>
         <SiteHeader />
         {children}
