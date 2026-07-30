@@ -16,10 +16,22 @@
     // Scheduled runs have no request to derive the admin link from.
     "PUBLIC_BASE_URL": "https://combaksa-computer-repair.jung372.workers.dev"
   },
-  // Retries notifications the request path could not deliver.
   "triggers": {
-    "crons": ["*/5 * * * *"]
+    "crons": [
+      // Retries notifications the request path could not deliver.
+      "*/5 * * * *",
+      // Daily D1 backup at 03:00 KST (18:00 UTC), when 접수 traffic is lowest.
+      "0 18 * * *"
+    ]
   },
+  // Holds the daily D1 dumps. Delete rules live on the bucket, not in the
+  // Worker: `wrangler r2 bucket lifecycle add` keeps 45 days.
+  "r2_buckets": [
+    {
+      "binding": "BACKUPS",
+      "bucket_name": "combaksa-computer-repair-backups"
+    }
+  ],
   "d1_databases": [
     {
       "binding": "DB",

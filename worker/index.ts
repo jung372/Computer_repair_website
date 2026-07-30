@@ -1,10 +1,14 @@
 /** Cloudflare Worker entry point for the computer repair service. */
 import handler from "vinext/server/app-router-entry";
+import { runDailyBackup } from "../infrastructure/backup";
 import { processPendingNotifications } from "../infrastructure/telegram";
 import { getRuntimeString } from "../lib/runtime-config";
 
 /** How many queued notifications one scheduled run may drain. */
 const SCHEDULED_NOTIFICATION_BATCH = 10;
+
+/** Must match the daily backup entry in wrangler.jsonc — 03:00 KST. */
+const BACKUP_CRON = "0 18 * * *";
 
 const worker = {
   async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
@@ -51,11 +55,34 @@ const worker = {
   },
 
   /**
-   * Drains notifications that failed while Telegram was unreachable. Without
-   * this the retry schedule in the outbox only advances when the next request
-   * comes in or an operator presses the resend button.
+   * Two schedules share this handler, so it dispatches on the cron expression.
+   * The daily one copies D1 into R2; the frequent one drains notifications that
+   * failed while Telegram was unreachable — without it the retry schedule in the
+   * outbox only advances when the next request comes in or an operator presses
+   * the resend button.
    */
-  async scheduled(_controller: ScheduledController, _env: Env, ctx: ExecutionContext): Promise<void> {
+  async scheduled(controller: ScheduledController, _env: Env, ctx: ExecutionContext): Promise<void> {
+    if (controller.cron === BACKUP_CRON) {
+      ctx.waitUntil(
+        runDailyBackup()
+          .then((result) => {
+            console.log(JSON.stringify({
+              message: "Daily D1 backup stored",
+              key: result.key,
+              bytes: result.bytes,
+              totalRows: result.totalRows,
+            }));
+          })
+          .catch((error: unknown) => {
+            console.error(JSON.stringify({
+              message: "Daily D1 backup failed",
+              error: error instanceof Error ? error.message : String(error),
+            }));
+          }),
+      );
+      return;
+    }
+
     ctx.waitUntil(
       processPendingNotifications(
         getRuntimeString("PUBLIC_BASE_URL"),

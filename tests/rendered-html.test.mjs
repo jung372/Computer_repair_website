@@ -76,9 +76,42 @@ test("delivers Telegram notifications off the response path and retries them on 
   assert.doesNotMatch(requestApi, /await processPendingNotifications\(/);
   assert.match(workerEntry, /async scheduled\(/);
   assert.match(workerEntry, /processPendingNotifications\(/);
-  assert.match(wrangler, /"crons": \["\*\/5 \* \* \* \*"\]/);
+  // The backup shares the crons array now, so check that the retry schedule is
+  // present rather than pinning the array's formatting.
+  assert.match(wrangler, /"\*\/5 \* \* \* \*"/);
   assert.match(wrangler, /"TELEGRAM_NOTIFICATION_ENABLED": "true"/);
   assert.match(wrangler, /"PUBLIC_BASE_URL"/);
+});
+
+test("backs up D1 into R2 on its own daily schedule", async () => {
+  const [workerEntry, backup, wrangler, localScript] = await Promise.all([
+    readFile(new URL("worker/index.ts", root), "utf8"),
+    readFile(new URL("infrastructure/backup.ts", root), "utf8"),
+    readFile(new URL("wrangler.jsonc", root), "utf8"),
+    readFile(new URL("tools/backup-local.bat", root), "utf8"),
+  ]);
+
+  // Both schedules share one handler, so it must dispatch on the cron string;
+  // otherwise the backup runs every five minutes or never runs at all.
+  assert.match(wrangler, /"0 18 \* \* \*"/);
+  assert.match(workerEntry, /const BACKUP_CRON = "0 18 \* \* \*"/);
+  assert.match(workerEntry, /controller\.cron === BACKUP_CRON/);
+  assert.match(workerEntry, /runDailyBackup\(\)/);
+
+  assert.match(wrangler, /"binding": "BACKUPS"/);
+  assert.match(wrangler, /"bucket_name": "combaksa-computer-repair-backups"/);
+
+  // The table list is read from the database so a new migration cannot silently
+  // fall out of the backup.
+  assert.match(backup, /FROM sqlite_master/);
+  assert.doesNotMatch(backup, /service_requests/);
+  // One batch is one transaction, which is what makes the snapshot consistent.
+  assert.match(backup, /db\.batch</);
+  // Retention belongs to the bucket lifecycle rule, not to Worker delete calls.
+  assert.doesNotMatch(backup, /\.delete\(/);
+
+  // R2 shares the Cloudflare account with D1, so an offsite copy must exist too.
+  assert.match(localScript, /wrangler d1 export/);
 });
 
 test("removes public request discovery and postal code collection from customer UI", async () => {
