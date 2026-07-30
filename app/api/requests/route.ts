@@ -1,3 +1,4 @@
+import { waitUntil } from "cloudflare:workers";
 import {
   CUSTOMER_LOOKUP_COOKIE,
   createCustomerLookupSession,
@@ -41,7 +42,9 @@ export async function POST(request: Request) {
     const created = await createServiceRequest(payload);
     await recordAccessFailure(submissionKey);
     const session = await createCustomerLookupSession([created.id]).catch(() => null);
-    await processPendingNotifications(new URL(request.url).origin).catch(() => undefined);
+    // Telegram can take seconds to answer, so the customer gets their receipt
+    // number immediately and the notification finishes after the response.
+    waitUntil(processPendingNotifications(new URL(request.url).origin).catch(() => undefined));
     const headers = new Headers({ "Cache-Control": "private, no-store" });
     if (session) {
       const secure = new URL(request.url).protocol === "https:" ? "; Secure" : "";

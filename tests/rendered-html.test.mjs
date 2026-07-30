@@ -64,6 +64,23 @@ test("includes durable private requests, personal lookup, admin and Telegram sur
   assert.match(telegram, /sendMessage/);
 });
 
+test("delivers Telegram notifications off the response path and retries them on a schedule", async () => {
+  const [requestApi, workerEntry, wrangler] = await Promise.all([
+    readFile(new URL("app/api/requests/route.ts", root), "utf8"),
+    readFile(new URL("worker/index.ts", root), "utf8"),
+    readFile(new URL("wrangler.jsonc", root), "utf8"),
+  ]);
+
+  // The customer must not wait for Telegram before receiving a receipt number.
+  assert.match(requestApi, /waitUntil\(processPendingNotifications\(/);
+  assert.doesNotMatch(requestApi, /await processPendingNotifications\(/);
+  assert.match(workerEntry, /async scheduled\(/);
+  assert.match(workerEntry, /processPendingNotifications\(/);
+  assert.match(wrangler, /"crons": \["\*\/5 \* \* \* \*"\]/);
+  assert.match(wrangler, /"TELEGRAM_NOTIFICATION_ENABLED": "true"/);
+  assert.match(wrangler, /"PUBLIC_BASE_URL"/);
+});
+
 test("removes public request discovery and postal code collection from customer UI", async () => {
   const [home, lookupPage, requestForm, requestService, privacy, header, footer] = await Promise.all([
     readFile(new URL("app/page.tsx", root), "utf8"),

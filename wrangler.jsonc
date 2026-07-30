@@ -11,8 +11,14 @@
   "vars": {
     "NEXT_PUBLIC_BUSINESS_EMAIL": "kkyman1947@naver.com",
     "NEXT_PUBLIC_BUSINESS_PHONE": "010-3388-1597",
-    "TELEGRAM_NOTIFICATION_ENABLED": "false",
-    "REQUEST_SUBMISSION_ENABLED": "true"
+    "TELEGRAM_NOTIFICATION_ENABLED": "true",
+    "REQUEST_SUBMISSION_ENABLED": "true",
+    // Scheduled runs have no request to derive the admin link from.
+    "PUBLIC_BASE_URL": "https://combaksa-computer-repair.jung372.workers.dev"
+  },
+  // Retries notifications the request path could not deliver.
+  "triggers": {
+    "crons": ["*/5 * * * *"]
   },
   "d1_databases": [
     {

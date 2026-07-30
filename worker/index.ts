@@ -1,5 +1,10 @@
 /** Cloudflare Worker entry point for the computer repair service. */
 import handler from "vinext/server/app-router-entry";
+import { processPendingNotifications } from "../infrastructure/telegram";
+import { getRuntimeString } from "../lib/runtime-config";
+
+/** How many queued notifications one scheduled run may drain. */
+const SCHEDULED_NOTIFICATION_BATCH = 10;
 
 const worker = {
   async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
@@ -43,6 +48,25 @@ const worker = {
       }));
       return new Response("Internal server error", { status: 500 });
     }
+  },
+
+  /**
+   * Drains notifications that failed while Telegram was unreachable. Without
+   * this the retry schedule in the outbox only advances when the next request
+   * comes in or an operator presses the resend button.
+   */
+  async scheduled(_controller: ScheduledController, _env: Env, ctx: ExecutionContext): Promise<void> {
+    ctx.waitUntil(
+      processPendingNotifications(
+        getRuntimeString("PUBLIC_BASE_URL"),
+        SCHEDULED_NOTIFICATION_BATCH,
+      ).catch((error: unknown) => {
+        console.error(JSON.stringify({
+          message: "Scheduled notification flush failed",
+          error: error instanceof Error ? error.message : String(error),
+        }));
+      }),
+    );
   },
 } satisfies ExportedHandler<Env>;
 
