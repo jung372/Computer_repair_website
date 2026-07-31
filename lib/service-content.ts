@@ -149,6 +149,45 @@ export const deviceGuides: Record<Exclude<DeviceType, "other">, DeviceGuide> = {
       },
     ],
   },
+  "data-recovery": {
+    slug: "data-recovery",
+    title: "데이터 복구",
+    english: "Data recovery",
+    accent: "rose",
+    summary: "휴대폰·SD카드·블랙박스·하드·외장하드·SSD까지, 인식되지 않거나 삭제된 자료를 덮어쓰기 전에 살립니다.",
+    symptoms: [
+      {
+        id: "phone",
+        title: "휴대폰 사진과 연락처가 사라졌어요",
+        cause: "실수로 삭제했거나 초기화, 액정 파손, 침수로 내부 저장 영역에 접근하지 못하는 상태일 수 있습니다.",
+        action: "새로 사진을 찍거나 앱을 설치하지 마세요. 덮어쓰기가 진행되면 복구 가능성이 낮아집니다.",
+      },
+      {
+        id: "sd-card",
+        title: "SD카드가 인식되지 않아요",
+        cause: "파일 시스템 손상, 컨트롤러 불량, 접점 오염 또는 물리적 파손을 구분해야 합니다.",
+        action: "포맷하라는 안내창이 떠도 포맷하지 마세요. 카드를 분리한 상태로 그대로 가져와 주세요.",
+      },
+      {
+        id: "dashcam",
+        title: "블랙박스 영상을 찾을 수 없어요",
+        cause: "메모리 수명 초과, 반복 녹화로 인한 덮어쓰기, 파일 시스템 손상이 흔한 원인입니다.",
+        action: "사고 영상이 필요하다면 즉시 녹화를 멈추고 전원을 분리하세요. 계속 켜두면 영상이 덮어쓰기됩니다.",
+      },
+      {
+        id: "hdd",
+        title: "하드·외장하드가 열리지 않고 소리가 나요",
+        cause: "내장·외장 하드의 헤드 손상, 배드섹터, 기판 이상 또는 파티션 정보 손상 가능성이 있습니다.",
+        action: "딸깍거리는 소리가 나면 즉시 전원을 분리하세요. 반복해서 연결하면 손상이 커집니다.",
+      },
+      {
+        id: "ssd",
+        title: "SSD가 갑자기 사라졌어요",
+        cause: "컨트롤러 고장, 펌웨어 이상, 정전으로 인한 매핑 정보 손상일 수 있습니다.",
+        action: "복구 프로그램을 직접 돌리지 마세요. 계속 사용하면 TRIM이 동작해 자료가 지워질 수 있습니다.",
+      },
+    ],
+  },
 };
 
 export const serviceGuideList = Object.values(deviceGuides);

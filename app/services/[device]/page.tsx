@@ -32,7 +32,7 @@ export default async function DeviceServicePage({ params }: Props) {
             <h1>{guide.title}</h1>
             <p>{guide.summary}</p>
             <Link className="button button-primary" href={`/requests/new?device=${guide.slug}`}>
-              이 기기로 신청하기 <ArrowRight size={18} />
+              이 서비스로 신청하기 <ArrowRight size={18} />
             </Link>
           </div>
           <span className="device-page-icon"><DeviceIcon type={guide.slug} size={88} /></span>

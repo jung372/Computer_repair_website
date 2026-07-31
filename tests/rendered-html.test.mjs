@@ -255,3 +255,34 @@ test("pins the business contact and creates the D1 migration", async () => {
   assert.match(migration, /CREATE TABLE `customer_lookup_sessions`/);
   assert.match(migration, /CREATE TABLE `admins`/);
 });
+
+test("offers data recovery as a repair service category", async () => {
+  const [domain, content, icon, css] = await Promise.all([
+    readFile(new URL("lib/domain.ts", root), "utf8"),
+    readFile(new URL("lib/service-content.ts", root), "utf8"),
+    readFile(new URL("components/device-icon.tsx", root), "utf8"),
+    readFile(new URL("app/globals.css", root), "utf8"),
+  ]);
+
+  // 드롭다운·검증·라벨이 모두 이 배열을 읽으므로 id가 빠지면 접수가 거부된다.
+  assert.match(domain, /"data-recovery"/);
+  assert.match(domain, /"data-recovery": "데이터 복구"/);
+  // 기타기기는 드롭다운 마지막에 남아야 한다.
+  assert.match(domain, /"data-recovery", "other"\] as const/);
+
+  assert.match(content, /title: "데이터 복구"/);
+  // 다섯 가지 복구 대상이 상세 페이지에서 사라지지 않아야 한다.
+  for (const target of [/휴대폰/, /SD카드/, /블랙박스/, /하드·외장하드/, /SSD/]) {
+    assert.match(content, target);
+  }
+
+  // 분기가 없으면 Wrench 폴백으로 조용히 떨어진다.
+  assert.match(icon, /type === "data-recovery"/);
+
+  // 다섯 번째 accent는 전용 색 램프가 있어야 기존 카드와 구분된다.
+  assert.match(css, /--rose-600/);
+  assert.match(css, /\.accent-rose \.service-icon/);
+  assert.match(css, /\.device-page-hero\.accent-rose \.device-page-icon/);
+  // .process-grid도 5열이라 선택자까지 묶어서 확인한다.
+  assert.match(css, /\.service-grid \{[^}]*repeat\(5, 1fr\)/);
+});

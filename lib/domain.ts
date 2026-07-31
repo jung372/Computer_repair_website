@@ -1,4 +1,4 @@
-export const DEVICE_TYPES = ["desktop", "laptop", "monitor", "apple", "other"] as const;
+export const DEVICE_TYPES = ["desktop", "laptop", "monitor", "apple", "data-recovery", "other"] as const;
 export type DeviceType = (typeof DEVICE_TYPES)[number];
 
 export const DEVICE_LABELS: Record<DeviceType, string> = {
@@ -6,6 +6,7 @@ export const DEVICE_LABELS: Record<DeviceType, string> = {
   laptop: "노트북",
   monitor: "모니터",
   apple: "애플기기",
+  "data-recovery": "데이터 복구",
   other: "기타기기",
 };
 

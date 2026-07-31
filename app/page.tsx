@@ -103,9 +103,9 @@ export default async function Home() {
           <div className="section-heading split-heading">
             <div>
               <span className="eyebrow">Repair services</span>
-              <h2>어떤 기기에 문제가 있나요?</h2>
+              <h2>어떤 문제가 있나요?</h2>
             </div>
-            <p>기기를 선택하면 자주 발생하는 증상과 지금 해야 할 일을 먼저 확인할 수 있습니다.</p>
+            <p>항목을 선택하면 자주 발생하는 증상과 지금 해야 할 일을 먼저 확인할 수 있습니다.</p>
           </div>
           <div className="service-grid">
             {serviceGuideList.map((guide, index) => (

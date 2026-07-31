@@ -1,4 +1,4 @@
-import { Apple, Laptop, Monitor, PcCase, Wrench } from "lucide-react";
+import { Apple, HardDrive, Laptop, Monitor, PcCase, Wrench } from "lucide-react";
 import type { DeviceType } from "@/lib/domain";
 
 export function DeviceIcon({ type, size = 28 }: { type: DeviceType; size?: number }) {
@@ -7,5 +7,6 @@ export function DeviceIcon({ type, size = 28 }: { type: DeviceType; size?: numbe
   if (type === "laptop") return <Laptop {...props} />;
   if (type === "monitor") return <Monitor {...props} />;
   if (type === "apple") return <Apple {...props} />;
+  if (type === "data-recovery") return <HardDrive {...props} />;
   return <Wrench {...props} />;
 }

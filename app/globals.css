@@ -19,6 +19,8 @@
   --mint-100: #ddf7f0;
   --violet-600: #7758d8;
   --violet-100: #ede8ff;
+  --rose-600: #e11d48;
+  --rose-100: #ffe4ea;
   --white: #ffffff;
   --shadow-sm: 0 8px 24px rgba(7, 17, 31, 0.07);
   --shadow-md: 0 20px 50px rgba(7, 17, 31, 0.12);
@@ -735,8 +737,8 @@ p {
 
 .service-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 18px;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 14px;
 }
 
 .service-card {
@@ -788,6 +790,8 @@ p {
 .accent-orange .service-detail-preview-icon { background: var(--orange-100); color: var(--orange-600); }
 .accent-violet .service-icon,
 .accent-violet .service-detail-preview-icon { background: var(--violet-100); color: var(--violet-600); }
+.accent-rose .service-icon,
+.accent-rose .service-detail-preview-icon { background: var(--rose-100); color: var(--rose-600); }
 
 .service-english,
 .service-detail-preview > div > span {
@@ -1250,6 +1254,7 @@ p {
 .device-page-hero.accent-mint .device-page-icon { background: var(--mint-100); color: var(--mint-600); }
 .device-page-hero.accent-orange .device-page-icon { background: var(--orange-100); color: var(--orange-600); }
 .device-page-hero.accent-violet .device-page-icon { background: var(--violet-100); color: var(--violet-600); }
+.device-page-hero.accent-rose .device-page-icon { background: var(--rose-100); color: var(--rose-600); }
 
 .symptom-guide-grid {
   display: grid;

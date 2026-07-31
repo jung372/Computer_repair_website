@@ -17,7 +17,7 @@ export async function generateMetadata(): Promise<Metadata> {
       template: "%s | 컴박사",
     },
     description:
-      "컴퓨터, 노트북, 모니터, 애플기기의 고장 증상을 확인하고 온라인으로 안전하게 수리를 신청하세요.",
+      "컴퓨터, 노트북, 모니터, 애플기기의 고장 증상과 데이터 복구를 확인하고 온라인으로 안전하게 수리를 신청하세요.",
     icons: {
       icon: "/favicon.svg",
       shortcut: "/favicon.svg",

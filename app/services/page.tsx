@@ -6,7 +6,7 @@ import { serviceGuideList } from "@/lib/service-content";
 
 export const metadata: Metadata = {
   title: "수리 서비스",
-  description: "컴퓨터, 노트북, 모니터, 애플기기의 주요 고장 증상과 점검 안내.",
+  description: "컴퓨터, 노트북, 모니터, 애플기기, 데이터 복구의 주요 고장 증상과 점검 안내.",
 };
 
 export default function ServicesPage() {
@@ -15,7 +15,7 @@ export default function ServicesPage() {
       <section className="page-hero">
         <div className="container">
           <span className="eyebrow eyebrow-light">Repair services</span>
-          <h1>기기별 수리 서비스</h1>
+          <h1>수리 서비스</h1>
           <p>비슷한 증상을 선택하면 가능한 원인과 지금 해야 할 일을 확인할 수 있습니다.</p>
         </div>
       </section>
