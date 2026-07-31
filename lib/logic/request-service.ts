@@ -18,6 +18,8 @@ import { createLookupKey } from "@/lib/security/lookup-key";
 import { hashPassword, verifyPassword } from "@/lib/security/password";
 
 const PRIVACY_VERSION = "2026-07-29.v2";
+// 고객이 쓴 내용을 조용히 잘라내지 않기 위한 방어선. 화면에는 제한을 두지 않는다.
+const DESCRIPTION_LIMIT = 20_000;
 
 export class RequestValidationError extends Error {
   constructor(public fields: Record<string, string>) {
@@ -70,8 +72,7 @@ export async function createServiceRequest(input: unknown) {
   const address2 = clean(values.address2, 160);
   const manufacturerModel = clean(values.manufacturerModel, 100);
   const symptom = clean(values.symptom, 120);
-  const description = clean(values.description, 2_000);
-  const preferredAt = clean(values.preferredAt, 40) || null;
+  const description = clean(values.description, DESCRIPTION_LIMIT);
   const password = typeof values.password === "string" ? values.password : "";
   const passwordLength = Array.from(password).length;
   const deviceType = DEVICE_TYPES.includes(values.deviceType as DeviceType)
@@ -83,7 +84,13 @@ export async function createServiceRequest(input: unknown) {
   if (!address1) fields.address1 = "기본 주소를 입력해 주세요.";
   if (!deviceType) fields.deviceType = "기기 종류를 선택해 주세요.";
   if (!symptom) fields.symptom = "대표 증상을 입력해 주세요.";
-  if (description.length < 10) fields.description = "접수 내용을 10자 이상 입력해 주세요.";
+  if (!description) fields.description = "접수 내용을 입력해 주세요.";
+  else if (
+    typeof values.description === "string" &&
+    values.description.trim().length > DESCRIPTION_LIMIT
+  ) {
+    fields.description = `접수 내용은 ${DESCRIPTION_LIMIT.toLocaleString("ko-KR")}자 이내로 입력해 주세요.`;
+  }
   if (passwordLength < 4 || passwordLength > 20) {
     fields.password = "신청 조회 비밀번호는 4~20자로 입력해 주세요.";
   }
@@ -118,7 +125,8 @@ export async function createServiceRequest(input: unknown) {
     accessPasswordHash,
     lookupKey,
     status: "RECEIVED",
-    preferredAt,
+    // 희망 방문 일시는 더 이상 수집하지 않는다. 컬럼은 과거 접수 건 보존용으로만 남는다.
+    preferredAt: null,
     internalNote: "",
     notificationStatus: getInitialNotificationStatus(),
     notificationError: null,

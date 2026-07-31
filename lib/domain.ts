@@ -66,7 +66,6 @@ export const STATUS_TRANSITIONS = Object.fromEntries(
   REQUEST_STATUSES.map((status) => [status, [...REQUEST_STATUSES]]),
 ) as Record<RequestStatus, RequestStatus[]>;
 
-export const RECEIPT_TYPES = ["온라인접수", "관리자접수"] as const;
 export const CUSTOMER_TYPES = ["신규일반고객", "재방문고객"] as const;
 export const PAYMENT_METHODS = ["", "현금결제", "카드결제", "계좌이체"] as const;
 
@@ -116,7 +115,6 @@ export type CreateRequestInput = {
   symptom: string;
   description: string;
   password: string;
-  preferredAt?: string;
   privacyConsent: boolean;
   website?: string;
 };

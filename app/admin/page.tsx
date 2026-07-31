@@ -7,10 +7,7 @@ import {
   getAdminRequestFilterOptions,
   listAdminRequestRecords,
 } from "@/data/admin-request-repository";
-import {
-  CUSTOMER_TYPES,
-  RECEIPT_TYPES,
-} from "@/lib/domain";
+import { CUSTOMER_TYPES } from "@/lib/domain";
 import { requireAdmin } from "@/lib/admin-auth";
 
 export const metadata: Metadata = {
@@ -45,7 +42,6 @@ export default async function AdminPage({
   const selectedStatuses = all(query.status);
   const filters = {
     q: first(query.q),
-    receiptType: first(query.receiptType),
     assignee: first(query.assignee),
     customerType: first(query.customerType),
     integratedFrom: first(query.integratedFrom),
@@ -60,7 +56,6 @@ export default async function AdminPage({
     listAdminRequestRecords(filters),
     getAdminRequestFilterOptions(),
   ]);
-  const receiptTypes = unique([...RECEIPT_TYPES, ...filterOptions.receiptTypes]);
   const customerTypes = unique([...CUSTOMER_TYPES, ...filterOptions.customerTypes]);
 
   return (
@@ -105,13 +100,6 @@ export default async function AdminPage({
                   placeholder="이름, 제목, 접수번호, 휴대폰 등 키워드"
                 />
               </div>
-            </label>
-            <label>
-              <span>접수구분</span>
-              <select name="receiptType" defaultValue={filters.receiptType}>
-                <option value="">구분 전체</option>
-                {receiptTypes.map((value) => <option key={value}>{value}</option>)}
-              </select>
             </label>
             <label>
               <span>담당기사</span>
@@ -176,7 +164,6 @@ export default async function AdminPage({
             <thead>
               <tr>
                 <th>번호</th>
-                <th>접수구분</th>
                 <th>고객명</th>
                 <th>휴대폰</th>
                 <th>담당자</th>
@@ -189,7 +176,6 @@ export default async function AdminPage({
               {requests.map((request) => (
                 <tr key={request.id}>
                   <td className="admin-serial">{request.serialNumber}</td>
-                  <td>{request.receiptType}</td>
                   <td>
                     <Link className="admin-customer-link" href={`/admin/requests/${request.publicId}`}>
                       {request.name || "미상"}

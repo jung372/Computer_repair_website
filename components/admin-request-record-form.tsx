@@ -1,6 +1,6 @@
 "use client";
 
-import { BellRing, Calculator, List, Save, ShieldAlert } from "lucide-react";
+import { BellRing, List, Save, ShieldAlert } from "lucide-react";
 import Link from "next/link";
 import { useState, type FormEvent } from "react";
 import type { AdminRequestRecord } from "@/data/admin-request-repository";
@@ -8,17 +8,14 @@ import {
   ADMIN_OPERATIONAL_STATUSES,
   CUSTOMER_TYPES,
   PAYMENT_METHODS,
-  RECEIPT_TYPES,
   STATUS_LABELS,
   type RequestStatus,
 } from "@/lib/domain";
+import { deriveSettlement, formatWon } from "@/lib/settlement";
 
 type Amounts = {
   totalAmount: number;
   materialCost: number;
-  vatAmount: number;
-  technicianIncome: number;
-  officeDeposit: number;
 };
 
 function unique(values: string[]) {
@@ -32,10 +29,8 @@ export function AdminRequestRecordForm({ request }: { request: AdminRequestRecor
   const [amounts, setAmounts] = useState<Amounts>({
     totalAmount: request.totalAmount,
     materialCost: request.materialCost,
-    vatAmount: request.vatAmount,
-    technicianIncome: request.technicianIncome,
-    officeDeposit: request.officeDeposit,
   });
+  const settlement = deriveSettlement(amounts.totalAmount, amounts.materialCost);
   const statusOptions = unique([
     ...ADMIN_OPERATIONAL_STATUSES,
     ...(ADMIN_OPERATIONAL_STATUSES.includes(
@@ -44,7 +39,6 @@ export function AdminRequestRecordForm({ request }: { request: AdminRequestRecor
       ? []
       : [request.status]),
   ]) as RequestStatus[];
-  const receiptTypes = unique([...RECEIPT_TYPES, request.receiptType]);
   const customerTypes = unique([...CUSTOMER_TYPES, request.customerType]);
   const paymentMethods = unique([...PAYMENT_METHODS, request.paymentMethod]);
 
@@ -83,15 +77,6 @@ export function AdminRequestRecordForm({ request }: { request: AdminRequestRecor
     const payload = Object.fromEntries(new FormData(event.currentTarget).entries());
     const ok = await send({ ...payload, action: "save-record" });
     if (ok) window.location.reload();
-  }
-
-  function calculateSettlement() {
-    const vatAmount = Math.round(amounts.totalAmount / 11);
-    const officeDeposit = Math.max(
-      0,
-      amounts.totalAmount - vatAmount - amounts.materialCost - amounts.technicianIncome,
-    );
-    setAmounts((current) => ({ ...current, vatAmount, officeDeposit }));
   }
 
   async function anonymize() {
@@ -148,7 +133,7 @@ export function AdminRequestRecordForm({ request }: { request: AdminRequestRecor
             <input id="symptom" name="symptom" defaultValue={request.symptom} maxLength={120} required />
           </RecordField>
           <RecordField label="장애현상 *" name="description" error={errors.description} wide>
-            <textarea id="description" name="description" rows={7} maxLength={2000} defaultValue={request.description} required />
+            <textarea id="description" name="description" rows={7} maxLength={20000} defaultValue={request.description} required />
           </RecordField>
           <RecordField label="관리자메모" name="internalNote" error={errors.internalNote} wide>
             <textarea id="internalNote" name="internalNote" rows={5} maxLength={2000} defaultValue={request.internalNote} placeholder="고객에게 보이지 않는 메모" />
@@ -162,11 +147,6 @@ export function AdminRequestRecordForm({ request }: { request: AdminRequestRecor
           <div><h2>배정과 일정</h2><p>접수 분류, 담당자와 주요 처리 일자를 관리합니다.</p></div>
         </div>
         <div className="admin-record-grid">
-          <RecordField label="접수구분 *" name="receiptType" error={errors.receiptType}>
-            <select id="receiptType" name="receiptType" defaultValue={request.receiptType} required>
-              {receiptTypes.map((value) => <option key={value}>{value}</option>)}
-            </select>
-          </RecordField>
           <RecordField label="고객접수구분" name="requestCategory" error={errors.requestCategory}>
             <input id="requestCategory" name="requestCategory" defaultValue={request.requestCategory} maxLength={80} placeholder="예: 출장수리" />
           </RecordField>
@@ -203,9 +183,12 @@ export function AdminRequestRecordForm({ request }: { request: AdminRequestRecor
       <section className="admin-record-section">
         <div className="admin-record-section-heading">
           <span>04</span>
-          <div><h2>결제와 정산</h2><p>모든 금액은 원 단위로 입력합니다.</p></div>
+          <div>
+            <h2>결제와 정산</h2>
+            <p>결제방법·총수금액·자재비만 입력하면 부가세와 기사수익은 자동 계산됩니다.</p>
+          </div>
         </div>
-        <div className="admin-record-grid admin-settlement-grid">
+        <div className="admin-record-grid">
           <RecordField label="결제방법" name="paymentMethod" error={errors.paymentMethod}>
             <select id="paymentMethod" name="paymentMethod" defaultValue={request.paymentMethod}>
               <option value="">선택하세요</option>
@@ -214,12 +197,8 @@ export function AdminRequestRecordForm({ request }: { request: AdminRequestRecor
           </RecordField>
           <AmountField label="총수금액" name="totalAmount" value={amounts.totalAmount} error={errors.totalAmount} setAmounts={setAmounts} />
           <AmountField label="자재비" name="materialCost" value={amounts.materialCost} error={errors.materialCost} setAmounts={setAmounts} />
-          <AmountField label="부가세" name="vatAmount" value={amounts.vatAmount} error={errors.vatAmount} setAmounts={setAmounts} />
-          <AmountField label="기사수익" name="technicianIncome" value={amounts.technicianIncome} error={errors.technicianIncome} setAmounts={setAmounts} />
-          <AmountField label="사무실입금액" name="officeDeposit" value={amounts.officeDeposit} error={errors.officeDeposit} setAmounts={setAmounts} />
-          <button className="admin-calculator-button" type="button" onClick={calculateSettlement}>
-            <Calculator size={17} aria-hidden="true" /> 부가세·사무실입금액 계산
-          </button>
+          <DerivedAmountField label="부가세" value={settlement.vatAmount} hint="총수금액 ÷ 11" />
+          <DerivedAmountField label="기사수익" value={settlement.technicianIncome} hint="총수금액 − 부가세 − 자재비" />
         </div>
       </section>
 
@@ -288,6 +267,26 @@ function RecordField({
       <label htmlFor={name}>{label}</label>
       {children}
       {error && <small className="field-error">{error}</small>}
+    </div>
+  );
+}
+
+function DerivedAmountField({
+  label,
+  value,
+  hint,
+}: {
+  label: string;
+  value: number;
+  hint: string;
+}) {
+  return (
+    <div className="admin-record-field">
+      <span className="admin-record-derived-label">{label}</span>
+      <output className="admin-readonly-value admin-derived-amount">
+        <strong>{formatWon(value)}</strong>
+        <small>{hint}</small>
+      </output>
     </div>
   );
 }

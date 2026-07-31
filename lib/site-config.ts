@@ -7,6 +7,9 @@ export const siteDefaults = {
   hours: "평일·토요일 09:00–20:00",
   region: "서울·경기 일부 지역 출장",
   email: "contact@example.com",
+  businessNumber: "389-80-03376",
+  representative: "김규웅",
+  address: "서울특별시 광진구 자양로19길 42-17, 101호",
 };
 
 export function getSiteConfig() {
@@ -17,5 +20,10 @@ export function getSiteConfig() {
     hours: getRuntimeString("NEXT_PUBLIC_BUSINESS_HOURS") || siteDefaults.hours,
     region: getRuntimeString("NEXT_PUBLIC_SERVICE_REGION") || siteDefaults.region,
     email: getRuntimeString("NEXT_PUBLIC_BUSINESS_EMAIL") || siteDefaults.email,
+    businessNumber:
+      getRuntimeString("NEXT_PUBLIC_BUSINESS_NUMBER") || siteDefaults.businessNumber,
+    representative:
+      getRuntimeString("NEXT_PUBLIC_BUSINESS_OWNER") || siteDefaults.representative,
+    address: getRuntimeString("NEXT_PUBLIC_BUSINESS_ADDRESS") || siteDefaults.address,
   };
 }

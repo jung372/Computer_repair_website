@@ -2735,12 +2735,22 @@ p {
   color: var(--white);
 }
 
+.footer-business {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 18px;
+  padding-top: 22px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  color: #8296aa;
+  font-size: 0.74rem;
+  line-height: 1.7;
+}
+
 .footer-bottom {
   display: flex;
   justify-content: space-between;
   gap: 20px;
-  padding-top: 22px;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  padding-top: 12px;
   color: #637588;
   font-size: 0.72rem;
 }
@@ -3314,7 +3324,7 @@ p {
 
 .admin-search-grid {
   display: grid;
-  grid-template-columns: minmax(260px, 2fr) repeat(3, minmax(150px, 1fr));
+  grid-template-columns: minmax(260px, 2fr) repeat(2, minmax(150px, 1fr));
   gap: 14px;
 }
 
@@ -3618,7 +3628,8 @@ p {
   grid-column: 1 / -1;
 }
 
-.admin-record-field > label {
+.admin-record-field > label,
+.admin-record-field > .admin-record-derived-label {
   display: block;
   margin-bottom: 7px;
   color: var(--ink-700);
@@ -3691,21 +3702,24 @@ p {
   transform: translateY(-50%);
 }
 
-.admin-calculator-button {
-  display: inline-flex;
-  align-self: end;
-  min-height: 45px;
-  align-items: center;
-  justify-content: center;
-  gap: 7px;
-  border: 1px dashed var(--blue-400);
-  border-radius: 9px;
-  background: var(--blue-50);
+.admin-derived-amount {
+  justify-content: space-between;
+  gap: 12px;
+  border-color: var(--blue-100);
+  background: var(--blue-100);
+}
+
+.admin-derived-amount strong {
   color: var(--blue-700);
-  cursor: pointer;
-  font: inherit;
-  font-size: 0.75rem;
-  font-weight: 800;
+  font-size: 0.92rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.admin-derived-amount small {
+  color: var(--ink-500);
+  font-size: 0.68rem;
+  text-align: right;
+  white-space: nowrap;
 }
 
 .admin-record-message {

@@ -7,6 +7,7 @@ import {
   REQUEST_STATUSES,
   type RequestStatus,
 } from "@/lib/domain";
+import { deriveSettlement } from "@/lib/settlement";
 
 export class AdminRecordValidationError extends Error {
   constructor(public fields: Record<string, string>) {
@@ -66,8 +67,7 @@ export async function saveAdminRequestRecord(
   }
   const address1 = clean(values.address1, 160);
   const symptom = clean(values.symptom, 120);
-  const description = clean(values.description, 2_000);
-  const receiptType = clean(values.receiptType, 40);
+  const description = clean(values.description, 20_000);
   const customerType = clean(values.customerType, 40);
   const title = clean(values.title, 120);
   const receivedDate = optionalDate(values.receivedDate, "receivedDate", errors);
@@ -78,7 +78,6 @@ export async function saveAdminRequestRecord(
   if (!address1) errors.address1 = "기본 주소를 입력해 주세요.";
   if (!symptom) errors.symptom = "대표 증상을 입력해 주세요.";
   if (!description) errors.description = "장애 현상을 입력해 주세요.";
-  if (!receiptType) errors.receiptType = "접수 구분을 입력해 주세요.";
   if (!customerType) errors.customerType = "고객 구분을 입력해 주세요.";
   if (!title) errors.title = "제목을 입력해 주세요.";
   if (!receivedDate) errors.receivedDate = "접수일을 선택해 주세요.";
@@ -87,6 +86,15 @@ export async function saveAdminRequestRecord(
     ["SHIPPED", "ONSITE_COMPLETED", "COMPLETED"].includes(status)
   ) {
     completedDate = todayInSeoul();
+  }
+
+  // 운영자는 총수금액과 자재비만 입력한다. 부가세·기사수익·사무실입금액은
+  // 클라이언트가 보낸 값을 믿지 않고 항상 서버에서 다시 계산한다.
+  const totalAmount = amount(values.totalAmount, "totalAmount", errors);
+  const materialCost = amount(values.materialCost, "materialCost", errors);
+  const settlement = deriveSettlement(totalAmount, materialCost);
+  if (materialCost > totalAmount - settlement.vatAmount) {
+    errors.materialCost = "자재비가 총수금액(부가세 제외)을 초과할 수 없습니다.";
   }
 
   const update: AdminRequestRecordUpdate = {
@@ -98,7 +106,6 @@ export async function saveAdminRequestRecord(
     status: status as RequestStatus,
     publicNote: clean(values.publicNote, 500),
     internalNote: clean(values.internalNote, 2_000),
-    receiptType,
     assignee: clean(values.assignee, 80),
     assigneePhone: clean(values.assigneePhone, 30),
     customerType,
@@ -112,11 +119,9 @@ export async function saveAdminRequestRecord(
     visitDate,
     completedDate,
     paymentMethod: clean(values.paymentMethod, 40),
-    totalAmount: amount(values.totalAmount, "totalAmount", errors),
-    materialCost: amount(values.materialCost, "materialCost", errors),
-    vatAmount: amount(values.vatAmount, "vatAmount", errors),
-    technicianIncome: amount(values.technicianIncome, "technicianIncome", errors),
-    officeDeposit: amount(values.officeDeposit, "officeDeposit", errors),
+    totalAmount,
+    materialCost,
+    ...settlement,
   };
   if (Object.keys(errors).length) throw new AdminRecordValidationError(errors);
   await updateAdminRequestRecord(request, update, changedBy);

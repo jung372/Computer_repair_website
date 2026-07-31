@@ -147,16 +147,11 @@ export function RequestForm({ initialDevice = "", initialSymptom = "" }: Request
             <textarea
               id="description"
               name="description"
-              minLength={10}
-              maxLength={2000}
               rows={7}
               placeholder="언제부터, 어떤 상황에서 증상이 발생하는지 적어 주세요."
               required
             />
-          </Field>
-          <Field label="희망 방문 일시" name="preferredAt" wide>
-            <input id="preferredAt" name="preferredAt" type="datetime-local" />
-            <small>희망 시간이며 운영자 확인 후 최종 일정이 확정됩니다.</small>
+            <small>길이 제한은 없습니다. 떠오르는 내용을 자유롭게 적어 주세요.</small>
           </Field>
         </div>
       </section>

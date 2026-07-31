@@ -8,7 +8,6 @@ import { mapRequest, type RequestRow } from "./request-repository";
 
 export type AdminRequestFilters = {
   q?: string;
-  receiptType?: string;
   assignee?: string;
   customerType?: string;
   integratedFrom?: string;
@@ -22,7 +21,6 @@ export type AdminRequestFilters = {
 
 export type RequestOperationsRecord = {
   serialNumber: number;
-  receiptType: string;
   assignee: string;
   assigneePhone: string;
   customerType: string;
@@ -48,7 +46,6 @@ export type AdminRequestRecord = ServiceRequestRecord & RequestOperationsRecord;
 
 type AdminRequestRow = RequestRow & {
   serial_no: number;
-  receipt_type: string;
   assignee: string;
   assignee_phone: string;
   customer_type: string;
@@ -79,7 +76,6 @@ export type AdminRequestRecordUpdate = {
   status: RequestStatus;
   publicNote: string;
   internalNote: string;
-  receiptType: string;
   assignee: string;
   assigneePhone: string;
   customerType: string;
@@ -104,7 +100,6 @@ const ADMIN_REQUEST_SELECT = `
   SELECT
     sr.*,
     serial.serial_no,
-    operations.receipt_type,
     operations.assignee,
     operations.assignee_phone,
     operations.customer_type,
@@ -133,7 +128,6 @@ function mapAdminRequest(row: AdminRequestRow): AdminRequestRecord {
   return {
     ...mapRequest(row),
     serialNumber: Number(row.serial_no),
-    receiptType: row.receipt_type,
     assignee: row.assignee,
     assigneePhone: row.assignee_phone,
     customerType: row.customer_type,
@@ -214,10 +208,6 @@ export async function listAdminRequestRecords(
     )`);
     values.push(...Array(10).fill(pattern));
   }
-  if (filters.receiptType) {
-    clauses.push("operations.receipt_type = ?");
-    values.push(filters.receiptType);
-  }
   if (filters.assignee) {
     clauses.push("operations.assignee = ?");
     values.push(filters.assignee);
@@ -281,12 +271,7 @@ export async function getAdminRequestRecord(publicId: string) {
 export async function getAdminRequestFilterOptions() {
   await ensureDatabase();
   const db = getD1();
-  const [receiptTypes, assignees, customerTypes] = await Promise.all([
-    db
-      .prepare(
-        "SELECT DISTINCT receipt_type AS value FROM request_operations WHERE receipt_type <> '' ORDER BY receipt_type",
-      )
-      .all<{ value: string }>(),
+  const [assignees, customerTypes] = await Promise.all([
     db
       .prepare(
         "SELECT DISTINCT assignee AS value FROM request_operations WHERE assignee <> '' ORDER BY assignee",
@@ -299,7 +284,6 @@ export async function getAdminRequestFilterOptions() {
       .all<{ value: string }>(),
   ]);
   return {
-    receiptTypes: receiptTypes.results.map((row) => row.value),
     assignees: assignees.results.map((row) => row.value),
     customerTypes: customerTypes.results.map((row) => row.value),
   };
@@ -336,7 +320,7 @@ export async function updateAdminRequestRecord(
     db
       .prepare(`
         UPDATE request_operations
-        SET receipt_type = ?, assignee = ?, assignee_phone = ?, customer_type = ?,
+        SET assignee = ?, assignee_phone = ?, customer_type = ?,
             landline = ?, invoice_date = ?, invoice_content = ?, title = ?,
             request_category = ?, received_date = ?, visit_timing = ?, visit_date = ?, completed_date = ?,
             payment_method = ?, total_amount = ?, material_cost = ?, vat_amount = ?,
@@ -344,7 +328,6 @@ export async function updateAdminRequestRecord(
         WHERE request_id = ?
       `)
       .bind(
-        update.receiptType,
         update.assignee,
         update.assigneePhone,
         update.customerType,

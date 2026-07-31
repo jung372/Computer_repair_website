@@ -153,17 +153,93 @@ test("provides an admin operations ledger, filters, stable serials and editable 
     ]);
 
   assert.match(adminPage, /접수내역 검색/);
-  assert.match(adminPage, /번호[\s\S]*접수구분[\s\S]*고객명[\s\S]*휴대폰[\s\S]*담당자[\s\S]*고객구분[\s\S]*처리상태[\s\S]*접수일/);
+  assert.match(adminPage, /번호[\s\S]*고객명[\s\S]*휴대폰[\s\S]*담당자[\s\S]*고객구분[\s\S]*처리상태[\s\S]*접수일/);
   assert.match(adminPage, /integratedFrom/);
   assert.match(adminPage, /AdminStatusFilter/);
   assert.match(detailPage, /AdminRequestRecordForm/);
   assert.match(recordForm, /계산서 발행일자/);
   assert.match(recordForm, /관리자메모/);
-  assert.match(recordForm, /사무실입금액/);
   assert.match(repository, /ORDER BY serial\.serial_no DESC/);
   assert.match(schema, /request_serials/);
   assert.match(schema, /request_operations/);
   assert.match(migration, /AUTOINCREMENT/);
+});
+
+test("drops the receipt-type field and derives settlement amounts on the server", async () => {
+  const [adminPage, recordForm, recordService, repository, settlement] = await Promise.all([
+    readFile(new URL("app/admin/page.tsx", root), "utf8"),
+    readFile(new URL("components/admin-request-record-form.tsx", root), "utf8"),
+    readFile(new URL("lib/logic/admin-record-service.ts", root), "utf8"),
+    readFile(new URL("data/admin-request-repository.ts", root), "utf8"),
+    readFile(new URL("lib/settlement.ts", root), "utf8"),
+  ]);
+
+  // 접수구분은 입력 폼, 목록 열, 검색 필터에서 모두 사라진다.
+  assert.doesNotMatch(adminPage, /접수구분|receiptType|RECEIPT_TYPES/);
+  // 고객접수구분(requestCategory)은 남으므로 접수구분 라벨과 필드명만 정확히 검사한다.
+  assert.doesNotMatch(recordForm, /label="접수구분|receiptType/);
+  assert.match(recordForm, /label="고객접수구분"/);
+  assert.doesNotMatch(recordService, /receiptType/);
+  assert.doesNotMatch(repository, /receipt_type/);
+  // 컬럼 자체는 남기므로 UPDATE 문에서만 빠져야 한다.
+  assert.match(repository, /UPDATE request_operations\s+SET assignee = \?/);
+
+  // 부가세·기사수익은 읽기 전용 표시이며 사무실입금액 입력란은 없다.
+  assert.doesNotMatch(recordForm, /사무실입금액|admin-calculator-button|calculateSettlement/);
+  assert.match(recordForm, /DerivedAmountField label="부가세"/);
+  assert.match(recordForm, /DerivedAmountField label="기사수익"/);
+  assert.match(recordForm, /deriveSettlement\(amounts\.totalAmount, amounts\.materialCost\)/);
+
+  // 서버가 클라이언트 값을 믿지 않고 다시 계산한다.
+  assert.match(recordService, /deriveSettlement\(totalAmount, materialCost\)/);
+  assert.doesNotMatch(recordService, /values\.vatAmount|values\.technicianIncome|values\.officeDeposit/);
+  assert.match(recordService, /자재비가 총수금액/);
+  assert.match(settlement, /VAT_DIVISOR = 11/);
+});
+
+test("lifts the description length cap and stops collecting a preferred visit time", async () => {
+  const [requestForm, requestService, recordForm, recordService, detailPage, privacy] =
+    await Promise.all([
+      readFile(new URL("components/request-form.tsx", root), "utf8"),
+      readFile(new URL("lib/logic/request-service.ts", root), "utf8"),
+      readFile(new URL("components/admin-request-record-form.tsx", root), "utf8"),
+      readFile(new URL("lib/logic/admin-record-service.ts", root), "utf8"),
+      readFile(new URL("app/requests/[publicId]/page.tsx", root), "utf8"),
+      readFile(new URL("app/privacy/page.tsx", root), "utf8"),
+    ]);
+
+  // 상세 접수 내용에는 화면 제한이 없고, 서버 상한은 양쪽 폼이 같아야 한다.
+  assert.doesNotMatch(requestForm, /name="description"[\s\S]{0,200}maxLength/);
+  assert.doesNotMatch(requestForm, /name="description"[\s\S]{0,200}minLength/);
+  assert.match(requestService, /DESCRIPTION_LIMIT = 20_000/);
+  assert.doesNotMatch(requestService, /10자 이상/);
+  assert.match(recordForm, /name="description"[\s\S]{0,120}maxLength=\{20000\}/);
+  assert.match(recordService, /clean\(values\.description, 20_000\)/);
+
+  // 희망 방문 일시는 폼·상세·처리방침에서 모두 사라진다.
+  assert.doesNotMatch(requestForm, /preferredAt|희망 방문/);
+  assert.doesNotMatch(detailPage, /preferredAt|희망 일정/);
+  assert.doesNotMatch(privacy, /희망 방문 일시/);
+  assert.match(requestService, /preferredAt: null/);
+});
+
+test("shows the registered business identity in the footer", async () => {
+  // .env.example은 gitignore 대상이라 검사하지 않는다. 기본값은 코드에 있어야 한다.
+  const [siteConfig, footer] = await Promise.all([
+    readFile(new URL("lib/site-config.ts", root), "utf8"),
+    readFile(new URL("components/site-footer.tsx", root), "utf8"),
+  ]);
+
+  assert.match(siteConfig, /389-80-03376/);
+  assert.match(siteConfig, /김규웅/);
+  assert.match(siteConfig, /서울특별시 광진구 자양로19길 42-17, 101호/);
+  assert.match(footer, /사업자등록번호 \{config\.businessNumber\}/);
+  assert.match(footer, /대표 \{config\.representative\}/);
+  assert.match(footer, /\{config\.address\}/);
+  assert.doesNotMatch(footer, /사업자 정보는 실제 운영 정보로 교체해 주세요/);
+  assert.match(siteConfig, /NEXT_PUBLIC_BUSINESS_NUMBER/);
+  assert.match(siteConfig, /NEXT_PUBLIC_BUSINESS_OWNER/);
+  assert.match(siteConfig, /NEXT_PUBLIC_BUSINESS_ADDRESS/);
 });
 
 test("pins the business contact and creates the D1 migration", async () => {

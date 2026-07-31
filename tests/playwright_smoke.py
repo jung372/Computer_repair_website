@@ -40,6 +40,11 @@ with sync_playwright() as playwright:
     assert page.get_by_role("link", name="내 신청 조회").first.is_visible()
     assert page.get_by_text("최근 신청 현황").count() == 0
     assert "010-3388-1597" in page.locator("body").inner_text()
+    # 전자상거래법상 표시 의무 사항이므로 모든 페이지 하단에 노출되어야 한다.
+    footer_text = page.locator(".footer-business").inner_text()
+    assert "사업자등록번호 389-80-03376" in footer_text, footer_text
+    assert "대표 김규웅" in footer_text, footer_text
+    assert "서울특별시 광진구 자양로19길 42-17, 101호" in footer_text, footer_text
     page.screenshot(path=str(ARTIFACTS / "home-desktop.png"), full_page=True)
 
     page.goto(f"{BASE_URL}/requests", wait_until="networkidle")
@@ -98,8 +103,15 @@ with sync_playwright() as playwright:
     page.get_by_label("기본 주소 *").fill("서울시 강남구 테헤란로")
     page.get_by_label("기기 종류 *").select_option("desktop")
     page.get_by_label("대표 증상 *").fill("전원이 켜지지 않아요")
-    page.get_by_label("상세 접수 내용 *").fill(
-        "어제부터 전원 버튼을 눌러도 컴퓨터가 켜지지 않습니다."
+    # 희망 방문 일시는 더 이상 수집하지 않는다.
+    assert page.get_by_label("희망 방문 일시").count() == 0
+    # 상세 접수 내용은 길이 제한이 없어야 하므로 옛 상한(2,000자)을 넘겨 확인한다.
+    long_description = "어제부터 전원 버튼을 눌러도 컴퓨터가 켜지지 않습니다. " * 120
+    description_field = page.get_by_label("상세 접수 내용 *")
+    description_field.fill(long_description)
+    assert len(description_field.input_value()) == len(long_description), (
+        f"상세 접수 내용이 잘렸습니다: {len(description_field.input_value())}"
+        f" / {len(long_description)}"
     )
     page.get_by_label("신청 조회 비밀번호 *").fill("test1234")
     page.get_by_label(re.compile("개인정보 수집")).check()
@@ -108,6 +120,12 @@ with sync_playwright() as playwright:
     page.wait_for_load_state("networkidle")
     assert page.get_by_text("서비스 신청이 완료되었습니다.").is_visible()
     assert page.get_by_text("전원이 켜지지 않아요", exact=True).is_visible()
+    assert page.get_by_text("희망 일정").count() == 0
+    detail_description = page.locator(".request-description p").inner_text()
+    assert len(detail_description) == len(long_description.strip()), (
+        f"저장된 접수 내용이 잘렸습니다: {len(detail_description)}"
+        f" / {len(long_description.strip())}"
+    )
     # 숫자만 입력했지만 정규 형식으로 저장되었으므로 마스킹도 하이픈 형식이어야 한다.
     assert "010-****-5678" in page.locator("body").inner_text(), (
         f"연락처 마스킹이 정규 형식이 아님: {page.locator('body').inner_text()}"
@@ -162,6 +180,8 @@ with sync_playwright() as playwright:
     assert page.get_by_role("heading", name="접수내역 검색").is_visible()
     assert page.get_by_role("columnheader", name="번호").is_visible()
     assert page.get_by_role("columnheader", name="담당자").is_visible()
+    assert page.get_by_role("columnheader", name="접수구분").count() == 0
+    assert page.locator('select[name="receiptType"]').count() == 0
     assert page.get_by_role("link", name="미상").first.is_visible()
     assert (
         page.get_by_role("table").locator("tbody tr").first.locator("td").first.inner_text()
@@ -175,14 +195,36 @@ with sync_playwright() as playwright:
     assert page.get_by_role("heading", name="미상 고객 접수").is_visible(), (
         f"unexpected detail page: {page.url}; body={page.locator('body').inner_text()}"
     )
-    page.get_by_label("접수구분 *").select_option(label="관리자접수")
+    # 접수구분은 운영자 화면에서 완전히 제거되었다.
+    assert page.get_by_label("접수구분 *").count() == 0
+    assert page.get_by_label("사무실입금액").count() == 0
     page.get_by_label("담당자", exact=True).fill("테스트 담당자")
     page.get_by_label("방문구분").select_option(label="즉시")
     page.get_by_label("고객분류 *").select_option(label="재방문고객")
+
+    # 총수금액·자재비만 입력하면 부가세와 기사수익이 즉시 파생되어야 한다.
+    page.get_by_label("총수금액").fill("1100000")
+    page.get_by_label("자재비").fill("100000")
+    settlement = page.locator(".admin-derived-amount")
+    assert settlement.nth(0).inner_text().startswith("100,000 원"), (
+        f"부가세 자동 계산 실패: {settlement.nth(0).inner_text()}"
+    )
+    assert settlement.nth(1).inner_text().startswith("900,000 원"), (
+        f"기사수익 자동 계산 실패: {settlement.nth(1).inner_text()}"
+    )
+
     with page.expect_navigation(wait_until="networkidle"):
         page.get_by_role("button", name="저장", exact=True).click()
     assert page.get_by_label("담당자", exact=True).input_value() == "테스트 담당자"
     assert page.get_by_label("방문구분").input_value() == "즉시"
+    # 저장 후에도 파생 금액이 유지되고, 고객이 쓴 긴 접수 내용이 잘리지 않아야 한다.
+    assert page.get_by_label("총수금액").input_value() == "1100000"
+    assert page.locator(".admin-derived-amount").nth(1).inner_text().startswith("900,000 원")
+    saved_description = page.get_by_label("장애현상 *").input_value()
+    assert len(saved_description) == len(long_description.strip()), (
+        f"운영자 저장 후 접수 내용이 잘렸습니다: {len(saved_description)}"
+        f" / {len(long_description.strip())}"
+    )
     page.get_by_role("link", name="목록").click()
     page.wait_for_url(f"{BASE_URL}/admin")
     page.wait_for_load_state("networkidle")

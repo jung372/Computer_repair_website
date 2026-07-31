@@ -26,9 +26,14 @@ export function SiteFooter() {
           <Link href="/admin/login">운영자 로그인</Link>
         </div>
       </div>
+      <div className="container footer-business">
+        <span>사업자등록번호 {config.businessNumber}</span>
+        <span>대표 {config.representative}</span>
+        <span>{config.address}</span>
+      </div>
       <div className="container footer-bottom">
         <span>© {new Date().getFullYear()} {config.name}. All rights reserved.</span>
-        <span>사업자 정보는 실제 운영 정보로 교체해 주세요.</span>
+        <span>{config.name} · {config.phone}</span>
       </div>
     </footer>
   );

@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { CheckCircle2, ChevronRight, Clock3, MapPin, MonitorCog, ShieldCheck } from "lucide-react";
+import { CheckCircle2, ChevronRight, MapPin, MonitorCog, ShieldCheck } from "lucide-react";
 import Link from "next/link";
 import { cookies } from "next/headers";
 import { notFound } from "next/navigation";
@@ -87,7 +87,6 @@ export default async function RequestDetailPage({
               <div><dt><MonitorCog size={17} /> 기기</dt><dd>{DEVICE_LABELS[request.deviceType]}</dd></div>
               <div><dt><ShieldCheck size={17} /> 정보 보호</dt><dd>본인 확인 완료</dd></div>
               <div><dt><MapPin size={17} /> 지역</dt><dd>{request.regionPublic}</dd></div>
-              <div><dt><Clock3 size={17} /> 희망 일정</dt><dd>{request.preferredAt || "운영자와 협의"}</dd></div>
               {request.manufacturerModel && <div><dt>모델명</dt><dd>{request.manufacturerModel}</dd></div>}
               <div><dt>연락처</dt><dd>{maskPhone(request.phone)}</dd></div>
             </dl>
