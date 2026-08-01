@@ -13,9 +13,9 @@ export default function AdminDeniedPage() {
       <div className="admin-login-card">
         <span className="unlock-icon"><ShieldX size={30} /></span>
         <span className="eyebrow">Access denied</span>
-        <h1>로그인이 만료되었습니다</h1>
-        <p>운영자 페이지를 계속 사용하려면 비밀번호로 다시 로그인해 주세요.</p>
-        <Link className="button button-secondary" href="/admin/login">다시 로그인</Link>
+        <h1>접근 권한이 없습니다</h1>
+        <p>이 계정에 배정되지 않은 신청이거나 운영자 전용 메뉴입니다.</p>
+        <Link className="button button-secondary" href="/admin">내 신청 목록으로</Link>
       </div>
     </main>
   );

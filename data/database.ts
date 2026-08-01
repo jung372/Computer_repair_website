@@ -108,6 +108,10 @@ async function initializeDatabase() {
         id TEXT PRIMARY KEY,
         login_name TEXT NOT NULL UNIQUE,
         password_hash TEXT NOT NULL,
+        display_name TEXT NOT NULL DEFAULT '',
+        phone TEXT NOT NULL DEFAULT '',
+        role TEXT NOT NULL DEFAULT 'STAFF',
+        created_by TEXT,
         is_active INTEGER NOT NULL DEFAULT 1,
         session_version INTEGER NOT NULL DEFAULT 1,
         password_changed_at TEXT NOT NULL,
@@ -139,6 +143,9 @@ async function initializeDatabase() {
         receipt_type TEXT NOT NULL DEFAULT '온라인접수',
         assignee TEXT NOT NULL DEFAULT '',
         assignee_phone TEXT NOT NULL DEFAULT '',
+        assignee_account_id TEXT,
+        assigned_by TEXT,
+        assigned_at TEXT,
         customer_type TEXT NOT NULL DEFAULT '신규일반고객',
         landline TEXT NOT NULL DEFAULT '',
         invoice_date TEXT,
@@ -153,6 +160,7 @@ async function initializeDatabase() {
         total_amount INTEGER NOT NULL DEFAULT 0,
         material_cost INTEGER NOT NULL DEFAULT 0,
         vat_amount INTEGER NOT NULL DEFAULT 0,
+        material_vat_amount INTEGER NOT NULL DEFAULT 0,
         technician_income INTEGER NOT NULL DEFAULT 0,
         office_deposit INTEGER NOT NULL DEFAULT 0,
         updated_at TEXT NOT NULL,
@@ -205,6 +213,69 @@ async function initializeDatabase() {
       )
       .run();
   }
+  if (!operationColumns.results.some((column) => column.name === "material_vat_amount")) {
+    await db
+      .prepare(
+        "ALTER TABLE request_operations ADD COLUMN material_vat_amount INTEGER NOT NULL DEFAULT 0",
+      )
+      .run();
+    await db.batch([
+      db.prepare(`
+        UPDATE request_operations
+        SET payment_method = CASE payment_method
+              WHEN '현금결제' THEN '현금 결제'
+              WHEN '카드결제' THEN '카드 결제'
+              ELSE payment_method
+            END,
+            material_vat_amount = CAST(ROUND(material_cost / 10.0) AS INTEGER)
+      `),
+      db.prepare(`
+        UPDATE request_operations
+        SET vat_amount = CASE payment_method
+              WHEN '현금 결제' THEN 0
+              WHEN '현금영수증 결제' THEN CAST(ROUND(total_amount / 11.0) AS INTEGER)
+              WHEN '카드 결제' THEN CAST(ROUND(total_amount / 11.0) AS INTEGER)
+              ELSE vat_amount
+            END
+      `),
+      db.prepare(`
+        UPDATE request_operations
+        SET technician_income = MAX(
+          0,
+          total_amount - vat_amount - material_cost - material_vat_amount
+        )
+        WHERE payment_method IN ('현금 결제', '현금영수증 결제', '카드 결제')
+      `),
+    ]);
+  }
+  if (!operationColumns.results.some((column) => column.name === "assignee_account_id")) {
+    await db.batch([
+      db.prepare("ALTER TABLE request_operations ADD COLUMN assignee_account_id TEXT"),
+      db.prepare("ALTER TABLE request_operations ADD COLUMN assigned_by TEXT"),
+      db.prepare("ALTER TABLE request_operations ADD COLUMN assigned_at TEXT"),
+    ]);
+  }
+  const adminColumns = await db
+    .prepare("PRAGMA table_info(admins)")
+    .all<{ name: string }>();
+  if (!adminColumns.results.some((column) => column.name === "display_name")) {
+    await db.batch([
+      db.prepare("ALTER TABLE admins ADD COLUMN display_name TEXT NOT NULL DEFAULT ''"),
+      db.prepare("ALTER TABLE admins ADD COLUMN phone TEXT NOT NULL DEFAULT ''"),
+      db.prepare("ALTER TABLE admins ADD COLUMN role TEXT NOT NULL DEFAULT 'STAFF'"),
+      db.prepare("ALTER TABLE admins ADD COLUMN created_by TEXT"),
+      db.prepare(`
+        UPDATE admins
+        SET login_name = 'admin', display_name = '운영자', role = 'OWNER'
+        WHERE id = 'primary'
+      `),
+    ]);
+  }
+  await db
+    .prepare(
+      "CREATE INDEX IF NOT EXISTS request_operations_assignee_account_idx ON request_operations(assignee_account_id)",
+    )
+    .run();
   await db
     .prepare(
       "CREATE INDEX IF NOT EXISTS service_requests_lookup_phone_idx ON service_requests(lookup_key, phone)",

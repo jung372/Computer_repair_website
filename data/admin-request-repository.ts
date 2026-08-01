@@ -23,6 +23,9 @@ export type RequestOperationsRecord = {
   serialNumber: number;
   assignee: string;
   assigneePhone: string;
+  assigneeAccountId: string | null;
+  assignedBy: string | null;
+  assignedAt: string | null;
   customerType: string;
   landline: string;
   invoiceDate: string | null;
@@ -36,7 +39,8 @@ export type RequestOperationsRecord = {
   paymentMethod: string;
   totalAmount: number;
   materialCost: number;
-  vatAmount: number;
+  totalVatAmount: number;
+  materialVatAmount: number;
   technicianIncome: number;
   officeDeposit: number;
   operationsUpdatedAt: string;
@@ -48,6 +52,9 @@ type AdminRequestRow = RequestRow & {
   serial_no: number;
   assignee: string;
   assignee_phone: string;
+  assignee_account_id: string | null;
+  assigned_by: string | null;
+  assigned_at: string | null;
   customer_type: string;
   landline: string;
   invoice_date: string | null;
@@ -62,6 +69,7 @@ type AdminRequestRow = RequestRow & {
   total_amount: number;
   material_cost: number;
   vat_amount: number;
+  material_vat_amount: number;
   technician_income: number;
   office_deposit: number;
   operations_updated_at: string;
@@ -76,8 +84,6 @@ export type AdminRequestRecordUpdate = {
   status: RequestStatus;
   publicNote: string;
   internalNote: string;
-  assignee: string;
-  assigneePhone: string;
   customerType: string;
   landline: string;
   invoiceDate: string | null;
@@ -91,7 +97,8 @@ export type AdminRequestRecordUpdate = {
   paymentMethod: string;
   totalAmount: number;
   materialCost: number;
-  vatAmount: number;
+  totalVatAmount: number;
+  materialVatAmount: number;
   technicianIncome: number;
   officeDeposit: number;
 };
@@ -102,6 +109,9 @@ const ADMIN_REQUEST_SELECT = `
     serial.serial_no,
     operations.assignee,
     operations.assignee_phone,
+    operations.assignee_account_id,
+    operations.assigned_by,
+    operations.assigned_at,
     operations.customer_type,
     operations.landline,
     operations.invoice_date,
@@ -116,6 +126,7 @@ const ADMIN_REQUEST_SELECT = `
     operations.total_amount,
     operations.material_cost,
     operations.vat_amount,
+    operations.material_vat_amount,
     operations.technician_income,
     operations.office_deposit,
     operations.updated_at AS operations_updated_at
@@ -130,6 +141,9 @@ function mapAdminRequest(row: AdminRequestRow): AdminRequestRecord {
     serialNumber: Number(row.serial_no),
     assignee: row.assignee,
     assigneePhone: row.assignee_phone,
+    assigneeAccountId: row.assignee_account_id,
+    assignedBy: row.assigned_by,
+    assignedAt: row.assigned_at,
     customerType: row.customer_type,
     landline: row.landline,
     invoiceDate: row.invoice_date,
@@ -143,7 +157,8 @@ function mapAdminRequest(row: AdminRequestRow): AdminRequestRecord {
     paymentMethod: row.payment_method,
     totalAmount: Number(row.total_amount),
     materialCost: Number(row.material_cost),
-    vatAmount: Number(row.vat_amount),
+    totalVatAmount: Number(row.vat_amount),
+    materialVatAmount: Number(row.material_vat_amount),
     technicianIncome: Number(row.technician_income),
     officeDeposit: Number(row.office_deposit),
     operationsUpdatedAt: row.operations_updated_at,
@@ -193,10 +208,15 @@ function addIntegratedDateRange(
 export async function listAdminRequestRecords(
   filters: AdminRequestFilters = {},
   limit = 200,
+  assignedAccountId?: string,
 ) {
   await ensureDatabase();
   const clauses = ["sr.deleted_at IS NULL"];
   const values: unknown[] = [];
+  if (assignedAccountId) {
+    clauses.push("operations.assignee_account_id = ?");
+    values.push(assignedAccountId);
+  }
   const query = filters.q?.trim().slice(0, 100);
   if (query) {
     const pattern = `%${query}%`;
@@ -208,8 +228,10 @@ export async function listAdminRequestRecords(
     )`);
     values.push(...Array(10).fill(pattern));
   }
-  if (filters.assignee) {
-    clauses.push("operations.assignee = ?");
+  if (filters.assignee === "__UNASSIGNED__") {
+    clauses.push("operations.assignee_account_id IS NULL");
+  } else if (filters.assignee) {
+    clauses.push("operations.assignee_account_id = ?");
     values.push(filters.assignee);
   }
   if (filters.customerType) {
@@ -256,35 +278,27 @@ export async function listAdminRequestRecords(
   return result.results.map(mapAdminRequest);
 }
 
-export async function getAdminRequestRecord(publicId: string) {
+export async function getAdminRequestRecord(publicId: string, assignedAccountId?: string) {
   await ensureDatabase();
+  const assignmentClause = assignedAccountId ? " AND operations.assignee_account_id = ?" : "";
   const row = await getD1()
     .prepare(`
       ${ADMIN_REQUEST_SELECT}
-      WHERE sr.public_id = ? AND sr.deleted_at IS NULL
+      WHERE sr.public_id = ? AND sr.deleted_at IS NULL${assignmentClause}
     `)
-    .bind(publicId)
+    .bind(...(assignedAccountId ? [publicId, assignedAccountId] : [publicId]))
     .first<AdminRequestRow>();
   return row ? mapAdminRequest(row) : null;
 }
 
 export async function getAdminRequestFilterOptions() {
   await ensureDatabase();
-  const db = getD1();
-  const [assignees, customerTypes] = await Promise.all([
-    db
-      .prepare(
-        "SELECT DISTINCT assignee AS value FROM request_operations WHERE assignee <> '' ORDER BY assignee",
-      )
-      .all<{ value: string }>(),
-    db
-      .prepare(
-        "SELECT DISTINCT customer_type AS value FROM request_operations WHERE customer_type <> '' ORDER BY customer_type",
-      )
-      .all<{ value: string }>(),
-  ]);
+  const customerTypes = await getD1()
+    .prepare(
+      "SELECT DISTINCT customer_type AS value FROM request_operations WHERE customer_type <> '' ORDER BY customer_type",
+    )
+    .all<{ value: string }>();
   return {
-    assignees: assignees.results.map((row) => row.value),
     customerTypes: customerTypes.results.map((row) => row.value),
   };
 }
@@ -320,16 +334,13 @@ export async function updateAdminRequestRecord(
     db
       .prepare(`
         UPDATE request_operations
-        SET assignee = ?, assignee_phone = ?, customer_type = ?,
-            landline = ?, invoice_date = ?, invoice_content = ?, title = ?,
+        SET customer_type = ?, landline = ?, invoice_date = ?, invoice_content = ?, title = ?,
             request_category = ?, received_date = ?, visit_timing = ?, visit_date = ?, completed_date = ?,
-            payment_method = ?, total_amount = ?, material_cost = ?, vat_amount = ?,
+            payment_method = ?, total_amount = ?, material_cost = ?, vat_amount = ?, material_vat_amount = ?,
             technician_income = ?, office_deposit = ?, updated_at = ?
         WHERE request_id = ?
       `)
       .bind(
-        update.assignee,
-        update.assigneePhone,
         update.customerType,
         update.landline,
         update.invoiceDate,
@@ -343,7 +354,8 @@ export async function updateAdminRequestRecord(
         update.paymentMethod,
         update.totalAmount,
         update.materialCost,
-        update.vatAmount,
+        update.totalVatAmount,
+        update.materialVatAmount,
         update.technicianIncome,
         update.officeDeposit,
         now,
@@ -369,4 +381,62 @@ export async function updateAdminRequestRecord(
     );
   }
   await db.batch(statements);
+}
+
+export async function assignAdminRequest(
+  publicId: string,
+  staffId: string | null,
+  assignedBy: string,
+) {
+  await ensureDatabase();
+  const db = getD1();
+  const request = await getAdminRequestRecord(publicId);
+  if (!request) throw new Error("NOT_FOUND");
+  const staff = staffId
+    ? await db
+        .prepare(`
+          SELECT id, login_name, display_name, phone
+          FROM admins
+          WHERE id = ? AND role = 'STAFF' AND is_active = 1
+        `)
+        .bind(staffId)
+        .first<{ id: string; login_name: string; display_name: string; phone: string }>()
+    : null;
+  if (staffId && !staff) throw new Error("INVALID_ASSIGNEE");
+  const now = new Date().toISOString();
+  const assigneeName = staff?.display_name || staff?.login_name || "";
+  const assigneePhone = staff?.phone || "";
+  await db.batch([
+    db
+      .prepare(`
+        UPDATE request_operations
+        SET assignee_account_id = ?, assignee = ?, assignee_phone = ?,
+            assigned_by = ?, assigned_at = ?, updated_at = ?
+        WHERE request_id = ?
+      `)
+      .bind(staff?.id ?? null, assigneeName, assigneePhone, assignedBy, now, now, request.id),
+    db
+      .prepare(`
+        INSERT INTO admin_audit_logs
+          (id, admin_id, event_type, metadata, created_at)
+        VALUES (?, ?, 'REQUEST_ASSIGNED', ?, ?)
+      `)
+      .bind(
+        crypto.randomUUID(),
+        assignedBy,
+        JSON.stringify({
+          requestId: request.id,
+          publicId,
+          previousStaffId: request.assigneeAccountId,
+          staffId: staff?.id ?? null,
+        }),
+        now,
+      ),
+  ]);
+  return {
+    assigneeAccountId: staff?.id ?? null,
+    assignee: assigneeName,
+    assigneePhone,
+    assignedAt: now,
+  };
 }
