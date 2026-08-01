@@ -84,11 +84,15 @@ test("delivers Telegram notifications off the response path and retries them on 
 });
 
 test("backs up D1 into R2 on its own daily schedule", async () => {
-  const [workerEntry, backup, wrangler, localScript] = await Promise.all([
+  const [workerEntry, backup, wrangler, localScript, serverSync, serverSetup, restoreScript] =
+    await Promise.all([
     readFile(new URL("worker/index.ts", root), "utf8"),
     readFile(new URL("infrastructure/backup.ts", root), "utf8"),
     readFile(new URL("wrangler.jsonc", root), "utf8"),
     readFile(new URL("tools/backup-local.bat", root), "utf8"),
+    readFile(new URL("tools/server-backup/sync-r2-backups.ps1", root), "utf8"),
+    readFile(new URL("tools/server-backup/setup-backup-task.ps1", root), "utf8"),
+    readFile(new URL("tools/server-backup/restore-backup.ps1", root), "utf8"),
   ]);
 
   // Both schedules share one handler, so it must dispatch on the cron string;
@@ -107,11 +111,28 @@ test("backs up D1 into R2 on its own daily schedule", async () => {
   assert.doesNotMatch(backup, /service_requests/);
   // One batch is one transaction, which is what makes the snapshot consistent.
   assert.match(backup, /db\.batch</);
+  // The server must be able to reject a truncated or altered offsite copy.
+  assert.match(backup, /crypto\.subtle\.digest\("SHA-256"/);
+  assert.match(backup, /customMetadata: \{ sha256 \}/);
+  assert.match(backup, /`\$\{BACKUP_PREFIX\}\/\$\{backupDate\}\.json`/);
   // Retention belongs to the bucket lifecycle rule, not to Worker delete calls.
   assert.doesNotMatch(backup, /\.delete\(/);
 
   // R2 shares the Cloudflare account with D1, so an offsite copy must exist too.
   assert.match(localScript, /wrangler d1 export/);
+  assert.match(serverSync, /wrangler\.cmd/);
+  assert.match(serverSync, /Get-FileHash[\s\S]*SHA256/);
+  assert.match(serverSync, /Protect-CmsMessage/);
+  assert.match(serverSync, /Unprotect-CmsMessage/);
+  assert.match(serverSync, /retentionDays -ne 365/);
+  assert.match(serverSync, /maxBackupAgeHours/);
+  assert.match(serverSetup, /Find-GoogleDriveRoot/);
+  assert.match(serverSetup, /Protect-LocalRuntimeDirectory/);
+  assert.match(serverSetup, /LocalFallbackRoot = 'D:\\SecureBackups\\ComputerRepair'/);
+  assert.match(serverSetup, /retentionDays = 365/);
+  assert.match(serverSetup, /maxBackupAgeHours = 30/);
+  assert.match(restoreScript, /Unprotect-CmsMessage/);
+  assert.match(restoreScript, /production D1 database was not modified/);
 });
 
 test("removes public request discovery and postal code collection from customer UI", async () => {

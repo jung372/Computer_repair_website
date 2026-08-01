@@ -86,3 +86,49 @@ npm run deploy
 5. Cloudflare Workers 배포
 
 저장소에는 `CLOUDFLARE_API_TOKEN` GitHub Actions Secret이 필요합니다. Account ID는 `wrangler.jsonc`에서 관리합니다.
+
+## 서버 PC 신청 데이터 백업
+
+운영 D1은 매일 03:00 KST에 복구 가능한 SQL로 직렬화되어
+`combaksa-computer-repair-backups` R2 버킷에 저장됩니다. SQL과 함께 파일 크기,
+SHA-256, 테이블별 행 수를 기록한 manifest가 생성됩니다.
+
+서버 PC는 03:20 KST와 사용자 로그인 시 R2의 최신 백업을 내려받아 무결성을
+검사하고 Windows CMS 인증서로 암호화합니다. Google Drive Desktop의 동기화
+폴더를 찾으면 암호화된 파일을 그곳에 저장하고, 찾지 못하면
+`D:\SecureBackups\ComputerRepair`를 사용합니다. 두 저장소 모두 보존기간은
+365일입니다. SQL 원문과 Cloudflare API Token은 Google Drive에 기록되지 않습니다.
+
+서버 PC의 관리자 PowerShell에서 저장소를 clone하고 `npm ci`를 실행한 다음
+설정합니다. Google Drive 경로는 자동 탐색보다 명시하는 편이 안전합니다.
+
+```powershell
+Set-Location "D:\05 AI Study\Computer_Repair_Website"
+npm ci
+.\tools\server-backup\setup-backup-task.ps1 `
+  -GoogleDriveRoot "G:\내 드라이브" `
+  -CertificateBackupPath "E:\OfflineKeys\computer-repair-backup.pfx"
+```
+
+설정 과정에서 다음 값을 입력합니다.
+
+- 해당 R2 버킷만 읽을 수 있는 Cloudflare API Token
+- 오프라인 PFX 복구본을 보호할 비밀번호
+
+Google Drive가 설치되지 않았거나 지정 경로가 쓰기 불가능하면 로컬 폴더로
+자동 대체됩니다. 암호화 개인키가 서버와 함께 손실되면 Google Drive 백업을
+복구할 수 없으므로 PFX와 비밀번호는 Google Drive 밖의 별도 보호 매체에
+보관해야 합니다.
+
+암호화된 백업을 SQL로 복호화할 때는 다음 명령을 사용합니다. 이 명령은 SQL
+파일만 만들며 운영 D1을 자동으로 변경하지 않습니다.
+
+```powershell
+.\tools\server-backup\restore-backup.ps1 `
+  -EncryptedBackupPath "G:\내 드라이브\ComputerRepairBackups\2026\08\d1-2026-08-01.sql.p7m" `
+  -OutputSqlPath "D:\RestoreStaging\d1-2026-08-01.sql"
+```
+
+복구 SQL은 먼저 임시 D1에 마이그레이션과 함께 적용해 테이블별 건수를 검증한
+후 운영 복구에 사용합니다. 개인정보가 포함된 복호화 SQL은 점검 종료 즉시
+안전하게 제거합니다.
