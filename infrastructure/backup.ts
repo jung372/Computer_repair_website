@@ -23,10 +23,15 @@ const KST_OFFSET_MS = 9 * 60 * 60 * 1000;
 export type BackupResult = {
   key: string;
   bytes: number;
+  sha256: string;
   totalRows: number;
   tables: { name: string; rows: number }[];
   generatedAt: string;
 };
+
+function toHex(bytes: ArrayBuffer): string {
+  return Array.from(new Uint8Array(bytes), (byte) => byte.toString(16).padStart(2, "0")).join("");
+}
 
 function requireBucket(): R2Bucket {
   if (!env.BACKUPS) {
@@ -101,24 +106,32 @@ export async function runDailyBackup(now = new Date()): Promise<BackupResult> {
   });
 
   const key = `${BACKUP_PREFIX}/${backupDate}.sql`;
-  const bytes = new TextEncoder().encode(sql).byteLength;
+  const encoded = new TextEncoder().encode(sql);
+  const bytes = encoded.byteLength;
+  const sha256 = toHex(await crypto.subtle.digest("SHA-256", encoded));
   const tables = dumps.map((dump) => ({ name: dump.name, rows: dump.rows.length }));
   const result: BackupResult = {
     key,
     bytes,
+    sha256,
     totalRows: tables.reduce((sum, table) => sum + table.rows, 0),
     tables,
     generatedAt,
   };
 
-  await bucket.put(key, sql, {
+  await bucket.put(key, encoded, {
     httpMetadata: { contentType: "application/sql; charset=utf-8" },
+    customMetadata: { sha256 },
   });
-  // A single GET on the manifest answers "did last night's backup run?" without
-  // listing or downloading the dumps.
-  await bucket.put(MANIFEST_KEY, JSON.stringify(result, null, 2), {
+
+  const manifest = JSON.stringify(result, null, 2);
+  const manifestOptions = {
     httpMetadata: { contentType: "application/json; charset=utf-8" },
-  });
+  };
+  // Keep an immutable sidecar beside each dump for offsite verification, and a
+  // stable pointer so the server PC can fetch the newest backup with two GETs.
+  await bucket.put(`${BACKUP_PREFIX}/${backupDate}.json`, manifest, manifestOptions);
+  await bucket.put(MANIFEST_KEY, manifest, manifestOptions);
 
   return result;
 }
