@@ -11,7 +11,7 @@
     "start": "vinext start",
     "preview": "npm run build && vite preview",
     "deploy": "npm run build && wrangler deploy",
-    "test": "npm run build && node --experimental-strip-types --test tests/rendered-html.test.mjs tests/backup-serialize.test.mjs tests/settlement.test.mjs",
+    "test": "npm run build && node --experimental-strip-types --test tests/rendered-html.test.mjs tests/backup-serialize.test.mjs tests/settlement.test.mjs tests/canonical-url.test.mjs",
     "lint": "eslint app components data db examples infrastructure lib tests worker next.config.ts postcss.config.mjs drizzle.config.ts vite.config.ts",
     "types": "wrangler types",
     "types:check": "wrangler types --check",
