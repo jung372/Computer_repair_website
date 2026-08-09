@@ -2,6 +2,7 @@
 import handler from "vinext/server/app-router-entry";
 import { runDailyBackup } from "../infrastructure/backup";
 import { processPendingNotifications } from "../infrastructure/telegram";
+import { getCanonicalRedirectUrl } from "../lib/canonical-url";
 import { getRuntimeString } from "../lib/runtime-config";
 
 /** How many queued notifications one scheduled run may drain. */
@@ -13,6 +14,8 @@ const BACKUP_CRON = "0 18 * * *";
 const worker = {
   async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
     const url = new URL(request.url);
+    const canonicalUrl = getCanonicalRedirectUrl(url);
+    if (canonicalUrl) return Response.redirect(canonicalUrl, 308);
 
     try {
       const response = await handler.fetch(request, env, ctx);

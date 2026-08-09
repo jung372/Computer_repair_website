@@ -5,6 +5,17 @@
   "main": "./worker/index.ts",
   "compatibility_date": "2026-05-22",
   "compatibility_flags": ["nodejs_compat"],
+  "workers_dev": true,
+  "routes": [
+    {
+      "pattern": "combaksa.pe.kr",
+      "custom_domain": true
+    },
+    {
+      "pattern": "www.combaksa.pe.kr",
+      "custom_domain": true
+    }
+  ],
   "assets": {
     "binding": "ASSETS"
   },
@@ -14,7 +25,7 @@
     "TELEGRAM_NOTIFICATION_ENABLED": "true",
     "REQUEST_SUBMISSION_ENABLED": "true",
     // Scheduled runs have no request to derive the admin link from.
-    "PUBLIC_BASE_URL": "https://combaksa-computer-repair.jung372.workers.dev"
+    "PUBLIC_BASE_URL": "https://combaksa.pe.kr"
   },
   "triggers": {
     "crons": [

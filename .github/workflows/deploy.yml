@@ -53,7 +53,7 @@ jobs:
         run: npm run build
 
       - name: Run regression tests
-        run: node --test tests/rendered-html.test.mjs
+        run: node --experimental-strip-types --test tests/rendered-html.test.mjs tests/backup-serialize.test.mjs tests/settlement.test.mjs tests/canonical-url.test.mjs
 
       - name: Deploy Worker
         uses: cloudflare/wrangler-action@v3
