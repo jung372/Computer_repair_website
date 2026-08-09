@@ -1,12 +1,14 @@
 import type { Metadata } from "next";
-import { Search, ShieldCheck } from "lucide-react";
+import { ArrowRight, MessageSquareText, Phone, Search } from "lucide-react";
 import Link from "next/link";
+import { AdminAccountNav } from "@/components/admin-account-nav";
 import { AdminStatusFilter } from "@/components/admin-status-filter";
 import { StatusBadge } from "@/components/status-badge";
 import {
   getAdminRequestFilterOptions,
   listAdminRequestRecords,
 } from "@/data/admin-request-repository";
+import { listStaffAccounts } from "@/data/admin-repository";
 import { CUSTOMER_TYPES } from "@/lib/domain";
 import { requireAdmin } from "@/lib/admin-auth";
 
@@ -42,7 +44,7 @@ export default async function AdminPage({
   const selectedStatuses = all(query.status);
   const filters = {
     q: first(query.q),
-    assignee: first(query.assignee),
+    assignee: admin.role === "OWNER" ? first(query.assignee) : "",
     customerType: first(query.customerType),
     integratedFrom: first(query.integratedFrom),
     integratedTo: first(query.integratedTo),
@@ -52,11 +54,13 @@ export default async function AdminPage({
     completedTo: first(query.completedTo),
     statuses: selectedStatuses,
   };
-  const [requests, filterOptions] = await Promise.all([
-    listAdminRequestRecords(filters),
+  const [requests, filterOptions, staffAccounts] = await Promise.all([
+    listAdminRequestRecords(filters, 200, admin.role === "STAFF" ? admin.id : undefined),
     getAdminRequestFilterOptions(),
+    admin.role === "OWNER" ? listStaffAccounts() : Promise.resolve([]),
   ]);
   const customerTypes = unique([...CUSTOMER_TYPES, ...filterOptions.customerTypes]);
+  const returnTo = buildAdminReturnPath(query);
 
   return (
     <main id="main-content" className="admin-shell">
@@ -64,18 +68,14 @@ export default async function AdminPage({
         <div className="container admin-top-inner">
           <div>
             <span className="eyebrow eyebrow-light">Operations</span>
-            <h1>서비스 접수 관리</h1>
-            <p>{admin.displayName}님, 검색 조건으로 접수 내역을 빠르게 확인하고 처리하세요.</p>
+            <h1>{admin.role === "OWNER" ? "서비스 접수 관리" : "내 배정 신청"}</h1>
+            <p>
+              {admin.displayName}님, {admin.role === "OWNER"
+                ? "전체 접수 내역을 확인하고 담당자를 배정하세요."
+                : "운영자가 배정한 신청 내역만 표시됩니다."}
+            </p>
           </div>
-          <div className="admin-account">
-            <span className="admin-identity">보안 세션 사용 중</span>
-            <Link className="admin-security-link" href="/admin/settings/security">
-              <ShieldCheck size={15} aria-hidden="true" /> 비밀번호 변경
-            </Link>
-            <form action="/api/admin/logout" method="post">
-              <button type="submit">로그아웃</button>
-            </form>
-          </div>
+          <AdminAccountNav user={admin} />
         </div>
       </section>
 
@@ -89,7 +89,7 @@ export default async function AdminPage({
             <p>현재 조건에 맞는 접수 <strong>{requests.length}</strong>건</p>
           </div>
 
-          <div className="admin-search-grid">
+          <div className={`admin-search-grid ${admin.role === "STAFF" ? "staff-scope" : ""}`}>
             <label className="admin-search-keyword">
               <span>검색어</span>
               <div className="admin-input-with-icon">
@@ -101,13 +101,20 @@ export default async function AdminPage({
                 />
               </div>
             </label>
-            <label>
-              <span>담당기사</span>
-              <select name="assignee" defaultValue={filters.assignee}>
-                <option value="">담당자 전체</option>
-                {filterOptions.assignees.map((value) => <option key={value}>{value}</option>)}
-              </select>
-            </label>
+            {admin.role === "OWNER" && (
+              <label>
+                <span>담당기사</span>
+                <select name="assignee" defaultValue={filters.assignee}>
+                  <option value="">담당자 전체</option>
+                  <option value="__UNASSIGNED__">미배정</option>
+                  {staffAccounts.map((account) => (
+                    <option value={account.id} key={account.id}>
+                      {account.displayName} · {account.loginName}{account.isActive ? "" : " (차단됨)"}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            )}
             <label>
               <span>고객구분</span>
               <select name="customerType" defaultValue={filters.customerType}>
@@ -159,7 +166,9 @@ export default async function AdminPage({
           </div>
           <small>최신 접수번호 순 · 최대 200건</small>
         </div>
-        <div className="admin-table-wrap">
+        {requests.length ? (
+          <>
+        <div className="admin-table-wrap admin-request-table-wrap">
           <table className="admin-table admin-operations-table">
             <thead>
               <tr>
@@ -177,7 +186,10 @@ export default async function AdminPage({
                 <tr key={request.id}>
                   <td className="admin-serial">{request.serialNumber}</td>
                   <td>
-                    <Link className="admin-customer-link" href={`/admin/requests/${request.publicId}`}>
+                    <Link
+                      className="admin-customer-link"
+                      href={`/admin/requests/${request.publicId}?returnTo=${encodeURIComponent(returnTo)}`}
+                    >
                       {request.name || "미상"}
                     </Link>
                   </td>
@@ -198,16 +210,75 @@ export default async function AdminPage({
               ))}
             </tbody>
           </table>
-          {!requests.length && (
-            <div className="empty-state">
-              <strong>조건에 맞는 접수 내역이 없습니다.</strong>
-              <p>검색 조건을 줄이거나 초기화한 뒤 다시 확인해 주세요.</p>
-            </div>
-          )}
         </div>
+        <div className="admin-request-card-list">
+          {requests.map((request) => {
+            const detailHref = `/admin/requests/${request.publicId}?returnTo=${encodeURIComponent(returnTo)}`;
+            return (
+              <article className="admin-request-card" key={request.id}>
+                <header className="admin-request-card-header">
+                  <div>
+                    <strong>{request.name || "미상"}</strong>
+                    <span>{request.customerType}</span>
+                  </div>
+                  <div className="admin-request-card-reference">
+                    <strong>#{request.serialNumber}</strong>
+                    <time dateTime={request.receivedDate}>{request.receivedDate}</time>
+                  </div>
+                </header>
+
+                <div className="admin-request-card-chips">
+                  <StatusBadge status={request.status} />
+                  <a className="admin-request-phone-chip" href={`tel:${request.phone}`}>
+                    <Phone size={14} aria-hidden="true" /> {request.phone}
+                  </a>
+                  <a className="admin-request-sms-chip" href={`sms:${request.phone}`}>
+                    <MessageSquareText size={14} aria-hidden="true" /> SMS
+                  </a>
+                </div>
+
+                <div className="admin-request-card-body">
+                  <Link className="admin-request-card-title" href={detailHref}>
+                    {request.title || request.symptom || "수리요청"}
+                  </Link>
+                  <p className="admin-request-card-symptom">{request.symptom}</p>
+                  <p className="admin-request-card-description">{request.description}</p>
+                  <p className="admin-request-card-address">{request.address1}{request.address2 ? ` ${request.address2}` : ""}</p>
+                  <span className={`admin-request-assignee ${request.assignee ? "assigned" : "unassigned"}`}>
+                    {admin.role === "STAFF" ? "내 배정" : request.assignee || "미배정"}
+                  </span>
+                </div>
+
+                <Link className="admin-request-card-detail" href={detailHref}>
+                  상세보기 / 수정하기 <ArrowRight size={16} aria-hidden="true" />
+                </Link>
+              </article>
+            );
+          })}
+        </div>
+          </>
+        ) : (
+          <div className="empty-state">
+            <strong>{admin.role === "STAFF" ? "배정된 신청 내역이 없습니다." : "조건에 맞는 접수 내역이 없습니다."}</strong>
+            <p>{admin.role === "STAFF" ? "운영자가 담당자로 배정하면 이곳에 표시됩니다." : "검색 조건을 줄이거나 초기화한 뒤 다시 확인해 주세요."}</p>
+          </div>
+        )}
       </section>
     </main>
   );
+}
+
+function buildAdminReturnPath(query: AdminSearchParams) {
+  const parameters = new URLSearchParams();
+  for (const [key, value] of Object.entries(query)) {
+    if (Array.isArray(value)) {
+      for (const item of value) parameters.append(key, item);
+    } else if (value) {
+      parameters.set(key, value);
+    }
+  }
+  const search = parameters.toString();
+  return search ? `/admin?${search}` : "/admin";
 }
 
 function DateRange({

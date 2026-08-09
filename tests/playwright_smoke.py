@@ -172,7 +172,8 @@ with sync_playwright() as playwright:
         page.wait_for_load_state("networkidle")
 
     page.goto(f"{BASE_URL}/admin/login", wait_until="networkidle")
-    page.get_by_label("운영자 비밀번호").fill("StrongLocalAdmin123!")
+    page.get_by_label("아이디").fill("admin")
+    page.get_by_label("비밀번호", exact=True).fill("StrongLocalAdmin123!")
     page.get_by_role("button", name="로그인").click()
     page.wait_for_url(f"{BASE_URL}/admin")
     page.wait_for_load_state("networkidle")
@@ -189,6 +190,23 @@ with sync_playwright() as playwright:
     )
     page.screenshot(path=str(ARTIFACTS / "admin-ledger-desktop.png"), full_page=True)
 
+    # 운영자만 직원 계정을 만들 수 있고 숫자 4자리 비밀번호를 발급할 수 있다.
+    page.get_by_role("link", name="직원 관리").click()
+    page.wait_for_url(f"{BASE_URL}/admin/staff")
+    page.get_by_label("직원명").fill("테스트 담당자")
+    page.get_by_label("로그인 아이디").fill("staff01")
+    staff_phone = page.get_by_label("연락처")
+    assert staff_phone.get_attribute("maxlength") is None
+    staff_phone.press_sequentially("01022223333")
+    assert staff_phone.input_value() == "010-2222-3333"
+    page.get_by_label("숫자 비밀번호").fill("1234")
+    page.get_by_role("button", name="직원 등록").click()
+    page.wait_for_url(re.compile(r"/admin/staff\?status=created"))
+    assert page.get_by_role("heading", name="테스트 담당자").is_visible()
+    page.get_by_role("link", name="신청내역").click()
+    page.wait_for_url(f"{BASE_URL}/admin")
+    page.wait_for_load_state("networkidle")
+
     page.get_by_role("link", name="미상").first.click()
     page.wait_for_url(re.compile(r"/admin/requests/R-\d{8}-[A-F0-9]{6}"))
     page.wait_for_load_state("networkidle")
@@ -198,34 +216,48 @@ with sync_playwright() as playwright:
     # 접수구분은 운영자 화면에서 완전히 제거되었다.
     assert page.get_by_label("접수구분 *").count() == 0
     assert page.get_by_label("사무실입금액").count() == 0
-    page.get_by_label("담당자", exact=True).fill("테스트 담당자")
+    page.get_by_label("담당자", exact=True).select_option(label="테스트 담당자 · staff01")
+    page.get_by_role("button", name="담당자 배정").click()
+    assert page.get_by_text("담당자 배정을 저장했습니다.", exact=True).first.is_visible()
     page.get_by_label("방문구분").select_option(label="즉시")
     page.get_by_label("고객분류 *").select_option(label="재방문고객")
 
-    # 총수금액·자재비만 입력하면 부가세와 기사수익이 즉시 파생되어야 한다.
+    # 결제방법·총수금액·자재비를 입력하면 두 부가세와 기사수익이 즉시 파생되어야 한다.
+    page.get_by_label("결제방법").select_option(label="카드 결제")
     page.get_by_label("총수금액").fill("1100000")
     page.get_by_label("자재비").fill("100000")
     settlement = page.locator(".admin-derived-amount")
     assert settlement.nth(0).inner_text().startswith("100,000 원"), (
-        f"부가세 자동 계산 실패: {settlement.nth(0).inner_text()}"
+        f"총수금액 부가세 자동 계산 실패: {settlement.nth(0).inner_text()}"
     )
-    assert settlement.nth(1).inner_text().startswith("900,000 원"), (
-        f"기사수익 자동 계산 실패: {settlement.nth(1).inner_text()}"
+    assert settlement.nth(1).inner_text().startswith("10,000 원"), (
+        f"자재비 부가세 자동 계산 실패: {settlement.nth(1).inner_text()}"
+    )
+    assert settlement.nth(2).inner_text().startswith("890,000 원"), (
+        f"기사수익 자동 계산 실패: {settlement.nth(2).inner_text()}"
     )
 
-    with page.expect_navigation(wait_until="networkidle"):
-        page.get_by_role("button", name="저장", exact=True).click()
-    assert page.get_by_label("담당자", exact=True).input_value() == "테스트 담당자"
+    save_button = page.get_by_role("button", name="저장", exact=True)
+    save_button.scroll_into_view_if_needed()
+    detail_url = page.url
+    scroll_before_save = page.evaluate("window.scrollY")
+    save_button.click()
+    page.get_by_text("접수 내역을 저장했습니다.", exact=True).wait_for()
+    assert page.url == detail_url
+    assert abs(page.evaluate("window.scrollY") - scroll_before_save) < 5
+    assert page.get_by_label("담당자", exact=True).input_value() != ""
     assert page.get_by_label("방문구분").input_value() == "즉시"
     # 저장 후에도 파생 금액이 유지되고, 고객이 쓴 긴 접수 내용이 잘리지 않아야 한다.
     assert page.get_by_label("총수금액").input_value() == "1100000"
-    assert page.locator(".admin-derived-amount").nth(1).inner_text().startswith("900,000 원")
+    assert page.get_by_label("결제방법").input_value() == "카드 결제"
+    assert page.locator(".admin-derived-amount").nth(2).inner_text().startswith("890,000 원")
     saved_description = page.get_by_label("장애현상 *").input_value()
     assert len(saved_description) == len(long_description.strip()), (
         f"운영자 저장 후 접수 내용이 잘렸습니다: {len(saved_description)}"
         f" / {len(long_description.strip())}"
     )
-    page.get_by_role("link", name="목록").click()
+    with page.expect_navigation(wait_until="networkidle"):
+        page.get_by_role("link", name="목록").click()
     page.wait_for_url(f"{BASE_URL}/admin")
     page.wait_for_load_state("networkidle")
     admin_table = page.get_by_role("table")
@@ -240,13 +272,34 @@ with sync_playwright() as playwright:
     page.get_by_role("button", name="비밀번호 변경").click()
     page.wait_for_url(re.compile(r"/admin/login\?changed=done"))
     page.wait_for_load_state("networkidle")
-    page.get_by_label("운영자 비밀번호").fill("ChangedLocalAdmin456!")
+    assert page.get_by_label("아이디").input_value() == "admin"
+    page.get_by_label("비밀번호", exact=True).fill("ChangedLocalAdmin456!")
     page.get_by_role("button", name="로그인").click()
     page.wait_for_url(f"{BASE_URL}/admin")
     page.wait_for_load_state("networkidle")
     assert page.get_by_role("heading", name="서비스 접수 관리").is_visible()
 
+    # 직원은 같은 로그인 화면을 사용하지만 본인에게 배정된 신청만 볼 수 있다.
+    page.get_by_role("button", name="로그아웃").click()
+    page.wait_for_url(f"{BASE_URL}/admin/login")
+    assert page.get_by_label("아이디").input_value() == "admin"
+    page.get_by_label("아이디").fill("staff01")
+    page.get_by_label("비밀번호", exact=True).fill("1234")
+    page.get_by_role("button", name="로그인").click()
+    page.wait_for_url(f"{BASE_URL}/admin")
+    page.wait_for_load_state("networkidle")
+    assert page.get_by_role("heading", name="내 배정 신청").is_visible()
+    assert page.get_by_role("link", name="직원 관리").count() == 0
+    assert page.get_by_role("table").locator("tbody tr").count() == 1
+
     mobile = browser.new_page(viewport={"width": 390, "height": 844})
+    mobile.goto(f"{BASE_URL}/admin", wait_until="networkidle")
+    assert mobile.locator(".admin-request-card").count() == 1
+    assert mobile.locator(".admin-request-card").is_visible()
+    assert not mobile.locator(".admin-request-table-wrap").is_visible()
+    assert mobile.get_by_role("link", name="상세보기 / 수정하기").is_visible()
+    mobile.screenshot(path=str(ARTIFACTS / "admin-mobile-cards.png"), full_page=True)
+
     mobile.goto(f"{BASE_URL}/requests", wait_until="networkidle")
     assert mobile.get_by_role("heading", name="내 신청 조회", exact=True).is_visible()
     mobile.screenshot(path=str(ARTIFACTS / "lookup-mobile.png"), full_page=True)

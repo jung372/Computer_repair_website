@@ -1,4 +1,4 @@
-import { changePrimaryAdminPassword, getPrimaryAdmin, recordAdminAudit } from "@/data/admin-repository";
+import { changeAccountPassword, getAdminAccountById, recordAdminAudit } from "@/data/admin-repository";
 import {
   clearAccessFailures,
   getAccessAttempt,
@@ -10,6 +10,7 @@ import {
   getAdminUser,
 } from "@/lib/admin-auth";
 import { hashPassword, verifyPassword } from "@/lib/security/password";
+import { isValidStaffPassword } from "@/lib/account-policy";
 import { assertSameOrigin, hashClientAddress } from "@/lib/security/request-guard";
 
 export async function POST(request: Request) {
@@ -18,32 +19,35 @@ export async function POST(request: Request) {
     const user = await getAdminUser();
     if (!user) return Response.redirect(new URL("/admin/login", request.url), 303);
     const clientHash = await hashClientAddress(request);
-    const key = `admin-password:${clientHash}`;
+    const key = `admin-password:${user.id}:${clientHash}`;
     const attempt = await getAccessAttempt(key);
     if (attempt?.blocked_until && new Date(attempt.blocked_until).getTime() > Date.now()) {
       return errorRedirect(request, "blocked");
     }
-    const admin = await getPrimaryAdmin();
-    if (!admin?.isActive) return Response.redirect(new URL("/admin/login", request.url), 303);
+    const account = await getAdminAccountById(user.id);
+    if (!account?.isActive) return Response.redirect(new URL("/admin/login", request.url), 303);
     const form = await request.formData();
     const currentPassword = String(form.get("currentPassword") ?? "");
     const newPassword = String(form.get("newPassword") ?? "");
     const confirmPassword = String(form.get("confirmPassword") ?? "");
 
-    if (!(await verifyPassword(currentPassword, admin.passwordHash))) {
+    if (!(await verifyPassword(currentPassword, account.passwordHash))) {
       await recordAccessFailure(key);
-      await recordAdminAudit("PASSWORD_CHANGE_FAILED", clientHash, admin.id);
+      await recordAdminAudit("PASSWORD_CHANGE_FAILED", clientHash, account.id);
       return errorRedirect(request, "current");
     }
-    if (await verifyPassword(newPassword, admin.passwordHash)) {
+    if (await verifyPassword(newPassword, account.passwordHash)) {
       return errorRedirect(request, "same");
     }
     const length = Array.from(newPassword).length;
-    if (length < 12 || length > 64 || newPassword !== confirmPassword) {
+    const validForRole = account.role === "OWNER"
+      ? length >= 12 && length <= 64
+      : isValidStaffPassword(newPassword);
+    if (!validForRole || newPassword !== confirmPassword) {
       return errorRedirect(request, "invalid");
     }
 
-    await changePrimaryAdminPassword(await hashPassword(newPassword), clientHash);
+    await changeAccountPassword(account.id, await hashPassword(newPassword), clientHash);
     await clearAccessFailures(key);
     const url = new URL("/admin/login", request.url);
     url.searchParams.set("changed", "done");

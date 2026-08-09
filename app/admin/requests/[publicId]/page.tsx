@@ -1,12 +1,14 @@
 import type { Metadata } from "next";
 import { ChevronRight } from "lucide-react";
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
+import { AdminAccountNav } from "@/components/admin-account-nav";
 import { AdminRequestRecordForm } from "@/components/admin-request-record-form";
 import { getAdminRequestRecord } from "@/data/admin-request-repository";
+import { listStaffAccounts } from "@/data/admin-repository";
 import { listStatusHistory } from "@/data/request-repository";
 import { STATUS_LABELS } from "@/lib/domain";
-import { requireAdmin } from "@/lib/admin-auth";
+import { requireAdmin, safeAdminReturnPath } from "@/lib/admin-auth";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
@@ -16,19 +18,32 @@ export const metadata: Metadata = {
 
 export default async function AdminRequestPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ publicId: string }>;
+  searchParams: Promise<{ returnTo?: string }>;
 }) {
   const { publicId } = await params;
-  await requireAdmin(`/admin/requests/${publicId}`);
-  const request = await getAdminRequestRecord(publicId);
-  if (!request) notFound();
-  const history = await listStatusHistory(request.id);
+  const user = await requireAdmin(`/admin/requests/${publicId}`);
+  const request = await getAdminRequestRecord(
+    publicId,
+    user.role === "STAFF" ? user.id : undefined,
+  );
+  if (!request) {
+    if (user.role === "STAFF") redirect("/admin/denied");
+    notFound();
+  }
+  const [history, staff, query] = await Promise.all([
+    listStatusHistory(request.id),
+    user.role === "OWNER" ? listStaffAccounts() : Promise.resolve([]),
+    searchParams,
+  ]);
+  const returnTo = safeAdminReturnPath(query.returnTo ?? "/admin");
 
   return (
     <main id="main-content" className="admin-shell">
       <section className="admin-top admin-detail-top">
-        <div className="container">
+        <div className="container admin-detail-header">
           <div className="breadcrumbs breadcrumbs-light">
             <Link href="/admin">접수내역</Link>
             <ChevronRight size={14} />
@@ -41,11 +56,23 @@ export default async function AdminRequestPage({
               <p>{request.publicId} · 최종 수정 {formatDateTime(request.operationsUpdatedAt)}</p>
             </div>
           </div>
+          <AdminAccountNav user={user} />
         </div>
       </section>
 
       <section className="container admin-record-layout">
-        <AdminRequestRecordForm request={request} />
+        <AdminRequestRecordForm
+          request={request}
+          user={user}
+          staff={staff.map((account) => ({
+            id: account.id,
+            loginName: account.loginName,
+            displayName: account.displayName,
+            phone: account.phone,
+            isActive: account.isActive,
+          }))}
+          returnTo={returnTo}
+        />
 
         <aside className="admin-record-history">
           <div className="timeline-card">

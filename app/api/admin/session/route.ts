@@ -1,11 +1,13 @@
 import {
   ADMIN_SESSION_COOKIE,
+  LAST_LOGIN_COOKIE,
   LEGACY_ADMIN_SESSION_COOKIE,
-  authenticateAdminPassword,
+  authenticateAdminCredentials,
   createAdminSessionToken,
   safeAdminReturnPath,
 } from "@/lib/admin-auth";
-import { getPrimaryAdmin, recordAdminAudit } from "@/data/admin-repository";
+import { getAdminAccountByLoginName, recordAdminAudit } from "@/data/admin-repository";
+import { normalizeLoginName } from "@/lib/account-policy";
 import {
   clearAccessFailures,
   getAccessAttempt,
@@ -20,34 +22,55 @@ export async function POST(request: Request) {
   try {
     assertSameOrigin(request);
     const form = await request.formData();
+    const loginName = normalizeLoginName(form.get("loginName"));
     const password = String(form.get("password") ?? "");
     const returnTo = safeAdminReturnPath(String(form.get("returnTo") ?? "/admin"));
     const clientHash = await hashClientAddress(request);
-    const key = `admin:${clientHash}`;
-    const attempt = await getAccessAttempt(key);
+    const ipKey = `admin-ip:${clientHash}`;
+    const accountKey = `admin-account:${loginName || "empty"}`;
+    const [ipAttempt, accountAttempt] = await Promise.all([
+      getAccessAttempt(ipKey),
+      getAccessAttempt(accountKey),
+    ]);
 
     if (
-      attempt?.blocked_until &&
-      new Date(attempt.blocked_until).getTime() > Date.now()
+      [ipAttempt, accountAttempt].some(
+        (attempt) => attempt?.blocked_until && new Date(attempt.blocked_until).getTime() > Date.now(),
+      )
     ) {
       return loginRedirect(request, returnTo, "blocked");
     }
 
-    const admin = await authenticateAdminPassword(password, clientHash);
-    if (!admin) {
-      await recordAccessFailure(key);
-      await recordAdminAudit("LOGIN_FAILED", clientHash, (await getPrimaryAdmin())?.id ?? null);
+    const account = await authenticateAdminCredentials(loginName, password, clientHash);
+    if (!account) {
+      await Promise.all([
+        recordAccessFailure(ipKey),
+        recordAccessFailure(accountKey),
+      ]);
+      await recordAdminAudit(
+        "LOGIN_FAILED",
+        clientHash,
+        (await getAdminAccountByLoginName(loginName))?.id ?? null,
+        { loginName },
+      );
       return loginRedirect(request, returnTo, "invalid");
     }
 
-    await clearAccessFailures(key);
+    await Promise.all([
+      clearAccessFailures(ipKey),
+      clearAccessFailures(accountKey),
+    ]);
     const response = new Response(null, {
       status: 303,
       headers: { Location: new URL(returnTo, request.url).toString() },
     });
     response.headers.append(
       "Set-Cookie",
-      `${ADMIN_SESSION_COOKIE}=${await createAdminSessionToken(admin)}; Path=/; HttpOnly${secureFlag(request)}; SameSite=Strict; Max-Age=28800`,
+      `${ADMIN_SESSION_COOKIE}=${await createAdminSessionToken(account)}; Path=/; HttpOnly${secureFlag(request)}; SameSite=Strict; Max-Age=28800`,
+    );
+    response.headers.append(
+      "Set-Cookie",
+      `${LAST_LOGIN_COOKIE}=${encodeURIComponent(account.loginName)}; Path=/admin; HttpOnly${secureFlag(request)}; SameSite=Strict; Max-Age=15552000`,
     );
     response.headers.append(
       "Set-Cookie",

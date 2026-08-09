@@ -2,23 +2,32 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import {
   createPrimaryAdmin,
+  getAdminAccountById,
+  getAdminAccountByLoginName,
   getPrimaryAdmin,
   markAdminLogin,
   type AdminRecord,
 } from "@/data/admin-repository";
+import {
+  ADMIN_LOGIN_NAME,
+  normalizeLoginName,
+  type AccountRole,
+} from "@/lib/account-policy";
 import { constantTimeEqualStrings } from "@/lib/security/constant-time";
 import { hashPassword, verifyPassword } from "@/lib/security/password";
 import { getRuntimeString, isDevelopment } from "./runtime-config";
 
 export type AdminUser = {
   id: string;
-  email: string;
+  loginName: string;
   displayName: string;
+  role: AccountRole;
   sessionVersion: number;
 };
 
 export const ADMIN_SESSION_COOKIE = "combaksa_admin_session";
 export const LEGACY_ADMIN_SESSION_COOKIE = "baroon_admin_session";
+export const LAST_LOGIN_COOKIE = "combaksa_last_login_id";
 const SESSION_LIFETIME_SECONDS = 8 * 60 * 60;
 const encoder = new TextEncoder();
 
@@ -26,16 +35,15 @@ export async function getAdminUser(): Promise<AdminUser | null> {
   const token = (await cookies()).get(ADMIN_SESSION_COOKIE)?.value;
   const payload = await verifyAdminSessionToken(token);
   if (!payload) return null;
-  const admin = await getPrimaryAdmin();
+  const account = await getAdminAccountById(payload.adminId);
   if (
-    !admin ||
-    !admin.isActive ||
-    admin.id !== payload.adminId ||
-    admin.sessionVersion !== payload.sessionVersion
+    !account ||
+    !account.isActive ||
+    account.sessionVersion !== payload.sessionVersion
   ) {
     return null;
   }
-  return toAdminUser(admin);
+  return toAdminUser(account);
 }
 
 export async function requireAdmin(returnTo: string): Promise<AdminUser> {
@@ -46,24 +54,35 @@ export async function requireAdmin(returnTo: string): Promise<AdminUser> {
   return user;
 }
 
+export async function requireOwner(returnTo: string): Promise<AdminUser> {
+  const user = await requireAdmin(returnTo);
+  if (user.role !== "OWNER") redirect("/admin/denied");
+  return user;
+}
+
 export function adminSignInPath() {
   return "/admin/login?returnTo=%2Fadmin";
 }
 
-export async function authenticateAdminPassword(password: string, clientHash: string) {
-  let admin = await getPrimaryAdmin();
-  if (!admin) {
+export async function authenticateAdminCredentials(
+  loginNameValue: string,
+  password: string,
+  clientHash: string,
+) {
+  const loginName = normalizeLoginName(loginNameValue);
+  let account = await getAdminAccountByLoginName(loginName);
+  if (!account && loginName === ADMIN_LOGIN_NAME && !(await getPrimaryAdmin())) {
     const legacy = getRuntimeString("ADMIN_PASSWORD");
     if (!legacy || !password || !(await constantTimeEqualStrings(password, legacy))) return null;
     try {
-      admin = await createPrimaryAdmin(await hashPassword(password), clientHash);
+      account = await createPrimaryAdmin(await hashPassword(password), clientHash);
     } catch {
-      admin = await getPrimaryAdmin();
+      account = await getPrimaryAdmin();
     }
   }
-  if (!admin?.isActive || !(await verifyPassword(password, admin.passwordHash))) return null;
-  await markAdminLogin(admin.id, clientHash);
-  return admin;
+  if (!account?.isActive || !(await verifyPassword(password, account.passwordHash))) return null;
+  await markAdminLogin(account.id, clientHash);
+  return account;
 }
 
 export async function createAdminSessionToken(admin: AdminRecord) {
@@ -97,12 +116,13 @@ export function safeAdminReturnPath(value: string) {
   return value;
 }
 
-function toAdminUser(admin: AdminRecord): AdminUser {
+function toAdminUser(account: AdminRecord): AdminUser {
   return {
-    id: admin.id,
-    email: admin.loginName,
-    displayName: "운영자",
-    sessionVersion: admin.sessionVersion,
+    id: account.id,
+    loginName: account.loginName,
+    displayName: account.displayName,
+    role: account.role,
+    sessionVersion: account.sessionVersion,
   };
 }
 

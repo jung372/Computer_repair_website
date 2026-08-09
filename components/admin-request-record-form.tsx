@@ -1,14 +1,15 @@
 "use client";
 
-import { BellRing, List, Save, ShieldAlert } from "lucide-react";
-import Link from "next/link";
+import { BellRing, List, Save, ShieldAlert, UserCheck } from "lucide-react";
 import { useState, type FormEvent } from "react";
 import type { AdminRequestRecord } from "@/data/admin-request-repository";
+import type { AdminUser } from "@/lib/admin-auth";
 import {
   ADMIN_OPERATIONAL_STATUSES,
   CUSTOMER_TYPES,
   PAYMENT_METHODS,
   STATUS_LABELS,
+  type PaymentMethod,
   type RequestStatus,
 } from "@/lib/domain";
 import { deriveSettlement, formatWon } from "@/lib/settlement";
@@ -18,19 +19,53 @@ type Amounts = {
   materialCost: number;
 };
 
+type StaffOption = {
+  id: string;
+  loginName: string;
+  displayName: string;
+  phone: string;
+  isActive: boolean;
+};
+
 function unique(values: string[]) {
   return [...new Set(values.filter(Boolean))];
 }
 
-export function AdminRequestRecordForm({ request }: { request: AdminRequestRecord }) {
+export function AdminRequestRecordForm({
+  request,
+  user,
+  staff,
+  returnTo,
+}: {
+  request: AdminRequestRecord;
+  user: AdminUser;
+  staff: StaffOption[];
+  returnTo: string;
+}) {
   const [message, setMessage] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState(false);
+  const [selectedStaffId, setSelectedStaffId] = useState(request.assigneeAccountId ?? "");
+  const [assignment, setAssignment] = useState({
+    id: request.assigneeAccountId ?? "",
+    name: request.assignee,
+    phone: request.assigneePhone,
+  });
+  const [assignmentMessage, setAssignmentMessage] = useState("");
   const [amounts, setAmounts] = useState<Amounts>({
     totalAmount: request.totalAmount,
     materialCost: request.materialCost,
   });
-  const settlement = deriveSettlement(amounts.totalAmount, amounts.materialCost);
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod | "">(
+    PAYMENT_METHODS.includes(request.paymentMethod as PaymentMethod)
+      ? request.paymentMethod as PaymentMethod
+      : "",
+  );
+  const settlement = deriveSettlement(
+    paymentMethod,
+    amounts.totalAmount,
+    amounts.materialCost,
+  );
   const statusOptions = unique([
     ...ADMIN_OPERATIONAL_STATUSES,
     ...(ADMIN_OPERATIONAL_STATUSES.includes(
@@ -40,7 +75,6 @@ export function AdminRequestRecordForm({ request }: { request: AdminRequestRecor
       : [request.status]),
   ]) as RequestStatus[];
   const customerTypes = unique([...CUSTOMER_TYPES, request.customerType]);
-  const paymentMethods = unique([...PAYMENT_METHODS, request.paymentMethod]);
 
   async function send(payload: Record<string, unknown>) {
     setBusy(true);
@@ -56,17 +90,22 @@ export function AdminRequestRecordForm({ request }: { request: AdminRequestRecor
         error?: string;
         message?: string;
         fields?: Record<string, string>;
+        assignment?: {
+          assigneeAccountId: string | null;
+          assignee: string;
+          assigneePhone: string;
+        };
       };
       if (!response.ok) {
         setErrors(result.fields ?? {});
         setMessage(result.error ?? "처리하지 못했습니다.");
-        return false;
+        return null;
       }
       setMessage(result.message ?? "저장했습니다.");
-      return true;
+      return result;
     } catch {
       setMessage("연결이 원활하지 않습니다. 잠시 후 다시 시도해 주세요.");
-      return false;
+      return null;
     } finally {
       setBusy(false);
     }
@@ -75,14 +114,31 @@ export function AdminRequestRecordForm({ request }: { request: AdminRequestRecor
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const payload = Object.fromEntries(new FormData(event.currentTarget).entries());
-    const ok = await send({ ...payload, action: "save-record" });
-    if (ok) window.location.reload();
+    await send({ ...payload, action: "save-record" });
   }
 
   async function anonymize() {
     if (!window.confirm("신청자의 개인정보와 접수 내용을 복구할 수 없게 삭제할까요?")) return;
-    const ok = await send({ action: "anonymize" });
-    if (ok) window.location.assign("/admin");
+    const result = await send({ action: "anonymize" });
+    if (result) window.location.assign(returnTo);
+  }
+
+  async function assignStaff() {
+    if (!selectedStaffId && assignment.id) {
+      if (!window.confirm("현재 담당자 배정을 해제할까요?")) return;
+    }
+    setAssignmentMessage("");
+    const result = await send({
+      action: "assign",
+      assigneeAccountId: selectedStaffId,
+    });
+    if (!result?.assignment) return;
+    setAssignment({
+      id: result.assignment.assigneeAccountId ?? "",
+      name: result.assignment.assignee,
+      phone: result.assignment.assigneePhone,
+    });
+    setAssignmentMessage(result.message ?? "담당자 배정을 저장했습니다.");
   }
 
   return (
@@ -150,11 +206,56 @@ export function AdminRequestRecordForm({ request }: { request: AdminRequestRecor
           <RecordField label="고객접수구분" name="requestCategory" error={errors.requestCategory}>
             <input id="requestCategory" name="requestCategory" defaultValue={request.requestCategory} maxLength={80} placeholder="예: 출장수리" />
           </RecordField>
-          <RecordField label="담당자" name="assignee" error={errors.assignee}>
-            <input id="assignee" name="assignee" defaultValue={request.assignee} maxLength={80} placeholder="미배정" />
-          </RecordField>
-          <RecordField label="담당자 휴대전화" name="assigneePhone" error={errors.assigneePhone}>
-            <input id="assigneePhone" name="assigneePhone" type="tel" defaultValue={request.assigneePhone} maxLength={30} />
+          {user.role === "OWNER" ? (
+            <RecordField label="담당자" name="assigneeAccountId">
+              <div className="admin-assignment-control">
+                <select
+                  id="assigneeAccountId"
+                  value={selectedStaffId}
+                  onChange={(event) => {
+                    setSelectedStaffId(event.target.value);
+                    setAssignmentMessage("");
+                  }}
+                >
+                  <option value="">미배정</option>
+                  {staff.map((account) => (
+                    <option value={account.id} key={account.id} disabled={!account.isActive}>
+                      {account.displayName} · {account.loginName}{account.isActive ? "" : " (차단됨)"}
+                    </option>
+                  ))}
+                </select>
+                <button
+                  className="button button-assignment"
+                  type="button"
+                  disabled={
+                    busy ||
+                    (selectedStaffId === assignment.id && !(assignment.name && !assignment.id))
+                  }
+                  onClick={assignStaff}
+                >
+                  <UserCheck size={17} aria-hidden="true" />
+                  {selectedStaffId ? (assignment.id ? "배정 변경" : "담당자 배정") : "배정 해제"}
+                </button>
+              </div>
+              {assignment.name && !assignment.id && (
+                <small className="admin-assignment-legacy">기존 담당자 기록: {assignment.name}</small>
+              )}
+              {assignmentMessage && <small className="admin-assignment-success">{assignmentMessage}</small>}
+            </RecordField>
+          ) : (
+            <RecordField label="담당자" name="assigneeReadonly">
+              <div className="admin-readonly-value admin-assignee-readonly">
+                <strong>{assignment.name || user.displayName}</strong>
+                <small>{user.loginName}</small>
+              </div>
+            </RecordField>
+          )}
+          <RecordField label="담당자 휴대전화" name="assigneePhoneReadonly">
+            <div className="admin-readonly-value">
+              {selectedStaffId
+                ? staff.find((account) => account.id === selectedStaffId)?.phone || "연락처 미등록"
+                : assignment.phone || "연락처 미등록"}
+            </div>
           </RecordField>
           <RecordField label="접수일 *" name="receivedDate" error={errors.receivedDate}>
             <input id="receivedDate" name="receivedDate" type="date" defaultValue={request.receivedDate} required />
@@ -185,20 +286,35 @@ export function AdminRequestRecordForm({ request }: { request: AdminRequestRecor
           <span>04</span>
           <div>
             <h2>결제와 정산</h2>
-            <p>결제방법·총수금액·자재비만 입력하면 부가세와 기사수익은 자동 계산됩니다.</p>
+            <p>결제방법·총수금액·자재비를 입력하면 두 부가세와 기사수익이 자동 계산됩니다.</p>
           </div>
         </div>
         <div className="admin-record-grid">
-          <RecordField label="결제방법" name="paymentMethod" error={errors.paymentMethod}>
-            <select id="paymentMethod" name="paymentMethod" defaultValue={request.paymentMethod}>
+          <RecordField label="결제방법" name="paymentMethod" error={errors.paymentMethod} wide>
+            <select
+              id="paymentMethod"
+              name="paymentMethod"
+              value={paymentMethod}
+              onChange={(event) => setPaymentMethod(event.target.value as PaymentMethod | "")}
+            >
               <option value="">선택하세요</option>
-              {paymentMethods.filter(Boolean).map((value) => <option key={value}>{value}</option>)}
+              {PAYMENT_METHODS.map((value) => <option key={value}>{value}</option>)}
             </select>
           </RecordField>
           <AmountField label="총수금액" name="totalAmount" value={amounts.totalAmount} error={errors.totalAmount} setAmounts={setAmounts} />
+          <DerivedAmountField
+            label="총수금액 부가세"
+            value={settlement.totalVatAmount}
+            hint={paymentMethod === "현금 결제" ? "현금 결제 시 0원" : "총수금액 ÷ 11"}
+          />
           <AmountField label="자재비" name="materialCost" value={amounts.materialCost} error={errors.materialCost} setAmounts={setAmounts} />
-          <DerivedAmountField label="부가세" value={settlement.vatAmount} hint="총수금액 ÷ 11" />
-          <DerivedAmountField label="기사수익" value={settlement.technicianIncome} hint="총수금액 − 부가세 − 자재비" />
+          <DerivedAmountField label="자재비 부가세" value={settlement.materialVatAmount} hint="자재비 × 10%" />
+          <DerivedAmountField
+            label="기사수익"
+            value={settlement.technicianIncome}
+            hint="총수금액 − 두 부가세 − 자재비"
+            wide
+          />
         </div>
       </section>
 
@@ -226,7 +342,7 @@ export function AdminRequestRecordForm({ request }: { request: AdminRequestRecor
       )}
 
       <div className="admin-record-footer">
-        <Link className="button button-secondary" href="/admin"><List size={18} /> 목록</Link>
+        <a className="button button-secondary" href={returnTo}><List size={18} /> 목록</a>
         <button className="button button-primary" type="submit" disabled={busy}>
           <Save size={18} /> {busy ? "저장 중..." : "저장"}
         </button>
@@ -275,13 +391,15 @@ function DerivedAmountField({
   label,
   value,
   hint,
+  wide,
 }: {
   label: string;
   value: number;
   hint: string;
+  wide?: boolean;
 }) {
   return (
-    <div className="admin-record-field">
+    <div className={`admin-record-field ${wide ? "wide" : ""}`}>
       <span className="admin-record-derived-label">{label}</span>
       <output className="admin-readonly-value admin-derived-amount">
         <strong>{formatWon(value)}</strong>

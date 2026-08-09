@@ -9,9 +9,10 @@ export async function generateMetadata(): Promise<Metadata> {
   const host = requestHeaders.get("x-forwarded-host") ?? requestHeaders.get("host") ?? "localhost:3000";
   const protocol = requestHeaders.get("x-forwarded-proto") ?? (host.startsWith("localhost") ? "http" : "https");
   const origin = `${protocol}://${host}`;
-  const image = `${origin}/og.png`;
+  const image = `${origin}/og.png?v=combaksa-202608`;
   return {
     metadataBase: new URL(origin),
+    applicationName: "컴박사",
     title: {
       default: "컴박사 | 컴퓨터·노트북 출장 수리",
       template: "%s | 컴박사",
@@ -22,11 +23,16 @@ export async function generateMetadata(): Promise<Metadata> {
       icon: "/favicon.svg",
       shortcut: "/favicon.svg",
     },
+    alternates: {
+      canonical: origin,
+    },
     openGraph: {
       title: "컴박사",
+      siteName: "컴박사",
       description: "멈춘 컴퓨터, 다시 일상으로. 온라인 수리 접수와 진행 조회.",
       type: "website",
       locale: "ko_KR",
+      url: origin,
       images: [{ url: image, width: 1730, height: 909, alt: "컴박사 수리 서비스" }],
     },
     twitter: {

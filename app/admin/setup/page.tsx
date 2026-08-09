@@ -31,7 +31,7 @@ export default async function AdminSetupPage({
         <span className="unlock-icon"><ShieldCheck size={30} aria-hidden="true" /></span>
         <span className="eyebrow">First-time setup</span>
         <h1>운영자 비밀번호 설정</h1>
-        <p>Cloudflare에 등록한 최초 설정 토큰으로 소유자를 확인한 뒤 사용할 비밀번호를 정합니다.</p>
+        <p>Cloudflare에 등록한 최초 설정 토큰으로 소유자를 확인한 뒤 `admin` 계정의 비밀번호를 정합니다.</p>
         <form action="/api/admin/setup" method="post">
           <label htmlFor="setup-token">최초 설정 토큰</label>
           <div className="unlock-input input-shell">

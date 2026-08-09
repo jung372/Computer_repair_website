@@ -4,7 +4,9 @@ import {
   type AdminRequestRecordUpdate,
 } from "@/data/admin-request-repository";
 import {
+  PAYMENT_METHODS,
   REQUEST_STATUSES,
+  type PaymentMethod,
   type RequestStatus,
 } from "@/lib/domain";
 import { deriveSettlement } from "@/lib/settlement";
@@ -55,9 +57,12 @@ function todayInSeoul() {
 export async function saveAdminRequestRecord(
   publicId: string,
   input: unknown,
-  changedBy: string,
+  actor: { id: string; loginName: string; role: "OWNER" | "STAFF" },
 ) {
-  const request = await getAdminRequestRecord(publicId);
+  const request = await getAdminRequestRecord(
+    publicId,
+    actor.role === "STAFF" ? actor.id : undefined,
+  );
   if (!request) throw new Error("NOT_FOUND");
   const values = isRecord(input) ? input : {};
   const errors: Record<string, string> = {};
@@ -88,13 +93,29 @@ export async function saveAdminRequestRecord(
     completedDate = todayInSeoul();
   }
 
-  // 운영자는 총수금액과 자재비만 입력한다. 부가세·기사수익·사무실입금액은
+  // 운영자는 결제방법, 총수금액과 자재비만 입력한다. 부가세·기사수익·사무실입금액은
   // 클라이언트가 보낸 값을 믿지 않고 항상 서버에서 다시 계산한다.
+  const paymentMethod = clean(values.paymentMethod, 40);
   const totalAmount = amount(values.totalAmount, "totalAmount", errors);
   const materialCost = amount(values.materialCost, "materialCost", errors);
-  const settlement = deriveSettlement(totalAmount, materialCost);
-  if (materialCost > totalAmount - settlement.vatAmount) {
-    errors.materialCost = "자재비가 총수금액(부가세 제외)을 초과할 수 없습니다.";
+  if (!paymentMethod && (totalAmount > 0 || materialCost > 0)) {
+    errors.paymentMethod = "금액을 입력할 때는 결제방법을 선택해 주세요.";
+  } else if (
+    paymentMethod &&
+    !PAYMENT_METHODS.includes(paymentMethod as PaymentMethod)
+  ) {
+    errors.paymentMethod = "현금 결제, 현금영수증 결제, 카드 결제 중에서 선택해 주세요.";
+  }
+  const settlement = deriveSettlement(
+    paymentMethod as PaymentMethod | "",
+    totalAmount,
+    materialCost,
+  );
+  if (
+    materialCost + settlement.materialVatAmount >
+    totalAmount - settlement.totalVatAmount
+  ) {
+    errors.materialCost = "자재비와 자재비 부가세의 합계가 정산 가능한 금액을 초과할 수 없습니다.";
   }
 
   const update: AdminRequestRecordUpdate = {
@@ -106,8 +127,6 @@ export async function saveAdminRequestRecord(
     status: status as RequestStatus,
     publicNote: clean(values.publicNote, 500),
     internalNote: clean(values.internalNote, 2_000),
-    assignee: clean(values.assignee, 80),
-    assigneePhone: clean(values.assigneePhone, 30),
     customerType,
     landline: clean(values.landline, 30),
     invoiceDate,
@@ -118,11 +137,11 @@ export async function saveAdminRequestRecord(
     visitTiming: clean(values.visitTiming, 20) || "협의",
     visitDate,
     completedDate,
-    paymentMethod: clean(values.paymentMethod, 40),
+    paymentMethod,
     totalAmount,
     materialCost,
     ...settlement,
   };
   if (Object.keys(errors).length) throw new AdminRecordValidationError(errors);
-  await updateAdminRequestRecord(request, update, changedBy);
+  await updateAdminRequestRecord(request, update, actor.loginName);
 }

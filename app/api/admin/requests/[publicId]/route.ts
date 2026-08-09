@@ -1,4 +1,5 @@
 import { getAdminUser } from "@/lib/admin-auth";
+import { assignAdminRequest, getAdminRequestRecord } from "@/data/admin-request-repository";
 import {
   changeRequestStatus,
   removeRequestPersonalData,
@@ -25,14 +26,33 @@ export async function POST(
       status?: unknown;
       publicNote?: unknown;
       internalNote?: unknown;
+      assigneeAccountId?: unknown;
     };
 
+    const visibleRequest = await getAdminRequestRecord(
+      publicId,
+      admin.role === "STAFF" ? admin.id : undefined,
+    );
+    if (!visibleRequest) {
+      return Response.json({ error: "이 신청 내역에 접근할 권한이 없습니다." }, { status: 403 });
+    }
+
     if (payload.action === "save-record") {
-      await saveAdminRequestRecord(publicId, payload, admin.email);
+      await saveAdminRequestRecord(publicId, payload, admin);
       return Response.json({ message: "접수 내역을 저장했습니다." });
     }
+    if (payload.action === "assign") {
+      if (admin.role !== "OWNER") {
+        return Response.json({ error: "운영자만 담당자를 배정할 수 있습니다." }, { status: 403 });
+      }
+      const staffId = typeof payload.assigneeAccountId === "string"
+        ? payload.assigneeAccountId.trim() || null
+        : null;
+      const assignment = await assignAdminRequest(publicId, staffId, admin.id);
+      return Response.json({ message: "담당자 배정을 저장했습니다.", assignment });
+    }
     if (payload.action === "update") {
-      await changeRequestStatus(publicId, payload, admin.email);
+      await changeRequestStatus(publicId, payload, admin.loginName);
       return Response.json({ message: "처리 상태를 저장했습니다." });
     }
     if (payload.action === "retry-notification") {
@@ -42,7 +62,7 @@ export async function POST(
       return Response.json({ message: "텔레그램 알림을 다시 처리했습니다." });
     }
     if (payload.action === "anonymize") {
-      const removed = await removeRequestPersonalData(publicId, admin.email);
+      const removed = await removeRequestPersonalData(publicId, admin.loginName);
       if (!removed) return Response.json({ error: "신청을 찾을 수 없습니다." }, { status: 404 });
       return Response.json({ message: "개인정보를 삭제했습니다." });
     }
@@ -60,6 +80,7 @@ export async function POST(
       NOT_FOUND: "신청을 찾을 수 없습니다.",
       INVALID_STATUS: "올바른 상태를 선택해 주세요.",
       INVALID_TRANSITION: "현재 상태에서 변경할 수 없는 단계입니다.",
+      INVALID_ASSIGNEE: "활성 상태인 직원을 선택해 주세요.",
       REOPEN_REASON_REQUIRED: "완료된 접수를 다시 열 때 고객 공개 사유가 필요합니다.",
     };
     return Response.json(

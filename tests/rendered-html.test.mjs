@@ -60,7 +60,7 @@ test("includes durable private requests, personal lookup, admin and Telegram sur
   assert.match(adminApi, /getAdminUser/);
   assert.match(adminSession, /createAdminSessionToken/);
   assert.match(adminSetup, /createPrimaryAdmin/);
-  assert.match(adminPassword, /changePrimaryAdminPassword/);
+  assert.match(adminPassword, /changeAccountPassword/);
   assert.match(telegram, /sendMessage/);
 });
 
@@ -203,19 +203,99 @@ test("drops the receipt-type field and derives settlement amounts on the server"
   assert.doesNotMatch(recordService, /receiptType/);
   assert.doesNotMatch(repository, /receipt_type/);
   // 컬럼 자체는 남기므로 UPDATE 문에서만 빠져야 한다.
-  assert.match(repository, /UPDATE request_operations\s+SET assignee = \?/);
+  assert.match(repository, /UPDATE request_operations\s+SET customer_type = \?/);
 
-  // 부가세·기사수익은 읽기 전용 표시이며 사무실입금액 입력란은 없다.
+  // 두 부가세·기사수익은 읽기 전용 표시이며 사무실입금액 입력란은 없다.
   assert.doesNotMatch(recordForm, /사무실입금액|admin-calculator-button|calculateSettlement/);
-  assert.match(recordForm, /DerivedAmountField label="부가세"/);
-  assert.match(recordForm, /DerivedAmountField label="기사수익"/);
-  assert.match(recordForm, /deriveSettlement\(amounts\.totalAmount, amounts\.materialCost\)/);
+  assert.match(recordForm, /label="총수금액 부가세"/);
+  assert.match(recordForm, /label="자재비 부가세"/);
+  assert.match(recordForm, /label="기사수익"/);
+  assert.match(recordForm, /deriveSettlement\(\s*paymentMethod,\s*amounts\.totalAmount,\s*amounts\.materialCost/);
+  assert.match(recordForm, /현금 결제 시 0원/);
+  assert.match(recordForm, /PAYMENT_METHODS\.map/);
 
   // 서버가 클라이언트 값을 믿지 않고 다시 계산한다.
-  assert.match(recordService, /deriveSettlement\(totalAmount, materialCost\)/);
-  assert.doesNotMatch(recordService, /values\.vatAmount|values\.technicianIncome|values\.officeDeposit/);
-  assert.match(recordService, /자재비가 총수금액/);
+  assert.match(recordService, /deriveSettlement\(\s*paymentMethod as PaymentMethod \| "",\s*totalAmount,\s*materialCost/);
+  assert.doesNotMatch(recordService, /values\.(?:totalVatAmount|materialVatAmount|technicianIncome|officeDeposit)/);
+  assert.match(recordService, /자재비와 자재비 부가세의 합계/);
+  assert.match(recordService, /PAYMENT_METHODS\.includes/);
   assert.match(settlement, /VAT_DIVISOR = 11/);
+  assert.match(settlement, /MATERIAL_VAT_DIVISOR = 10/);
+});
+
+test("separates owner and staff access, assignment, and login identity", async () => {
+  const [
+    loginPage,
+    sessionRoute,
+    auth,
+    staffPage,
+    staffForm,
+    staffRoute,
+    adminPage,
+    detailPage,
+    recordForm,
+    repository,
+    schema,
+    migration,
+    cleanupMigration,
+    css,
+    layout,
+  ] = await Promise.all([
+    readFile(new URL("app/admin/login/page.tsx", root), "utf8"),
+    readFile(new URL("app/api/admin/session/route.ts", root), "utf8"),
+    readFile(new URL("lib/admin-auth.ts", root), "utf8"),
+    readFile(new URL("app/admin/staff/page.tsx", root), "utf8"),
+    readFile(new URL("components/staff-create-form.tsx", root), "utf8"),
+    readFile(new URL("app/api/admin/staff/route.ts", root), "utf8"),
+    readFile(new URL("app/admin/page.tsx", root), "utf8"),
+    readFile(new URL("app/admin/requests/[publicId]/page.tsx", root), "utf8"),
+    readFile(new URL("components/admin-request-record-form.tsx", root), "utf8"),
+    readFile(new URL("data/admin-request-repository.ts", root), "utf8"),
+    readFile(new URL("db/schema.ts", root), "utf8"),
+    readFile(new URL("drizzle/0005_staff_accounts_assignment.sql", root), "utf8"),
+    readFile(new URL("drizzle/0006_clear_legacy_assignee.sql", root), "utf8"),
+    readFile(new URL("app/globals.css", root), "utf8"),
+    readFile(new URL("app/layout.tsx", root), "utf8"),
+  ]);
+
+  assert.match(loginPage, /name="loginName"/);
+  assert.match(loginPage, /LAST_LOGIN_COOKIE/);
+  assert.match(sessionRoute, /authenticateAdminCredentials/);
+  assert.match(sessionRoute, /admin-ip:/);
+  assert.match(sessionRoute, /admin-account:/);
+  assert.match(sessionRoute, /LAST_LOGIN_COOKIE/);
+  assert.match(auth, /requireOwner/);
+  assert.match(staffPage, /새 직원 계정/);
+  assert.match(staffPage, /StaffCreateForm/);
+  assert.match(staffForm, /pattern="\[0-9\]\{4,64\}"/);
+  assert.match(staffForm, /formatPhoneInput/);
+  assert.match(staffForm, /formatPhoneOnBlur/);
+  assert.match(staffRoute, /owner\.role !== "OWNER"/);
+  assert.match(staffRoute, /normalizePhone\(rawPhone\)/);
+  assert.match(staffRoute, /formatPhone\(phoneDigits\)/);
+  assert.match(adminPage, /admin\.role === "STAFF" \? admin\.id/);
+  assert.match(adminPage, /admin-request-card-list/);
+  assert.match(adminPage, /상세보기 \/ 수정하기/);
+  assert.match(adminPage, /staffAccounts\.map/);
+  assert.match(detailPage, /user\.role === "STAFF" \? user\.id/);
+  assert.match(recordForm, /action: "assign"/);
+  assert.match(recordForm, /href=\{returnTo\}/);
+  assert.doesNotMatch(recordForm, /window\.location\.reload\(\)/);
+  assert.match(repository, /operations\.assignee_account_id = \?/);
+  assert.match(repository, /assignAdminRequest/);
+  assert.match(schema, /assigneeAccountId/);
+  assert.match(migration, /role` text DEFAULT 'STAFF'/);
+  assert.match(migration, /login_name` = 'admin'/);
+  assert.match(cleanupMigration, /WHERE `assignee` = '김규웅'/);
+  assert.match(cleanupMigration, /`assignee_account_id` IS NULL/);
+  assert.match(css, /\.admin-request-table-wrap\s*\{\s*display: none/);
+  assert.match(css, /\.admin-request-card-list\s*\{\s*display: grid/);
+  assert.match(css, /\.service-card-top\s*\{[\s\S]{0,160}margin-bottom: 6px/);
+  assert.match(css, /\.service-icon\s*\{[\s\S]{0,160}position: absolute/);
+  assert.match(layout, /applicationName: "컴박사"/);
+  assert.match(layout, /siteName: "컴박사"/);
+  assert.match(layout, /og\.png\?v=combaksa-202608/);
+  assert.doesNotMatch(layout, /바로온 컴퓨터/);
 });
 
 test("lifts the description length cap and stops collecting a preferred visit time", async () => {

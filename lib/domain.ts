@@ -68,7 +68,8 @@ export const STATUS_TRANSITIONS = Object.fromEntries(
 ) as Record<RequestStatus, RequestStatus[]>;
 
 export const CUSTOMER_TYPES = ["신규일반고객", "재방문고객"] as const;
-export const PAYMENT_METHODS = ["", "현금결제", "카드결제", "계좌이체"] as const;
+export const PAYMENT_METHODS = ["현금 결제", "현금영수증 결제", "카드 결제"] as const;
+export type PaymentMethod = (typeof PAYMENT_METHODS)[number];
 
 export type Visibility = "PUBLIC" | "PRIVATE";
 
