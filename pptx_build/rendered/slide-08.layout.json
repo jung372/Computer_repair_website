@@ -1,0 +1,1219 @@
+{
+  "schema": "openai.presentation.layout/v4",
+  "unit": "px",
+  "slide": {
+    "aid": "sl/hc5xjh",
+    "id": "hc5xjh",
+    "slide": 8,
+    "layoutId": "37461c7f-617f-4e60-b908-5e866b8b8455",
+    "layoutName": "Title Slide",
+    "layoutType": "title",
+    "masterLayoutId": "b56533b1-04c1-4934-a2ef-b6625285fde2",
+    "masterLayoutName": "Master",
+    "backgroundColor": "#F7F8FA",
+    "frame": {
+      "left": 0,
+      "top": 0,
+      "width": 1280,
+      "height": 720
+    }
+  },
+  "theme": {
+    "colorSchemeName": "ChatGPT",
+    "colors": {
+      "accent1": "#156082",
+      "accent2": "#E97132",
+      "accent3": "#196B24",
+      "accent4": "#0F9ED5",
+      "accent5": "#A02B93",
+      "accent6": "#4EA72E",
+      "bg1": "#FFFFFF",
+      "bg2": "#000000",
+      "tx1": "#1F1F1F",
+      "tx2": "#FFFFFF",
+      "dk1": "#000000",
+      "lt1": "#FFFFFF",
+      "dk2": "#0E2841",
+      "lt2": "#E8E8E8",
+      "hlink": "#467886",
+      "folHlink": "#96607D"
+    },
+    "typefaces": [
+      "Consolas",
+      "Malgun Gothic"
+    ]
+  },
+  "inheritedLayers": [
+    {
+      "scope": "layout",
+      "id": "37461c7f-617f-4e60-b908-5e866b8b8455",
+      "name": "Title Slide",
+      "type": "title",
+      "parentLayoutId": "b56533b1-04c1-4934-a2ef-b6625285fde2",
+      "elements": []
+    },
+    {
+      "scope": "master",
+      "id": "b56533b1-04c1-4934-a2ef-b6625285fde2",
+      "name": "Master",
+      "type": "master",
+      "elements": []
+    }
+  ],
+  "elements": [
+    {
+      "order": 1,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/wzmhcfa5",
+      "id": "1",
+      "name": "kicker-8",
+      "bbox": [
+        56,
+        34,
+        520,
+        24
+      ],
+      "geometry": "rect",
+      "text": "TRIAL & ERROR · SECURITY",
+      "textPreview": "TRIAL & ERROR · SECURITY",
+      "resolvedFontSize": 14,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 14,
+        "typeface": "Malgun Gothic",
+        "color": "#226BFF",
+        "bold": true,
+        "alignment": "left",
+        "verticalAlignment": "top",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "TRIAL & ERROR · SECURITY"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "TRIAL & ERROR · SECURITY",
+          "resolvedTextStyle": {
+            "fontSize": 14,
+            "typeface": "Malgun Gothic",
+            "color": "#226BFF",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "TRIAL & ERROR · SECURITY",
+              "fontSize": 14,
+              "typeface": "Malgun Gothic",
+              "color": "#226BFF",
+              "bold": true,
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 2,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/vyd03a90",
+      "id": "2",
+      "name": "title-8",
+      "bbox": [
+        56,
+        70,
+        1168,
+        70
+      ],
+      "geometry": "rect",
+      "text": "Trial 1 — Cloudflare CPU 한계가 비밀번호 해싱 방식을 바꿨다",
+      "textPreview": "Trial 1 — Cloudflare CPU 한계가 비밀번호 해싱 방식을 바꿨다",
+      "resolvedFontSize": 38,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 38,
+        "typeface": "Malgun Gothic",
+        "color": "#07111F",
+        "bold": true,
+        "alignment": "left",
+        "verticalAlignment": "top",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Trial 1 — Cloudflare CPU 한계가 비밀번호 해싱 방식을 바꿨다"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Trial 1 — Cloudflare CPU 한계가 비밀번호 해싱 방식을 바꿨다",
+          "resolvedTextStyle": {
+            "fontSize": 38,
+            "typeface": "Malgun Gothic",
+            "color": "#07111F",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Trial 1 — Cloudflare CPU 한계가 비밀번호 해싱 방식을 바꿨다",
+              "fontSize": 38,
+              "typeface": "Malgun Gothic",
+              "color": "#07111F",
+              "bold": true,
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 3,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/ux4za5sf",
+      "id": "3",
+      "name": "top-rule-8",
+      "bbox": [
+        56,
+        146,
+        1168,
+        0
+      ],
+      "geometry": "straightConnector1",
+      "lineColor": "#C9D0DA",
+      "lineWidth": 1
+    },
+    {
+      "order": 4,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/54fi94r2",
+      "id": "4",
+      "name": "footer-8",
+      "bbox": [
+        56,
+        674,
+        760,
+        20
+      ],
+      "geometry": "rect",
+      "text": "컴박사 웹페이지 구축 회고  ·  2026.08.09",
+      "textPreview": "컴박사 웹페이지 구축 회고  ·  2026.08.09",
+      "resolvedFontSize": 12,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 12,
+        "typeface": "Malgun Gothic",
+        "color": "#5B6575",
+        "alignment": "left",
+        "verticalAlignment": "top",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "컴박사 웹페이지 구축 회고  ·  2026.08.09"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "컴박사 웹페이지 구축 회고  ·  2026.08.09",
+          "resolvedTextStyle": {
+            "fontSize": 12,
+            "typeface": "Malgun Gothic",
+            "color": "#5B6575",
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "컴박사 웹페이지 구축 회고  ·  2026.08.09",
+              "fontSize": 12,
+              "typeface": "Malgun Gothic",
+              "color": "#5B6575",
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 5,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/436hgzah",
+      "id": "5",
+      "name": "page-8",
+      "bbox": [
+        1160,
+        672,
+        64,
+        22
+      ],
+      "geometry": "rect",
+      "text": "08",
+      "textPreview": "08",
+      "resolvedFontSize": 12,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 12,
+        "typeface": "Malgun Gothic",
+        "color": "#5B6575",
+        "alignment": "right",
+        "verticalAlignment": "top",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "08"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "08",
+          "resolvedTextStyle": {
+            "fontSize": 12,
+            "typeface": "Malgun Gothic",
+            "color": "#5B6575",
+            "alignment": "right"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "08",
+              "fontSize": 12,
+              "typeface": "Malgun Gothic",
+              "color": "#5B6575",
+              "alignment": "right"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 6,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/j2d07u9w",
+      "id": "6",
+      "name": "step-num-1-72",
+      "bbox": [
+        72,
+        202,
+        48,
+        36
+      ],
+      "geometry": "rect",
+      "text": "01",
+      "textPreview": "01",
+      "resolvedFontSize": 22,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 22,
+        "typeface": "Malgun Gothic",
+        "color": "#E14B4B",
+        "bold": true,
+        "alignment": "left",
+        "verticalAlignment": "top",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "01"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "01",
+          "resolvedTextStyle": {
+            "fontSize": 22,
+            "typeface": "Malgun Gothic",
+            "color": "#E14B4B",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "01",
+              "fontSize": 22,
+              "typeface": "Malgun Gothic",
+              "color": "#E14B4B",
+              "bold": true,
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 7,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/i14zepsb",
+      "id": "7",
+      "name": "step-title-1-72",
+      "bbox": [
+        128,
+        202,
+        444,
+        36
+      ],
+      "geometry": "rect",
+      "text": "Argon2id 적용",
+      "textPreview": "Argon2id 적용",
+      "resolvedFontSize": 22,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 22,
+        "typeface": "Malgun Gothic",
+        "color": "#07111F",
+        "bold": true,
+        "alignment": "left",
+        "verticalAlignment": "top",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Argon2id 적용"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Argon2id 적용",
+          "resolvedTextStyle": {
+            "fontSize": 22,
+            "typeface": "Malgun Gothic",
+            "color": "#07111F",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Argon2id 적용",
+              "fontSize": 22,
+              "typeface": "Malgun Gothic",
+              "color": "#07111F",
+              "bold": true,
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 8,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/l8byx0ri",
+      "id": "8",
+      "name": "step-body-1-72",
+      "bbox": [
+        128,
+        242,
+        444,
+        72
+      ],
+      "geometry": "rect",
+      "text": "강한 해싱을 선택했지만 Worker CPU 예산에 맞지 않았다.",
+      "textPreview": "강한 해싱을 선택했지만 Worker CPU 예산에 맞지 않았다.",
+      "resolvedFontSize": 17,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 17,
+        "typeface": "Malgun Gothic",
+        "color": "#5B6575",
+        "alignment": "left",
+        "verticalAlignment": "top",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 2,
+        "lines": [
+          {
+            "index": 1,
+            "text": "강한 해싱을 선택했지만 Worker CPU 예산에 맞지"
+          },
+          {
+            "index": 2,
+            "text": "않았다."
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "강한 해싱을 선택했지만 Worker CPU 예산에 맞지 않았다.",
+          "resolvedTextStyle": {
+            "fontSize": 17,
+            "typeface": "Malgun Gothic",
+            "color": "#5B6575",
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "강한 해싱을 선택했지만 Worker CPU 예산에 맞지 않았다.",
+              "fontSize": 17,
+              "typeface": "Malgun Gothic",
+              "color": "#5B6575",
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 9,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/k72h4vad",
+      "id": "9",
+      "name": "step-num-2-72",
+      "bbox": [
+        72,
+        332,
+        48,
+        36
+      ],
+      "geometry": "rect",
+      "text": "02",
+      "textPreview": "02",
+      "resolvedFontSize": 22,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 22,
+        "typeface": "Malgun Gothic",
+        "color": "#E7A21A",
+        "bold": true,
+        "alignment": "left",
+        "verticalAlignment": "top",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "02"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "02",
+          "resolvedTextStyle": {
+            "fontSize": 22,
+            "typeface": "Malgun Gothic",
+            "color": "#E7A21A",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "02",
+              "fontSize": 22,
+              "typeface": "Malgun Gothic",
+              "color": "#E7A21A",
+              "bold": true,
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 10,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/2hoz2xkr",
+      "id": "10",
+      "name": "step-title-2-72",
+      "bbox": [
+        128,
+        332,
+        444,
+        36
+      ],
+      "geometry": "rect",
+      "text": "WebCrypto PBKDF2 전환",
+      "textPreview": "WebCrypto PBKDF2 전환",
+      "resolvedFontSize": 22,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 22,
+        "typeface": "Malgun Gothic",
+        "color": "#07111F",
+        "bold": true,
+        "alignment": "left",
+        "verticalAlignment": "top",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "WebCrypto PBKDF2 전환"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "WebCrypto PBKDF2 전환",
+          "resolvedTextStyle": {
+            "fontSize": 22,
+            "typeface": "Malgun Gothic",
+            "color": "#07111F",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "WebCrypto PBKDF2 전환",
+              "fontSize": 22,
+              "typeface": "Malgun Gothic",
+              "color": "#07111F",
+              "bold": true,
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 11,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/3ihgb21c",
+      "id": "11",
+      "name": "step-body-2-72",
+      "bbox": [
+        128,
+        372,
+        444,
+        72
+      ],
+      "geometry": "rect",
+      "text": "플랫폼 기본 API로 바꿔 배포 가능성과 유지보수를 확보했다.",
+      "textPreview": "플랫폼 기본 API로 바꿔 배포 가능성과 유지보수를 확보했다.",
+      "resolvedFontSize": 17,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 17,
+        "typeface": "Malgun Gothic",
+        "color": "#5B6575",
+        "alignment": "left",
+        "verticalAlignment": "top",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 2,
+        "lines": [
+          {
+            "index": 1,
+            "text": "플랫폼 기본 API로 바꿔 배포 가능성과 유지보수를"
+          },
+          {
+            "index": 2,
+            "text": "확보했다."
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "플랫폼 기본 API로 바꿔 배포 가능성과 유지보수를 확보했다.",
+          "resolvedTextStyle": {
+            "fontSize": 17,
+            "typeface": "Malgun Gothic",
+            "color": "#5B6575",
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "플랫폼 기본 API로 바꿔 배포 가능성과 유지보수를 확보했다.",
+              "fontSize": 17,
+              "typeface": "Malgun Gothic",
+              "color": "#5B6575",
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 12,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/4jqh472x",
+      "id": "12",
+      "name": "step-num-3-72",
+      "bbox": [
+        72,
+        462,
+        48,
+        36
+      ],
+      "geometry": "rect",
+      "text": "03",
+      "textPreview": "03",
+      "resolvedFontSize": 22,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 22,
+        "typeface": "Malgun Gothic",
+        "color": "#0E9F6E",
+        "bold": true,
+        "alignment": "left",
+        "verticalAlignment": "top",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "03"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "03",
+          "resolvedTextStyle": {
+            "fontSize": 22,
+            "typeface": "Malgun Gothic",
+            "color": "#0E9F6E",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "03",
+              "fontSize": 22,
+              "typeface": "Malgun Gothic",
+              "color": "#0E9F6E",
+              "bold": true,
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 13,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/pkzydcji",
+      "id": "13",
+      "name": "step-title-3-72",
+      "bbox": [
+        128,
+        462,
+        444,
+        36
+      ],
+      "geometry": "rect",
+      "text": "반복 횟수 100,000 제한",
+      "textPreview": "반복 횟수 100,000 제한",
+      "resolvedFontSize": 22,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 22,
+        "typeface": "Malgun Gothic",
+        "color": "#07111F",
+        "bold": true,
+        "alignment": "left",
+        "verticalAlignment": "top",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "반복 횟수 100,000 제한"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "반복 횟수 100,000 제한",
+          "resolvedTextStyle": {
+            "fontSize": 22,
+            "typeface": "Malgun Gothic",
+            "color": "#07111F",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "반복 횟수 100,000 제한",
+              "fontSize": 22,
+              "typeface": "Malgun Gothic",
+              "color": "#07111F",
+              "bold": true,
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 14,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/ql8z6h03",
+      "id": "14",
+      "name": "step-body-3-72",
+      "bbox": [
+        128,
+        502,
+        444,
+        72
+      ],
+      "geometry": "rect",
+      "text": "실제 Workers 한계에 맞춰 상한을 코드와 문서에 고정했다.",
+      "textPreview": "실제 Workers 한계에 맞춰 상한을 코드와 문서에 고정했다.",
+      "resolvedFontSize": 17,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 17,
+        "typeface": "Malgun Gothic",
+        "color": "#5B6575",
+        "alignment": "left",
+        "verticalAlignment": "top",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 2,
+        "lines": [
+          {
+            "index": 1,
+            "text": "실제 Workers 한계에 맞춰 상한을 코드와 문서에"
+          },
+          {
+            "index": 2,
+            "text": "고정했다."
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "실제 Workers 한계에 맞춰 상한을 코드와 문서에 고정했다.",
+          "resolvedTextStyle": {
+            "fontSize": 17,
+            "typeface": "Malgun Gothic",
+            "color": "#5B6575",
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "실제 Workers 한계에 맞춰 상한을 코드와 문서에 고정했다.",
+              "fontSize": 17,
+              "typeface": "Malgun Gothic",
+              "color": "#5B6575",
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 15,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/rmhgfm18",
+      "id": "15",
+      "name": "security-code",
+      "bbox": [
+        640,
+        204,
+        568,
+        366
+      ],
+      "geometry": "roundRect",
+      "fillColor": "#061327",
+      "lineColor": "#061327",
+      "lineWidth": 1
+    },
+    {
+      "order": 16,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/cnqh8rit",
+      "id": "16",
+      "name": "security-code-text",
+      "bbox": [
+        678,
+        244,
+        492,
+        286
+      ],
+      "geometry": "rect",
+      "text": "d616ab7  Argon2id → PBKDF2\n5a09b27  constant-time 비교 await\n324c5e9  iterations ≤ 100,000\n\ncrypto.subtle.deriveBits(...)\nPBKDF2 / SHA-256 / random salt",
+      "textPreview": "d616ab7  Argon2id → PBKDF2 | 5a09b27  constant-time 비교 await | 324c5e9  iterations ≤ 100,000 |  | crypto.subtle.deriveBits(...) | PBKDF2 ...",
+      "resolvedFontSize": 20,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 20,
+        "typeface": "Consolas",
+        "color": "#FFFFFF",
+        "alignment": "left",
+        "verticalAlignment": "top",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 6,
+        "lines": [
+          {
+            "index": 1,
+            "text": "d616ab7  Argon2id → PBKDF2"
+          },
+          {
+            "index": 2,
+            "text": "5a09b27  constant-time 비교 await"
+          },
+          {
+            "index": 3,
+            "text": "324c5e9  iterations ≤ 100,000"
+          },
+          {
+            "index": 4,
+            "text": ""
+          },
+          {
+            "index": 5,
+            "text": "crypto.subtle.deriveBits(...)"
+          },
+          {
+            "index": 6,
+            "text": "PBKDF2 / SHA-256 / random salt"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "d616ab7  Argon2id → PBKDF2",
+          "resolvedTextStyle": {
+            "fontSize": 20,
+            "typeface": "Consolas",
+            "color": "#FFFFFF",
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "d616ab7  Argon2id → PBKDF2",
+              "fontSize": 20,
+              "typeface": "Consolas",
+              "color": "#FFFFFF",
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        },
+        {
+          "index": 2,
+          "text": "5a09b27  constant-time 비교 await",
+          "resolvedTextStyle": {
+            "fontSize": 20,
+            "typeface": "Consolas",
+            "color": "#FFFFFF",
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "5a09b27  constant-time 비교 await",
+              "fontSize": 20,
+              "typeface": "Consolas",
+              "color": "#FFFFFF",
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        },
+        {
+          "index": 3,
+          "text": "324c5e9  iterations ≤ 100,000",
+          "resolvedTextStyle": {
+            "fontSize": 20,
+            "typeface": "Consolas",
+            "color": "#FFFFFF",
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "324c5e9  iterations ≤ 100,000",
+              "fontSize": 20,
+              "typeface": "Consolas",
+              "color": "#FFFFFF",
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        },
+        {
+          "index": 5,
+          "text": "crypto.subtle.deriveBits(...)",
+          "resolvedTextStyle": {
+            "fontSize": 20,
+            "typeface": "Consolas",
+            "color": "#FFFFFF",
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "crypto.subtle.deriveBits(...)",
+              "fontSize": 20,
+              "typeface": "Consolas",
+              "color": "#FFFFFF",
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        },
+        {
+          "index": 6,
+          "text": "PBKDF2 / SHA-256 / random salt",
+          "resolvedTextStyle": {
+            "fontSize": 20,
+            "typeface": "Consolas",
+            "color": "#FFFFFF",
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "PBKDF2 / SHA-256 / random salt",
+              "fontSize": 20,
+              "typeface": "Consolas",
+              "color": "#FFFFFF",
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 17,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/dozyhwje",
+      "id": "17",
+      "name": "security-lesson",
+      "bbox": [
+        120,
+        614,
+        1040,
+        38
+      ],
+      "geometry": "rect",
+      "text": "교훈: 보안 알고리즘은 이론적 강도뿐 아니라 실행 플랫폼의 제약 안에서 검증해야 한다.",
+      "textPreview": "교훈: 보안 알고리즘은 이론적 강도뿐 아니라 실행 플랫폼의 제약 안에서 검증해야 한다.",
+      "resolvedFontSize": 20,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 20,
+        "typeface": "Malgun Gothic",
+        "color": "#226BFF",
+        "bold": true,
+        "alignment": "center",
+        "verticalAlignment": "top",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "교훈: 보안 알고리즘은 이론적 강도뿐 아니라 실행 플랫폼의 제약 안에서 검증해야 한다."
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "교훈: 보안 알고리즘은 이론적 강도뿐 아니라 실행 플랫폼의 제약 안에서 검증해야 한다.",
+          "resolvedTextStyle": {
+            "fontSize": 20,
+            "typeface": "Malgun Gothic",
+            "color": "#226BFF",
+            "bold": true,
+            "alignment": "center"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "교훈: 보안 알고리즘은 이론적 강도뿐 아니라 실행 플랫폼의 제약 안에서 검증해야 한다.",
+              "fontSize": 20,
+              "typeface": "Malgun Gothic",
+              "color": "#226BFF",
+              "bold": true,
+              "alignment": "center"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    }
+  ],
+  "composeRuns": []
+}

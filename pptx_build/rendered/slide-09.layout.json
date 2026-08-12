@@ -1,0 +1,1184 @@
+{
+  "schema": "openai.presentation.layout/v4",
+  "unit": "px",
+  "slide": {
+    "aid": "sl/bwmv2l",
+    "id": "bwmv2l",
+    "slide": 9,
+    "layoutId": "37461c7f-617f-4e60-b908-5e866b8b8455",
+    "layoutName": "Title Slide",
+    "layoutType": "title",
+    "masterLayoutId": "b56533b1-04c1-4934-a2ef-b6625285fde2",
+    "masterLayoutName": "Master",
+    "backgroundColor": "#F7F8FA",
+    "frame": {
+      "left": 0,
+      "top": 0,
+      "width": 1280,
+      "height": 720
+    }
+  },
+  "theme": {
+    "colorSchemeName": "ChatGPT",
+    "colors": {
+      "accent1": "#156082",
+      "accent2": "#E97132",
+      "accent3": "#196B24",
+      "accent4": "#0F9ED5",
+      "accent5": "#A02B93",
+      "accent6": "#4EA72E",
+      "bg1": "#FFFFFF",
+      "bg2": "#000000",
+      "tx1": "#1F1F1F",
+      "tx2": "#FFFFFF",
+      "dk1": "#000000",
+      "lt1": "#FFFFFF",
+      "dk2": "#0E2841",
+      "lt2": "#E8E8E8",
+      "hlink": "#467886",
+      "folHlink": "#96607D"
+    },
+    "typefaces": [
+      "Consolas",
+      "Malgun Gothic"
+    ]
+  },
+  "inheritedLayers": [
+    {
+      "scope": "layout",
+      "id": "37461c7f-617f-4e60-b908-5e866b8b8455",
+      "name": "Title Slide",
+      "type": "title",
+      "parentLayoutId": "b56533b1-04c1-4934-a2ef-b6625285fde2",
+      "elements": []
+    },
+    {
+      "scope": "master",
+      "id": "b56533b1-04c1-4934-a2ef-b6625285fde2",
+      "name": "Master",
+      "type": "master",
+      "elements": []
+    }
+  ],
+  "elements": [
+    {
+      "order": 1,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/wjatc3et",
+      "id": "1",
+      "name": "kicker-9",
+      "bbox": [
+        56,
+        34,
+        520,
+        24
+      ],
+      "geometry": "rect",
+      "text": "TRIAL & ERROR · INPUT UX",
+      "textPreview": "TRIAL & ERROR · INPUT UX",
+      "resolvedFontSize": 14,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 14,
+        "typeface": "Malgun Gothic",
+        "color": "#226BFF",
+        "bold": true,
+        "alignment": "left",
+        "verticalAlignment": "top",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "TRIAL & ERROR · INPUT UX"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "TRIAL & ERROR · INPUT UX",
+          "resolvedTextStyle": {
+            "fontSize": 14,
+            "typeface": "Malgun Gothic",
+            "color": "#226BFF",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "TRIAL & ERROR · INPUT UX",
+              "fontSize": 14,
+              "typeface": "Malgun Gothic",
+              "color": "#226BFF",
+              "bold": true,
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 2,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/vi1sjid8",
+      "id": "2",
+      "name": "title-9",
+      "bbox": [
+        56,
+        82,
+        1168,
+        72
+      ],
+      "geometry": "rect",
+      "text": "Trial 2 — 전화번호 입력은 형식화보다 실제 붙여넣기가 더 어려웠다",
+      "textPreview": "Trial 2 — 전화번호 입력은 형식화보다 실제 붙여넣기가 더 어려웠다",
+      "resolvedFontSize": 34,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 34,
+        "typeface": "Malgun Gothic",
+        "color": "#07111F",
+        "bold": true,
+        "alignment": "left",
+        "verticalAlignment": "top",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Trial 2 — 전화번호 입력은 형식화보다 실제 붙여넣기가 더 어려웠다"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Trial 2 — 전화번호 입력은 형식화보다 실제 붙여넣기가 더 어려웠다",
+          "resolvedTextStyle": {
+            "fontSize": 34,
+            "typeface": "Malgun Gothic",
+            "color": "#07111F",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Trial 2 — 전화번호 입력은 형식화보다 실제 붙여넣기가 더 어려웠다",
+              "fontSize": 34,
+              "typeface": "Malgun Gothic",
+              "color": "#07111F",
+              "bold": true,
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 3,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/ahsradwn",
+      "id": "3",
+      "name": "top-rule-9",
+      "bbox": [
+        56,
+        166,
+        1168,
+        0
+      ],
+      "geometry": "straightConnector1",
+      "lineColor": "#C9D0DA",
+      "lineWidth": 1
+    },
+    {
+      "order": 4,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/9gjah8v2",
+      "id": "4",
+      "name": "footer-9",
+      "bbox": [
+        56,
+        674,
+        760,
+        20
+      ],
+      "geometry": "rect",
+      "text": "컴박사 웹페이지 구축 회고  ·  2026.08.09",
+      "textPreview": "컴박사 웹페이지 구축 회고  ·  2026.08.09",
+      "resolvedFontSize": 12,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 12,
+        "typeface": "Malgun Gothic",
+        "color": "#5B6575",
+        "alignment": "left",
+        "verticalAlignment": "top",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "컴박사 웹페이지 구축 회고  ·  2026.08.09"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "컴박사 웹페이지 구축 회고  ·  2026.08.09",
+          "resolvedTextStyle": {
+            "fontSize": 12,
+            "typeface": "Malgun Gothic",
+            "color": "#5B6575",
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "컴박사 웹페이지 구축 회고  ·  2026.08.09",
+              "fontSize": 12,
+              "typeface": "Malgun Gothic",
+              "color": "#5B6575",
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 5,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/8fa983eh",
+      "id": "5",
+      "name": "page-9",
+      "bbox": [
+        1160,
+        672,
+        64,
+        22
+      ],
+      "geometry": "rect",
+      "text": "09",
+      "textPreview": "09",
+      "resolvedFontSize": 12,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 12,
+        "typeface": "Malgun Gothic",
+        "color": "#5B6575",
+        "alignment": "right",
+        "verticalAlignment": "top",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "09"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "09",
+          "resolvedTextStyle": {
+            "fontSize": 12,
+            "typeface": "Malgun Gothic",
+            "color": "#5B6575",
+            "alignment": "right"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "09",
+              "fontSize": 12,
+              "typeface": "Malgun Gothic",
+              "color": "#5B6575",
+              "alignment": "right"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 6,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/ne1sfydw",
+      "id": "6",
+      "name": "phone-timeline",
+      "bbox": [
+        100,
+        346,
+        1040,
+        0
+      ],
+      "geometry": "straightConnector1",
+      "lineColor": "#07111F",
+      "lineWidth": 2
+    },
+    {
+      "order": 7,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/md8r6twb",
+      "id": "7",
+      "name": "phone-dot-0",
+      "bbox": [
+        120,
+        334,
+        24,
+        24
+      ],
+      "geometry": "ellipse",
+      "fillColor": "#226BFF",
+      "lineColor": "#226BFF",
+      "lineWidth": 0
+    },
+    {
+      "order": 8,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/tc3atsv6",
+      "id": "8",
+      "name": "phone-hash-0",
+      "bbox": [
+        110,
+        286,
+        140,
+        28
+      ],
+      "geometry": "rect",
+      "text": "34b4778",
+      "textPreview": "34b4778",
+      "resolvedFontSize": 16,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 16,
+        "typeface": "Consolas",
+        "color": "#226BFF",
+        "bold": true,
+        "alignment": "left",
+        "verticalAlignment": "top",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "34b4778"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "34b4778",
+          "resolvedTextStyle": {
+            "fontSize": 16,
+            "typeface": "Consolas",
+            "color": "#226BFF",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "34b4778",
+              "fontSize": 16,
+              "typeface": "Consolas",
+              "color": "#226BFF",
+              "bold": true,
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 9,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/sbutknel",
+      "id": "9",
+      "name": "phone-title-0",
+      "bbox": [
+        110,
+        390,
+        250,
+        34
+      ],
+      "geometry": "rect",
+      "text": "정규화",
+      "textPreview": "정규화",
+      "resolvedFontSize": 22,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 22,
+        "typeface": "Malgun Gothic",
+        "color": "#07111F",
+        "bold": true,
+        "alignment": "left",
+        "verticalAlignment": "top",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "정규화"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "정규화",
+          "resolvedTextStyle": {
+            "fontSize": 22,
+            "typeface": "Malgun Gothic",
+            "color": "#07111F",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "정규화",
+              "fontSize": 22,
+              "typeface": "Malgun Gothic",
+              "color": "#07111F",
+              "bold": true,
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 10,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/ulo7itsr",
+      "id": "10",
+      "name": "phone-body-0",
+      "bbox": [
+        110,
+        436,
+        260,
+        84
+      ],
+      "geometry": "rect",
+      "text": "01033881597 →\n010-3388-1597",
+      "textPreview": "01033881597 → | 010-3388-1597",
+      "resolvedFontSize": 17,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 17,
+        "typeface": "Malgun Gothic",
+        "color": "#5B6575",
+        "alignment": "left",
+        "verticalAlignment": "top",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 2,
+        "lines": [
+          {
+            "index": 1,
+            "text": "01033881597 →"
+          },
+          {
+            "index": 2,
+            "text": "010-3388-1597"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "01033881597 →",
+          "resolvedTextStyle": {
+            "fontSize": 17,
+            "typeface": "Malgun Gothic",
+            "color": "#5B6575",
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "01033881597 →",
+              "fontSize": 17,
+              "typeface": "Malgun Gothic",
+              "color": "#5B6575",
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        },
+        {
+          "index": 2,
+          "text": "010-3388-1597",
+          "resolvedTextStyle": {
+            "fontSize": 17,
+            "typeface": "Malgun Gothic",
+            "color": "#5B6575",
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "010-3388-1597",
+              "fontSize": 17,
+              "typeface": "Malgun Gothic",
+              "color": "#5B6575",
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 11,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/fmxorytc",
+      "id": "11",
+      "name": "phone-dot-1",
+      "bbox": [
+        492,
+        334,
+        24,
+        24
+      ],
+      "geometry": "ellipse",
+      "fillColor": "#E14B4B",
+      "lineColor": "#E14B4B",
+      "lineWidth": 0
+    },
+    {
+      "order": 12,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/gn6pk3ax",
+      "id": "12",
+      "name": "phone-hash-1",
+      "bbox": [
+        482,
+        286,
+        140,
+        28
+      ],
+      "geometry": "rect",
+      "text": "59073d4",
+      "textPreview": "59073d4",
+      "resolvedFontSize": 16,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 16,
+        "typeface": "Consolas",
+        "color": "#226BFF",
+        "bold": true,
+        "alignment": "left",
+        "verticalAlignment": "top",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "59073d4"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "59073d4",
+          "resolvedTextStyle": {
+            "fontSize": 16,
+            "typeface": "Consolas",
+            "color": "#226BFF",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "59073d4",
+              "fontSize": 16,
+              "typeface": "Consolas",
+              "color": "#226BFF",
+              "bold": true,
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 13,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/hof6tob2",
+      "id": "13",
+      "name": "phone-title-1",
+      "bbox": [
+        482,
+        390,
+        250,
+        34
+      ],
+      "geometry": "rect",
+      "text": "붙여넣기 오류",
+      "textPreview": "붙여넣기 오류",
+      "resolvedFontSize": 22,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 22,
+        "typeface": "Malgun Gothic",
+        "color": "#07111F",
+        "bold": true,
+        "alignment": "left",
+        "verticalAlignment": "top",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "붙여넣기 오류"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "붙여넣기 오류",
+          "resolvedTextStyle": {
+            "fontSize": 22,
+            "typeface": "Malgun Gothic",
+            "color": "#07111F",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "붙여넣기 오류",
+              "fontSize": 22,
+              "typeface": "Malgun Gothic",
+              "color": "#07111F",
+              "bold": true,
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 14,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/6hone9sf",
+      "id": "14",
+      "name": "phone-body-1",
+      "bbox": [
+        482,
+        436,
+        260,
+        84
+      ],
+      "geometry": "rect",
+      "text": "maxLength가 원본 숫자를\n먼저 잘라내는 문제 발견",
+      "textPreview": "maxLength가 원본 숫자를 | 먼저 잘라내는 문제 발견",
+      "resolvedFontSize": 17,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 17,
+        "typeface": "Malgun Gothic",
+        "color": "#5B6575",
+        "alignment": "left",
+        "verticalAlignment": "top",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 2,
+        "lines": [
+          {
+            "index": 1,
+            "text": "maxLength가 원본 숫자를"
+          },
+          {
+            "index": 2,
+            "text": "먼저 잘라내는 문제 발견"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "maxLength가 원본 숫자를",
+          "resolvedTextStyle": {
+            "fontSize": 17,
+            "typeface": "Malgun Gothic",
+            "color": "#5B6575",
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "maxLength가 원본 숫자를",
+              "fontSize": 17,
+              "typeface": "Malgun Gothic",
+              "color": "#5B6575",
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        },
+        {
+          "index": 2,
+          "text": "먼저 잘라내는 문제 발견",
+          "resolvedTextStyle": {
+            "fontSize": 17,
+            "typeface": "Malgun Gothic",
+            "color": "#5B6575",
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "먼저 잘라내는 문제 발견",
+              "fontSize": 17,
+              "typeface": "Malgun Gothic",
+              "color": "#5B6575",
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 15,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/7ixonet0",
+      "id": "15",
+      "name": "phone-dot-2",
+      "bbox": [
+        864,
+        334,
+        24,
+        24
+      ],
+      "geometry": "ellipse",
+      "fillColor": "#226BFF",
+      "lineColor": "#226BFF",
+      "lineWidth": 0
+    },
+    {
+      "order": 16,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/sj65gjal",
+      "id": "16",
+      "name": "phone-hash-2",
+      "bbox": [
+        854,
+        286,
+        140,
+        28
+      ],
+      "geometry": "rect",
+      "text": "a19a915",
+      "textPreview": "a19a915",
+      "resolvedFontSize": 16,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 16,
+        "typeface": "Consolas",
+        "color": "#226BFF",
+        "bold": true,
+        "alignment": "left",
+        "verticalAlignment": "top",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "a19a915"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "a19a915",
+          "resolvedTextStyle": {
+            "fontSize": 16,
+            "typeface": "Consolas",
+            "color": "#226BFF",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "a19a915",
+              "fontSize": 16,
+              "typeface": "Consolas",
+              "color": "#226BFF",
+              "bold": true,
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 17,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/tkf6pob6",
+      "id": "17",
+      "name": "phone-title-2",
+      "bbox": [
+        854,
+        390,
+        250,
+        34
+      ],
+      "geometry": "rect",
+      "text": "회귀 테스트",
+      "textPreview": "회귀 테스트",
+      "resolvedFontSize": 22,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 22,
+        "typeface": "Malgun Gothic",
+        "color": "#07111F",
+        "bold": true,
+        "alignment": "left",
+        "verticalAlignment": "top",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "회귀 테스트"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "회귀 테스트",
+          "resolvedTextStyle": {
+            "fontSize": 22,
+            "typeface": "Malgun Gothic",
+            "color": "#07111F",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "회귀 테스트",
+              "fontSize": 22,
+              "typeface": "Malgun Gothic",
+              "color": "#07111F",
+              "bold": true,
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 18,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/qd87qdsz",
+      "id": "18",
+      "name": "phone-body-2",
+      "bbox": [
+        854,
+        436,
+        260,
+        84
+      ],
+      "geometry": "rect",
+      "text": "Playwright로 입력·붙여넣기\n행동을 자동 검증",
+      "textPreview": "Playwright로 입력·붙여넣기 | 행동을 자동 검증",
+      "resolvedFontSize": 17,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 17,
+        "typeface": "Malgun Gothic",
+        "color": "#5B6575",
+        "alignment": "left",
+        "verticalAlignment": "top",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 2,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Playwright로 입력·붙여넣기"
+          },
+          {
+            "index": 2,
+            "text": "행동을 자동 검증"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Playwright로 입력·붙여넣기",
+          "resolvedTextStyle": {
+            "fontSize": 17,
+            "typeface": "Malgun Gothic",
+            "color": "#5B6575",
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Playwright로 입력·붙여넣기",
+              "fontSize": 17,
+              "typeface": "Malgun Gothic",
+              "color": "#5B6575",
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        },
+        {
+          "index": 2,
+          "text": "행동을 자동 검증",
+          "resolvedTextStyle": {
+            "fontSize": 17,
+            "typeface": "Malgun Gothic",
+            "color": "#5B6575",
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "행동을 자동 검증",
+              "fontSize": 17,
+              "typeface": "Malgun Gothic",
+              "color": "#5B6575",
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 19,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/rehozitk",
+      "id": "19",
+      "name": "phone-lesson",
+      "bbox": [
+        198,
+        566,
+        884,
+        76
+      ],
+      "geometry": "roundRect",
+      "fillColor": "#EAF1FF",
+      "lineColor": "#226BFF",
+      "lineWidth": 1
+    },
+    {
+      "order": 20,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/nyt4ba9w",
+      "id": "20",
+      "name": "phone-lesson-text",
+      "bbox": [
+        230,
+        588,
+        820,
+        34
+      ],
+      "geometry": "rect",
+      "text": "교훈: 필드 제약은 최종 값뿐 아니라 입력 순서·붙여넣기·모바일 키보드까지 테스트해야 한다.",
+      "textPreview": "교훈: 필드 제약은 최종 값뿐 아니라 입력 순서·붙여넣기·모바일 키보드까지 테스트해야 한다.",
+      "resolvedFontSize": 19,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 19,
+        "typeface": "Malgun Gothic",
+        "color": "#07111F",
+        "bold": true,
+        "alignment": "center",
+        "verticalAlignment": "top",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "교훈: 필드 제약은 최종 값뿐 아니라 입력 순서·붙여넣기·모바일 키보드까지 테스트해야 한다."
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "교훈: 필드 제약은 최종 값뿐 아니라 입력 순서·붙여넣기·모바일 키보드까지 테스트해야 한다.",
+          "resolvedTextStyle": {
+            "fontSize": 19,
+            "typeface": "Malgun Gothic",
+            "color": "#07111F",
+            "bold": true,
+            "alignment": "center"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "교훈: 필드 제약은 최종 값뿐 아니라 입력 순서·붙여넣기·모바일 키보드까지 테스트해야 한다.",
+              "fontSize": 19,
+              "typeface": "Malgun Gothic",
+              "color": "#07111F",
+              "bold": true,
+              "alignment": "center"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    }
+  ],
+  "composeRuns": []
+}

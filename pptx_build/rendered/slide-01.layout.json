@@ -1,0 +1,389 @@
+{
+  "schema": "openai.presentation.layout/v4",
+  "unit": "px",
+  "slide": {
+    "aid": "sl/c6oq4x",
+    "id": "c6oq4x",
+    "slide": 1,
+    "layoutId": "37461c7f-617f-4e60-b908-5e866b8b8455",
+    "layoutName": "Title Slide",
+    "layoutType": "title",
+    "masterLayoutId": "b56533b1-04c1-4934-a2ef-b6625285fde2",
+    "masterLayoutName": "Master",
+    "backgroundColor": "#FFFFFF",
+    "frame": {
+      "left": 0,
+      "top": 0,
+      "width": 1280,
+      "height": 720
+    }
+  },
+  "theme": {
+    "colorSchemeName": "ChatGPT",
+    "colors": {
+      "accent1": "#156082",
+      "accent2": "#E97132",
+      "accent3": "#196B24",
+      "accent4": "#0F9ED5",
+      "accent5": "#A02B93",
+      "accent6": "#4EA72E",
+      "bg1": "#FFFFFF",
+      "bg2": "#000000",
+      "tx1": "#1F1F1F",
+      "tx2": "#FFFFFF",
+      "dk1": "#000000",
+      "lt1": "#FFFFFF",
+      "dk2": "#0E2841",
+      "lt2": "#E8E8E8",
+      "hlink": "#467886",
+      "folHlink": "#96607D"
+    },
+    "typefaces": [
+      "Malgun Gothic"
+    ]
+  },
+  "inheritedLayers": [
+    {
+      "scope": "layout",
+      "id": "37461c7f-617f-4e60-b908-5e866b8b8455",
+      "name": "Title Slide",
+      "type": "title",
+      "parentLayoutId": "b56533b1-04c1-4934-a2ef-b6625285fde2",
+      "elements": []
+    },
+    {
+      "scope": "master",
+      "id": "b56533b1-04c1-4934-a2ef-b6625285fde2",
+      "name": "Master",
+      "type": "master",
+      "elements": []
+    }
+  ],
+  "elements": [
+    {
+      "order": 1,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/9cny1076",
+      "id": "1",
+      "name": "cover-kicker",
+      "bbox": [
+        56,
+        46,
+        520,
+        28
+      ],
+      "geometry": "rect",
+      "text": "COMBAKSA · PROJECT RETROSPECTIVE",
+      "textPreview": "COMBAKSA · PROJECT RETROSPECTIVE",
+      "resolvedFontSize": 15,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 15,
+        "typeface": "Malgun Gothic",
+        "color": "#226BFF",
+        "bold": true,
+        "alignment": "left",
+        "verticalAlignment": "top",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "COMBAKSA · PROJECT RETROSPECTIVE"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "COMBAKSA · PROJECT RETROSPECTIVE",
+          "resolvedTextStyle": {
+            "fontSize": 15,
+            "typeface": "Malgun Gothic",
+            "color": "#226BFF",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "COMBAKSA · PROJECT RETROSPECTIVE",
+              "fontSize": 15,
+              "typeface": "Malgun Gothic",
+              "color": "#226BFF",
+              "bold": true,
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 2,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/m9wzqlof",
+      "id": "2",
+      "name": "cover-title",
+      "bbox": [
+        56,
+        184,
+        540,
+        180
+      ],
+      "geometry": "rect",
+      "text": "컴박사 웹페이지\n구축 회고",
+      "textPreview": "컴박사 웹페이지 | 구축 회고",
+      "resolvedFontSize": 56,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 56,
+        "typeface": "Malgun Gothic",
+        "color": "#07111F",
+        "bold": true,
+        "alignment": "left",
+        "verticalAlignment": "top",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 2,
+        "lines": [
+          {
+            "index": 1,
+            "text": "컴박사 웹페이지"
+          },
+          {
+            "index": 2,
+            "text": "구축 회고"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "컴박사 웹페이지",
+          "resolvedTextStyle": {
+            "fontSize": 56,
+            "typeface": "Malgun Gothic",
+            "color": "#07111F",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "컴박사 웹페이지",
+              "fontSize": 56,
+              "typeface": "Malgun Gothic",
+              "color": "#07111F",
+              "bold": true,
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        },
+        {
+          "index": 2,
+          "text": "구축 회고",
+          "resolvedTextStyle": {
+            "fontSize": 56,
+            "typeface": "Malgun Gothic",
+            "color": "#07111F",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "구축 회고",
+              "fontSize": 56,
+              "typeface": "Malgun Gothic",
+              "color": "#07111F",
+              "bold": true,
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 3,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/7a5gzqp0",
+      "id": "3",
+      "name": "cover-subtitle",
+      "bbox": [
+        56,
+        404,
+        540,
+        48
+      ],
+      "geometry": "rect",
+      "text": "구축 절차 · 시행착오 · 배포 복구 사례",
+      "textPreview": "구축 절차 · 시행착오 · 배포 복구 사례",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 24,
+        "typeface": "Malgun Gothic",
+        "color": "#5B6575",
+        "alignment": "left",
+        "verticalAlignment": "top",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "구축 절차 · 시행착오 · 배포 복구 사례"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "구축 절차 · 시행착오 · 배포 복구 사례",
+          "resolvedTextStyle": {
+            "fontSize": 24,
+            "typeface": "Malgun Gothic",
+            "color": "#5B6575",
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "구축 절차 · 시행착오 · 배포 복구 사례",
+              "fontSize": 24,
+              "typeface": "Malgun Gothic",
+              "color": "#5B6575",
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 4,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/k7uxob6p",
+      "id": "4",
+      "name": "cover-meta",
+      "bbox": [
+        56,
+        548,
+        560,
+        42
+      ],
+      "geometry": "rect",
+      "text": "Next.js 호환 App Router · Cloudflare Workers · D1 · R2",
+      "textPreview": "Next.js 호환 App Router · Cloudflare Workers · D1 · R2",
+      "resolvedFontSize": 17,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 17,
+        "typeface": "Malgun Gothic",
+        "color": "#07111F",
+        "alignment": "left",
+        "verticalAlignment": "top",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Next.js 호환 App Router · Cloudflare Workers · D1 · R2"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Next.js 호환 App Router · Cloudflare Workers · D1 · R2",
+          "resolvedTextStyle": {
+            "fontSize": 17,
+            "typeface": "Malgun Gothic",
+            "color": "#07111F",
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Next.js 호환 App Router · Cloudflare Workers · D1 · R2",
+              "fontSize": 17,
+              "typeface": "Malgun Gothic",
+              "color": "#07111F",
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 5,
+      "kind": "image",
+      "scope": "slide",
+      "aid": "im/4z610vih",
+      "id": "5",
+      "bbox": [
+        672,
+        40,
+        552,
+        640
+      ],
+      "geometry": "roundRect",
+      "alt": "컴박사 브랜드 이미지",
+      "contentType": "image/png",
+      "imageFit": "contain",
+      "imageMask": {
+        "geometry": "roundRect",
+        "adjustmentList": [
+          {
+            "name": "adj",
+            "formula": "val 2174"
+          }
+        ]
+      },
+      "asset": {
+        "assetId": "c5f10993-49aa-4328-802a-29cd3204a6f5",
+        "contentType": "image/png",
+        "byteLength": 1135709
+      }
+    }
+  ],
+  "composeRuns": []
+}

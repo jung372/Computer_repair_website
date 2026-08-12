@@ -1,0 +1,310 @@
+{"kind":"deck","id":"pr/7c6a10","name":"Deck"}
+{"kind":"layout","layoutId":"b56533b1-04c1-4934-a2ef-b6625285fde2","name":"Master","type":"master"}
+{"kind":"layout","layoutId":"37461c7f-617f-4e60-b908-5e866b8b8455","name":"Title Slide","type":"title"}
+{"kind":"slide","id":"sl/c6oq4x","slide":1,"title":"COMBAKSA · PROJECT RETROSPECTIVE","textShapes":4}
+{"kind":"textbox","id":"sh/9cny1076","slide":1,"name":"cover-kicker","text":"COMBAKSA · PROJECT RETROSPECTIVE","textPreview":"COMBAKSA · PROJECT RETROSPECTIVE","textChars":32,"textLines":1,"bbox":[56,46,520,28]}
+{"kind":"textbox","id":"sh/m9wzqlof","slide":1,"name":"cover-title","text":"컴박사 웹페이지\n구축 회고","textPreview":"컴박사 웹페이지 | 구축 회고","textChars":14,"textLines":2,"bbox":[56,184,540,180]}
+{"kind":"textbox","id":"sh/7a5gzqp0","slide":1,"name":"cover-subtitle","text":"구축 절차 · 시행착오 · 배포 복구 사례","textPreview":"구축 절차 · 시행착오 · 배포 복구 사례","textChars":23,"textLines":1,"bbox":[56,404,540,48]}
+{"kind":"textbox","id":"sh/k7uxob6p","slide":1,"name":"cover-meta","text":"Next.js 호환 App Router · Cloudflare Workers · D1 · R2","textPreview":"Next.js 호환 App Router · Cloudflare Workers · D1 · R2","textChars":52,"textLines":1,"bbox":[56,548,560,42]}
+{"kind":"image","id":"im/4z610vih","slide":1,"name":"","geometry":"roundRect","alt":"컴박사 브랜드 이미지","bbox":[672,40,552,640]}
+{"kind":"notes","id":"nt/c6oq4x","slide":1,"text":"[Sources]\n- Repository README.md\n- Local asset public/og.png\n- Git commit 1d9809e60c0192db62e62342504ecb9b2bc3e612"}
+{"kind":"slide","id":"sl/c4i40y","slide":2,"title":"BUILD RETROSPECTIVE","textShapes":13}
+{"kind":"textbox","id":"sh/tgzi5k32","slide":2,"name":"kicker-2","text":"BUILD RETROSPECTIVE","textPreview":"BUILD RETROSPECTIVE","textChars":19,"textLines":1,"bbox":[56,34,520,24]}
+{"kind":"textbox","id":"sh/6toju5kb","slide":2,"name":"title-2","text":"11일 동안 31개 커밋으로 서비스가 운영 시스템으로 확장됐다","textPreview":"11일 동안 31개 커밋으로 서비스가 운영 시스템으로 확장됐다","textChars":34,"textLines":1,"bbox":[56,70,1168,70]}
+{"kind":"shape","id":"sh/7ux03alw","slide":2,"name":"top-rule-2","bbox":[56,146,1168,0]}
+{"kind":"textbox","id":"sh/gjq10f2d","slide":2,"name":"footer-2","text":"컴박사 웹페이지 구축 회고  ·  2026.08.09","textPreview":"컴박사 웹페이지 구축 회고  ·  2026.08.09","textChars":29,"textLines":1,"bbox":[56,674,760,20]}
+{"kind":"textbox","id":"sh/hkzi9k3y","slide":2,"name":"page-2","text":"02","textPreview":"02","textChars":2,"textLines":1,"bbox":[1160,672,64,22]}
+{"kind":"shape","id":"sh/fih07al8","slide":2,"name":"history-card-0","bbox":[716,184,508,122]}
+{"kind":"textbox","id":"sh/ona14z2p","slide":2,"name":"history-date-0","text":"7/29","textPreview":"7/29","textChars":4,"textLines":1,"bbox":[742,204,110,28]}
+{"kind":"textbox","id":"sh/pojid43a","slide":2,"name":"history-title-0","text":"기초 구축과 첫 배포","textPreview":"기초 구축과 첫 배포","textChars":11,"textLines":1,"bbox":[856,202,330,32]}
+{"kind":"textbox","id":"sh/psbud8r2","slide":2,"name":"history-body-0","text":"웹·D1·Workers 골격을 하루에 연결","textPreview":"웹·D1·Workers 골격을 하루에 연결","textChars":23,"textLines":1,"bbox":[742,244,446,42]}
+{"kind":"shape","id":"sh/4r2d43qh","slide":2,"name":"history-card-1","bbox":[716,332,508,122]}
+{"kind":"textbox","id":"sh/36tcby9w","slide":2,"name":"history-date-1","text":"7/30–31","textPreview":"7/30–31","textChars":7,"textLines":1,"bbox":[742,352,110,28]}
+{"kind":"textbox","id":"sh/25kv2tsb","slide":2,"name":"history-title-1","text":"보안과 운영 안정화","textPreview":"보안과 운영 안정화","textChars":10,"textLines":1,"bbox":[856,350,330,32]}
+{"kind":"textbox","id":"sh/dwvuh8ry","slide":2,"name":"history-body-1","text":"인증·입력·알림·백업을 연속 보강","textPreview":"인증·입력·알림·백업을 연속 보강","textChars":18,"textLines":1,"bbox":[742,392,446,42]}
+{"kind":"shape","id":"sh/cvmd83qd","slide":2,"name":"history-card-2","bbox":[716,480,508,122]}
+{"kind":"textbox","id":"sh/rudcfy9s","slide":2,"name":"history-date-2","text":"8/1–9","textPreview":"8/1–9","textChars":5,"textLines":1,"bbox":[742,500,110,28]}
+{"kind":"textbox","id":"sh/qtkv6d87","slide":2,"name":"history-title-2","text":"직원 운영과 도메인","textPreview":"직원 운영과 도메인","textChars":10,"textLines":1,"bbox":[856,498,330,32]}
+{"kind":"textbox","id":"sh/t0ru5oru","slide":2,"name":"history-body-2","text":"권한 분리 후 브랜치 사고까지 복구","textPreview":"권한 분리 후 브랜치 사고까지 복구","textChars":19,"textLines":1,"bbox":[742,540,446,42]}
+{"kind":"chart","id":"ch/e18n2tc7","slide":2,"name":"","chartType":"bar","bbox":[56,188,610,430]}
+{"kind":"notes","id":"nt/c4i40y","slide":2,"text":"[Sources]\n- git log --reverse --format='%ad|%h|%s' --date=short main"}
+{"kind":"slide","id":"sl/tr3557","slide":3,"title":"BUILD RETROSPECTIVE","textShapes":23}
+{"kind":"textbox","id":"sh/kzul87yp","slide":3,"name":"kicker-3","text":"BUILD RETROSPECTIVE","textPreview":"BUILD RETROSPECTIVE","textChars":19,"textLines":1,"bbox":[56,34,520,24]}
+{"kind":"textbox","id":"sh/jylkf2x4","slide":3,"name":"title-3","text":"구축 절차는 화면 제작이 아니라 운영 흐름을 닫는 순서였다","textPreview":"구축 절차는 화면 제작이 아니라 운영 흐름을 닫는 순서였다","textChars":32,"textLines":1,"bbox":[56,70,1168,70]}
+{"kind":"shape","id":"sh/yxc36xgj","slide":3,"name":"top-rule-3","bbox":[56,146,1168,0]}
+{"kind":"textbox","id":"sh/t4n2lcf6","slide":3,"name":"footer-3","text":"컴박사 웹페이지 구축 회고  ·  2026.08.09","textPreview":"컴박사 웹페이지 구축 회고  ·  2026.08.09","textChars":29,"textLines":1,"bbox":[56,674,760,20]}
+{"kind":"textbox","id":"sh/83elc7yl","slide":3,"name":"page-3","text":"03","textPreview":"03","textChars":2,"textLines":1,"bbox":[1160,672,64,22]}
+{"kind":"shape","id":"sh/725kj2x0","slide":3,"name":"process-line","bbox":[104,312,1060,0]}
+{"kind":"shape","id":"sh/61c3ahgf","slide":3,"name":"process-dot-0","bbox":[108,295,34,34]}
+{"kind":"textbox","id":"sh/hsnmpwf2","slide":3,"name":"process-index-0","text":"1","textPreview":"1","textChars":1,"textLines":1,"bbox":[108,300,34,22]}
+{"kind":"textbox","id":"sh/grelgryx","slide":3,"name":"process-title-0","text":"요구 정의","textPreview":"요구 정의","textChars":5,"textLines":1,"bbox":[72,356,150,34]}
+{"kind":"textbox","id":"sh/61876d4r","slide":3,"name":"process-body-0","text":"공개/비공개 범위","textPreview":"공개/비공개 범위","textChars":9,"textLines":1,"bbox":[64,400,166,56]}
+{"kind":"shape","id":"sh/72h8fi5c","slide":3,"name":"process-dot-1","bbox":[302,295,34,34]}
+{"kind":"textbox","id":"sh/83q98nmx","slide":3,"name":"process-index-1","text":"2","textPreview":"2","textChars":1,"textLines":1,"bbox":[302,300,34,22]}
+{"kind":"textbox","id":"sh/t4zqhs32","slide":3,"name":"process-title-1","text":"데이터 모델","textPreview":"데이터 모델","textChars":6,"textLines":1,"bbox":[266,356,150,34]}
+{"kind":"textbox","id":"sh/u58rad4n","slide":3,"name":"process-body-1","text":"D1·마이그레이션","textPreview":"D1·마이그레이션","textChars":9,"textLines":1,"bbox":[258,400,166,56]}
+{"kind":"shape","id":"sh/v6h8jil8","slide":3,"name":"process-dot-2","bbox":[496,295,34,34]}
+{"kind":"textbox","id":"sh/g7a9cnmt","slide":3,"name":"process-index-2","text":"3","textPreview":"3","textChars":1,"textLines":1,"bbox":[496,300,34,22]}
+{"kind":"textbox","id":"sh/hsjqls3e","slide":3,"name":"process-title-2","text":"UI·API","textPreview":"UI·API","textChars":6,"textLines":1,"bbox":[460,356,150,34]}
+{"kind":"textbox","id":"sh/a9o7yt4j","slide":3,"name":"process-body-2","text":"신청·조회·관리","textPreview":"신청·조회·관리","textChars":8,"textLines":1,"bbox":[452,400,166,56]}
+{"kind":"shape","id":"sh/bax87y54","slide":3,"name":"process-dot-3","bbox":[690,295,34,34]}
+{"kind":"textbox","id":"sh/zet4fulw","slide":3,"name":"process-index-3","text":"4","textPreview":"4","textChars":1,"textLines":1,"bbox":[690,300,34,22]}
+{"kind":"textbox","id":"sh/edkn6pkb","slide":3,"name":"process-title-3","text":"보안","textPreview":"보안","textChars":2,"textLines":1,"bbox":[654,356,150,34]}
+{"kind":"textbox","id":"sh/1gv6h432","slide":3,"name":"process-body-3","text":"세션·해시·속도 제한","textPreview":"세션·해시·속도 제한","textChars":11,"textLines":1,"bbox":[646,400,166,56]}
+{"kind":"shape","id":"sh/0f258z2h","slide":3,"name":"process-dot-4","bbox":[884,295,34,34]}
+{"kind":"textbox","id":"sh/rat4balk","slide":3,"name":"process-index-4","text":"5","textPreview":"5","textChars":1,"textLines":1,"bbox":[884,300,34,22]}
+{"kind":"textbox","id":"sh/q9kn25kz","slide":3,"name":"process-title-4","text":"검증","textPreview":"검증","textChars":2,"textLines":1,"bbox":[848,356,150,34]}
+{"kind":"textbox","id":"sh/dcbmdk3q","slide":3,"name":"process-body-4","text":"lint·build·tests","textPreview":"lint·build·tests","textChars":16,"textLines":1,"bbox":[840,400,166,56]}
+{"kind":"shape","id":"sh/sb254f25","slide":3,"name":"process-dot-5","bbox":[1078,295,34,34]}
+{"kind":"textbox","id":"sh/b6do7e14","slide":3,"name":"process-index-5","text":"6","textPreview":"6","textChars":1,"textLines":1,"bbox":[1078,300,34,22]}
+{"kind":"textbox","id":"sh/a54ne9kj","slide":3,"name":"process-title-5","text":"배포·운영","textPreview":"배포·운영","textChars":5,"textLines":1,"bbox":[1042,356,150,34]}
+{"kind":"textbox","id":"sh/8ry18bi1","slide":3,"name":"process-body-5","text":"Workers·백업·복구","textPreview":"Workers·백업·복구","textChars":13,"textLines":1,"bbox":[1034,400,166,56]}
+{"kind":"shape","id":"sh/ts721gjm","slide":3,"name":"process-takeaway","bbox":[184,516,912,92]}
+{"kind":"textbox","id":"sh/6pwj610v","slide":3,"name":"process-takeaway-text","text":"각 단계의 산출물이 다음 단계의 입력이 되도록 연결해야 재작업이 줄어든다.","textPreview":"각 단계의 산출물이 다음 단계의 입력이 되도록 연결해야 재작업이 줄어든다.","textChars":41,"textLines":1,"bbox":[224,542,832,40]}
+{"kind":"notes","id":"nt/tr3557","slide":3,"text":"[Sources]\n- README.md sections: 아키텍처, 검증, Cloudflare 배포, GitHub 자동배포"}
+{"kind":"slide","id":"sl/elkhy8","slide":4,"title":"BUILD RETROSPECTIVE","textShapes":16}
+{"kind":"textbox","id":"sh/7ylsb654","slide":4,"name":"kicker-4","text":"BUILD RETROSPECTIVE","textPreview":"BUILD RETROSPECTIVE","textChars":19,"textLines":1,"bbox":[56,34,520,24]}
+{"kind":"textbox","id":"sh/szu94bmp","slide":4,"name":"title-4","text":"구조를 네 계층으로 나눠 변경의 영향 범위를 통제했다","textPreview":"구조를 네 계층으로 나눠 변경의 영향 범위를 통제했다","textChars":29,"textLines":1,"bbox":[56,82,1168,72]}
+{"kind":"shape","id":"sh/t03axgna","slide":4,"name":"top-rule-4","bbox":[56,166,1168,0]}
+{"kind":"textbox","id":"sh/y9cryh47","slide":4,"name":"footer-4","text":"컴박사 웹페이지 구축 회고  ·  2026.08.09","textPreview":"컴박사 웹페이지 구축 회고  ·  2026.08.09","textChars":29,"textLines":1,"bbox":[56,674,760,20]}
+{"kind":"textbox","id":"sh/jals7m5s","slide":4,"name":"page-4","text":"04","textPreview":"04","textChars":2,"textLines":1,"bbox":[1160,672,64,22]}
+{"kind":"shape","id":"sh/kvu90rmd","slide":4,"name":"arch-arrow-1","bbox":[640,264,0,42]}
+{"kind":"shape","id":"sh/lw3a9wny","slide":4,"name":"arch-arrow-2","bbox":[640,388,0,42]}
+{"kind":"shape","id":"sh/a5sruh4b","slide":4,"name":"arch-arrow-3","bbox":[640,512,0,42]}
+{"kind":"shape","id":"sh/b61s3m5w","slide":4,"name":"arch-node-0","bbox":[196,184,888,90]}
+{"kind":"textbox","id":"sh/v25gjidg","slide":4,"name":"arch-layer-0","text":"PRESENTATION","textPreview":"PRESENTATION","textChars":12,"textLines":1,"bbox":[226,202,220,28]}
+{"kind":"textbox","id":"sh/u1wzadcv","slide":4,"name":"arch-path-0","text":"app/ · components/","textPreview":"app/ · components/","textChars":18,"textLines":1,"bbox":[456,202,290,28]}
+{"kind":"textbox","id":"sh/h4nilsvm","slide":4,"name":"arch-desc-0","text":"고객 화면과 관리자 UI","textPreview":"고객 화면과 관리자 UI","textChars":13,"textLines":1,"bbox":[760,202,294,48]}
+{"kind":"shape","id":"sh/g3ehcnu1","slide":4,"name":"arch-node-1","bbox":[196,308,888,90]}
+{"kind":"textbox","id":"sh/3650n2ds","slide":4,"name":"arch-layer-1","text":"LOGIC","textPreview":"LOGIC","textChars":5,"textLines":1,"bbox":[226,326,220,28]}
+{"kind":"textbox","id":"sh/i5wzexc7","slide":4,"name":"arch-path-1","text":"lib/logic/ · lib/security/","textPreview":"lib/logic/ · lib/security/","textChars":26,"textLines":1,"bbox":[456,326,290,28]}
+{"kind":"textbox","id":"sh/587ipsvi","slide":4,"name":"arch-desc-1","text":"업무 규칙과 인증 정책","textPreview":"업무 규칙과 인증 정책","textChars":12,"textLines":1,"bbox":[760,326,294,48]}
+{"kind":"shape","id":"sh/47yhg7ux","slide":4,"name":"arch-node-2","bbox":[196,432,888,90]}
+{"kind":"textbox","id":"sh/jalgbyd8","slide":4,"name":"arch-layer-2","text":"DATA","textPreview":"DATA","textChars":4,"textLines":1,"bbox":[226,450,220,28]}
+{"kind":"textbox","id":"sh/y9cz2tcn","slide":4,"name":"arch-path-2","text":"data/ · db/ · drizzle/","textPreview":"data/ · db/ · drizzle/","textChars":22,"textLines":1,"bbox":[456,450,290,28]}
+{"kind":"textbox","id":"sh/2p0ja1wb","slide":4,"name":"arch-desc-2","text":"조회·저장·스키마 진화","textPreview":"조회·저장·스키마 진화","textChars":12,"textLines":1,"bbox":[760,450,294,48]}
+{"kind":"shape","id":"sh/nqtkj6xw","slide":4,"name":"arch-node-3","bbox":[196,556,888,90]}
+{"kind":"textbox","id":"sh/or2lcbeh","slide":4,"name":"arch-layer-3","text":"INFRASTRUCTURE","textPreview":"INFRASTRUCTURE","textChars":14,"textLines":1,"bbox":[226,574,220,28]}
+{"kind":"textbox","id":"sh/9sb2lgf2","slide":4,"name":"arch-path-3","text":"worker/ · infrastructure/","textPreview":"worker/ · infrastructure/","textChars":25,"textLines":1,"bbox":[456,574,290,28]}
+{"kind":"textbox","id":"sh/e10j61wf","slide":4,"name":"arch-desc-3","text":"Workers·Telegram·R2","textPreview":"Workers·Telegram·R2","textChars":19,"textLines":1,"bbox":[760,574,294,48]}
+{"kind":"notes","id":"nt/elkhy8","slide":4,"text":"[Sources]\n- README.md section: 아키텍처\n- Repository directory structure"}
+{"kind":"slide","id":"sl/1ddnzw","slide":5,"title":"BUILD RETROSPECTIVE","textShapes":14}
+{"kind":"textbox","id":"sh/6x07i18b","slide":5,"name":"kicker-5","text":"BUILD RETROSPECTIVE","textPreview":"BUILD RETROSPECTIVE","textChars":19,"textLines":1,"bbox":[56,34,520,24]}
+{"kind":"textbox","id":"sh/t0rqdwr2","slide":5,"name":"title-5","text":"접수 기능은 ‘공개하지 않는 조회’에서 출발했다","textPreview":"접수 기능은 ‘공개하지 않는 조회’에서 출발했다","textChars":26,"textLines":1,"bbox":[56,70,1168,70]}
+{"kind":"shape","id":"sh/szipkrqh","slide":5,"name":"top-rule-5","bbox":[56,146,1168,0]}
+{"kind":"textbox","id":"sh/f2t8f698","slide":5,"name":"footer-5","text":"컴박사 웹페이지 구축 회고  ·  2026.08.09","textPreview":"컴박사 웹페이지 구축 회고  ·  2026.08.09","textChars":29,"textLines":1,"bbox":[56,674,760,20]}
+{"kind":"textbox","id":"sh/u107m18n","slide":5,"name":"page-5","text":"05","textPreview":"05","textChars":2,"textLines":1,"bbox":[1160,672,64,22]}
+{"kind":"shape","id":"sh/h4bqhgry","slide":5,"name":"secure-flow-1","bbox":[278,318,116,0]}
+{"kind":"shape","id":"sh/g32pobqd","slide":5,"name":"secure-flow-2","bbox":[570,318,116,0]}
+{"kind":"shape","id":"sh/v6po329o","slide":5,"name":"secure-flow-3","bbox":[862,318,116,0]}
+{"kind":"shape","id":"sh/a5g7ahs3","slide":5,"name":"secure-node-0","bbox":[72,238,238,164]}
+{"kind":"textbox","id":"sh/cnyhgja1","slide":5,"name":"secure-node-title-0","text":"고객 입력","textPreview":"고객 입력","textChars":5,"textLines":1,"bbox":[94,264,194,34]}
+{"kind":"textbox","id":"sh/do7i9orm","slide":5,"name":"secure-node-body-0","text":"연락처·주소·증상\n신청 비밀번호","textPreview":"연락처·주소·증상 | 신청 비밀번호","textChars":17,"textLines":2,"bbox":[94,316,194,62]}
+{"kind":"shape","id":"sh/qlgzetsv","slide":5,"name":"secure-node-1","bbox":[364,238,238,164]}
+{"kind":"textbox","id":"sh/rmp07y9g","slide":5,"name":"secure-node-title-1","text":"서버 검증","textPreview":"서버 검증","textChars":5,"textLines":1,"bbox":[386,264,194,34]}
+{"kind":"textbox","id":"sh/0bi1k3ax","slide":5,"name":"secure-node-body-1","text":"정규화·속도 제한\n동일 출처 검사","textPreview":"정규화·속도 제한 | 동일 출처 검사","textChars":18,"textLines":2,"bbox":[386,316,194,62]}
+{"kind":"shape","id":"sh/1crid8ri","slide":5,"name":"secure-node-2","bbox":[656,238,238,164]}
+{"kind":"textbox","id":"sh/e9gjits7","slide":5,"name":"secure-node-title-2","text":"D1 저장","textPreview":"D1 저장","textChars":5,"textLines":1,"bbox":[678,264,194,34]}
+{"kind":"textbox","id":"sh/zap0by9s","slide":5,"name":"secure-node-body-2","text":"민감정보 비공개\n해시·고정 접수번호","textPreview":"민감정보 비공개 | 해시·고정 접수번호","textChars":19,"textLines":2,"bbox":[678,316,194,62]}
+{"kind":"shape","id":"sh/gfeh8zat","slide":5,"name":"secure-node-3","bbox":[948,238,238,164]}
+{"kind":"textbox","id":"sh/hgni14re","slide":5,"name":"secure-node-title-3","text":"개인 조회","textPreview":"개인 조회","textChars":5,"textLines":1,"bbox":[970,264,194,34]}
+{"kind":"textbox","id":"sh/xcfy50j2","slide":5,"name":"secure-node-body-3","text":"휴대전화+비밀번호\n10분 조회 세션","textPreview":"휴대전화+비밀번호 | 10분 조회 세션","textChars":19,"textLines":2,"bbox":[970,316,194,62]}
+{"kind":"textbox","id":"sh/wb6xcv2h","slide":5,"name":"secure-principles-title","text":"설계 원칙","textPreview":"설계 원칙","textChars":5,"textLines":1,"bbox":[72,472,160,34]}
+{"kind":"textbox","id":"sh/vaxg3q1c","slide":5,"name":"secure-principles","text":"01  공개 목록을 만들지 않는다\n02  서버에서 입력을 다시 검증한다\n03  세션과 접근 실패를 짧게 제한한다","textPreview":"01  공개 목록을 만들지 않는다 | 02  서버에서 입력을 다시 검증한다 | 03  세션과 접근 실패를 짧게 제한한다","textChars":62,"textLines":3,"bbox":[250,462,800,118]}
+{"kind":"notes","id":"nt/1ddnzw","slide":5,"text":"[Sources]\n- README.md 주요 기능\n- lib/security/*\n- data/customer-lookup-repository.ts\n- drizzle/0001_private_lookup_admin.sql"}
+{"kind":"slide","id":"sl/0encj3","slide":6,"title":"BUILD RETROSPECTIVE","textShapes":9}
+{"kind":"textbox","id":"sh/f254n214","slide":6,"name":"kicker-6","text":"BUILD RETROSPECTIVE","textPreview":"BUILD RETROSPECTIVE","textChars":19,"textLines":1,"bbox":[56,34,520,24]}
+{"kind":"textbox","id":"sh/g3y5w72p","slide":6,"name":"title-6","text":"관리 화면은 ‘운영자 1명’에서 ‘직원별 배정 운영’으로 확장됐다","textPreview":"관리 화면은 ‘운영자 1명’에서 ‘직원별 배정 운영’으로 확장됐다","textChars":36,"textLines":1,"bbox":[56,82,1168,72]}
+{"kind":"shape","id":"sh/147mpcja","slide":6,"name":"top-rule-6","bbox":[56,166,1168,0]}
+{"kind":"textbox","id":"sh/25gnyhkv","slide":6,"name":"footer-6","text":"컴박사 웹페이지 구축 회고  ·  2026.08.09","textPreview":"컴박사 웹페이지 구축 회고  ·  2026.08.09","textChars":29,"textLines":1,"bbox":[56,674,760,20]}
+{"kind":"textbox","id":"sh/36porm10","slide":6,"name":"page-6","text":"06","textPreview":"06","textChars":2,"textLines":1,"bbox":[1160,672,64,22]}
+{"kind":"textbox","id":"sh/o7y507il","slide":6,"name":"before-label","text":"초기 운영","textPreview":"초기 운영","textChars":5,"textLines":1,"bbox":[72,188,520,34]}
+{"kind":"textbox","id":"sh/p876tcj6","slide":6,"name":"after-label","text":"확장된 운영","textPreview":"확장된 운영","textChars":6,"textLines":1,"bbox":[688,188,520,34]}
+{"kind":"shape","id":"sh/i9cnmdkb","slide":6,"name":"before-panel","bbox":[72,238,520,336]}
+{"kind":"shape","id":"sh/jal4fi1w","slide":6,"name":"after-panel","bbox":[688,238,520,336]}
+{"kind":"textbox","id":"sh/7ets3y5k","slide":6,"name":"before-list","text":"비밀번호만 입력\n담당자 이름을 자유 입력\n모든 접수를 한 화면에서 조회\n데스크톱 표 중심","textPreview":"비밀번호만 입력 | 담당자 이름을 자유 입력 | 모든 접수를 한 화면에서 조회 | 데스크톱 표 중심","textChars":49,"textLines":4,"bbox":[110,276,440,230]}
+{"kind":"textbox","id":"sh/mtkrutof","slide":6,"name":"after-list","text":"ID + PW 통합 로그인\n운영자가 직원 계정 생성·차단\n직원은 배정된 신청만 조회\n모바일 카드·전화·SMS 지원","textPreview":"ID + PW 통합 로그인 | 운영자가 직원 계정 생성·차단 | 직원은 배정된 신청만 조회 | 모바일 카드·전화·SMS 지원","textChars":63,"textLines":4,"bbox":[726,276,444,230]}
+{"kind":"textbox","id":"sh/9gba5onq","slide":6,"name":"after-impact","text":"권한이 UI가 아니라 데이터 조회·상세·저장 API 전체에 적용됨","textPreview":"권한이 UI가 아니라 데이터 조회·상세·저장 API 전체에 적용됨","textChars":36,"textLines":1,"bbox":[130,608,1020,36]}
+{"kind":"notes","id":"nt/0encj3","slide":6,"text":"[Sources]\n- Commit f07c936: Implement staff access and mobile operations UI\n- app/admin/staff/page.tsx\n- lib/admin-auth.ts\n- data/admin-request-repository.ts"}
+{"kind":"slide","id":"sl/7anha8","slide":7,"title":"BUILD RETROSPECTIVE","textShapes":12}
+{"kind":"textbox","id":"sh/nq5kzaxc","slide":7,"name":"kicker-7","text":"BUILD RETROSPECTIVE","textPreview":"BUILD RETROSPECTIVE","textChars":19,"textLines":1,"bbox":[56,34,520,24]}
+{"kind":"textbox","id":"sh/ore1sfyx","slide":7,"name":"title-7","text":"main 푸시 한 번으로 검증·마이그레이션·배포를 직렬화했다","textPreview":"main 푸시 한 번으로 검증·마이그레이션·배포를 직렬화했다","textChars":33,"textLines":1,"bbox":[56,70,1168,70]}
+{"kind":"shape","id":"sh/9sn210fi","slide":7,"name":"top-rule-7","bbox":[56,146,1168,0]}
+{"kind":"textbox","id":"sh/e1cjmlgv","slide":7,"name":"footer-7","text":"컴박사 웹페이지 구축 회고  ·  2026.08.09","textPreview":"컴박사 웹페이지 구축 회고  ·  2026.08.09","textChars":29,"textLines":1,"bbox":[56,674,760,20]}
+{"kind":"textbox","id":"sh/z2l0vqxg","slide":7,"name":"page-7","text":"07","textPreview":"07","textChars":2,"textLines":1,"bbox":[1160,672,64,22]}
+{"kind":"shape","id":"sh/03u1ovyl","slide":7,"name":"deploy-edge-0","bbox":[136,334,88,0]}
+{"kind":"shape","id":"sh/1432x0f6","slide":7,"name":"deploy-edge-1","bbox":[302,334,88,0]}
+{"kind":"shape","id":"sh/yxgjypgz","slide":7,"name":"deploy-edge-2","bbox":[468,334,88,0]}
+{"kind":"shape","id":"sh/jypk7uxk","slide":7,"name":"deploy-edge-3","bbox":[634,334,88,0]}
+{"kind":"shape","id":"sh/vetofytw","slide":7,"name":"deploy-edge-4","bbox":[800,334,88,0]}
+{"kind":"shape","id":"sh/udknmdcb","slide":7,"name":"deploy-edge-5","bbox":[966,334,88,0]}
+{"kind":"shape","id":"sh/hgv6h8bm","slide":7,"name":"deploy-node-0","bbox":[58,266,142,136]}
+{"kind":"textbox","id":"sh/gfmpo3u1","slide":7,"name":"deploy-stage-0","text":"main\npush","textPreview":"main | push","textChars":9,"textLines":2,"bbox":[70,304,118,64]}
+{"kind":"shape","id":"sh/3idojits","slide":7,"name":"deploy-node-1","bbox":[224,266,142,136]}
+{"kind":"textbox","id":"sh/ih47qdc7","slide":7,"name":"deploy-stage-1","text":"npm ci","textPreview":"npm ci","textChars":6,"textLines":1,"bbox":[236,304,118,64]}
+{"kind":"shape","id":"sh/5kv6lsby","slide":7,"name":"deploy-node-2","bbox":[390,266,142,136]}
+{"kind":"textbox","id":"sh/4jmpsnud","slide":7,"name":"deploy-stage-2","text":"lint\ntypes","textPreview":"lint | types","textChars":10,"textLines":2,"bbox":[402,304,118,64]}
+{"kind":"shape","id":"sh/r6xon2to","slide":7,"name":"deploy-node-3","bbox":[556,266,142,136]}
+{"kind":"textbox","id":"sh/q547uxcj","slide":7,"name":"deploy-stage-3","text":"D1\nmigrate","textPreview":"D1 | migrate","textChars":10,"textLines":2,"bbox":[568,304,118,64]}
+{"kind":"shape","id":"sh/218rm1wr","slide":7,"name":"deploy-node-4","bbox":[722,266,142,136]}
+{"kind":"textbox","id":"sh/n2hsfmdw","slide":7,"name":"deploy-stage-4","text":"build\ntests","textPreview":"build | tests","textChars":11,"textLines":2,"bbox":[734,304,118,64]}
+{"kind":"shape","id":"sh/o3q9oreh","slide":7,"name":"deploy-node-5","bbox":[888,266,142,136]}
+{"kind":"textbox","id":"sh/p4zahwv2","slide":7,"name":"deploy-stage-5","text":"Wrangler\ndeploy","textPreview":"Wrangler | deploy","textChars":15,"textLines":2,"bbox":[900,304,118,64]}
+{"kind":"shape","id":"sh/edorihwf","slide":7,"name":"deploy-node-6","bbox":[1054,266,142,136]}
+{"kind":"textbox","id":"sh/feh8bmd0","slide":7,"name":"deploy-stage-6","text":"운영\n확인","textPreview":"운영 | 확인","textChars":5,"textLines":2,"bbox":[1066,304,118,64]}
+{"kind":"shape","id":"sh/0zq9krel","slide":7,"name":"deploy-gate","bbox":[168,484,944,92]}
+{"kind":"textbox","id":"sh/10zqdwv6","slide":7,"name":"deploy-gate-text","text":"검사나 마이그레이션이 실패하면 Worker 배포 단계에 도달하지 않는다.","textPreview":"검사나 마이그레이션이 실패하면 Worker 배포 단계에 도달하지 않는다.","textChars":40,"textLines":1,"bbox":[206,511,868,40]}
+{"kind":"notes","id":"nt/7anha8","slide":7,"text":"[Sources]\n- .github/workflows/deploy.yml\n- README.md section: GitHub 자동배포"}
+{"kind":"slide","id":"sl/hc5xjh","slide":8,"title":"TRIAL & ERROR · SECURITY","textShapes":15}
+{"kind":"textbox","id":"sh/wzmhcfa5","slide":8,"name":"kicker-8","text":"TRIAL & ERROR · SECURITY","textPreview":"TRIAL & ERROR · SECURITY","textChars":24,"textLines":1,"bbox":[56,34,520,24]}
+{"kind":"textbox","id":"sh/vyd03a90","slide":8,"name":"title-8","text":"Trial 1 — Cloudflare CPU 한계가 비밀번호 해싱 방식을 바꿨다","textPreview":"Trial 1 — Cloudflare CPU 한계가 비밀번호 해싱 방식을 바꿨다","textChars":44,"textLines":1,"bbox":[56,70,1168,70]}
+{"kind":"shape","id":"sh/ux4za5sf","slide":8,"name":"top-rule-8","bbox":[56,146,1168,0]}
+{"kind":"textbox","id":"sh/54fi94r2","slide":8,"name":"footer-8","text":"컴박사 웹페이지 구축 회고  ·  2026.08.09","textPreview":"컴박사 웹페이지 구축 회고  ·  2026.08.09","textChars":29,"textLines":1,"bbox":[56,674,760,20]}
+{"kind":"textbox","id":"sh/436hgzah","slide":8,"name":"page-8","text":"08","textPreview":"08","textChars":2,"textLines":1,"bbox":[1160,672,64,22]}
+{"kind":"textbox","id":"sh/j2d07u9w","slide":8,"name":"step-num-1-72","text":"01","textPreview":"01","textChars":2,"textLines":1,"bbox":[72,202,48,36]}
+{"kind":"textbox","id":"sh/i14zepsb","slide":8,"name":"step-title-1-72","text":"Argon2id 적용","textPreview":"Argon2id 적용","textChars":11,"textLines":1,"bbox":[128,202,444,36]}
+{"kind":"textbox","id":"sh/l8byx0ri","slide":8,"name":"step-body-1-72","text":"강한 해싱을 선택했지만 Worker CPU 예산에 맞지 않았다.","textPreview":"강한 해싱을 선택했지만 Worker CPU 예산에 맞지 않았다.","textChars":35,"textLines":1,"bbox":[128,242,444,72]}
+{"kind":"textbox","id":"sh/k72h4vad","slide":8,"name":"step-num-2-72","text":"02","textPreview":"02","textChars":2,"textLines":1,"bbox":[72,332,48,36]}
+{"kind":"textbox","id":"sh/2hoz2xkr","slide":8,"name":"step-title-2-72","text":"WebCrypto PBKDF2 전환","textPreview":"WebCrypto PBKDF2 전환","textChars":19,"textLines":1,"bbox":[128,332,444,36]}
+{"kind":"textbox","id":"sh/3ihgb21c","slide":8,"name":"step-body-2-72","text":"플랫폼 기본 API로 바꿔 배포 가능성과 유지보수를 확보했다.","textPreview":"플랫폼 기본 API로 바꿔 배포 가능성과 유지보수를 확보했다.","textChars":34,"textLines":1,"bbox":[128,372,444,72]}
+{"kind":"textbox","id":"sh/4jqh472x","slide":8,"name":"step-num-3-72","text":"03","textPreview":"03","textChars":2,"textLines":1,"bbox":[72,462,48,36]}
+{"kind":"textbox","id":"sh/pkzydcji","slide":8,"name":"step-title-3-72","text":"반복 횟수 100,000 제한","textPreview":"반복 횟수 100,000 제한","textChars":16,"textLines":1,"bbox":[128,462,444,36]}
+{"kind":"textbox","id":"sh/ql8z6h03","slide":8,"name":"step-body-3-72","text":"실제 Workers 한계에 맞춰 상한을 코드와 문서에 고정했다.","textPreview":"실제 Workers 한계에 맞춰 상한을 코드와 문서에 고정했다.","textChars":35,"textLines":1,"bbox":[128,502,444,72]}
+{"kind":"shape","id":"sh/rmhgfm18","slide":8,"name":"security-code","bbox":[640,204,568,366]}
+{"kind":"textbox","id":"sh/cnqh8rit","slide":8,"name":"security-code-text","text":"d616ab7  Argon2id → PBKDF2\n5a09b27  constant-time 비교 await\n324c5e9  iterations ≤ 100,000\n\ncrypto.subtle.deriveBits(...)\nPBKDF2 / SHA-256 / random salt","textPreview":"d616ab7  Argon2id → PBKDF2 | 5a09b27  constant-time 비교 await | 324c5e9  iterations ≤ 100,000 |  | crypto.subtle.deriveBits(...) | PBKDF2 ...","textChars":150,"textLines":6,"bbox":[678,244,492,286]}
+{"kind":"textbox","id":"sh/dozyhwje","slide":8,"name":"security-lesson","text":"교훈: 보안 알고리즘은 이론적 강도뿐 아니라 실행 플랫폼의 제약 안에서 검증해야 한다.","textPreview":"교훈: 보안 알고리즘은 이론적 강도뿐 아니라 실행 플랫폼의 제약 안에서 검증해야 한다.","textChars":48,"textLines":1,"bbox":[120,614,1040,38]}
+{"kind":"notes","id":"nt/hc5xjh","slide":8,"text":"[Sources]\n- Commits d616ab7, 5a09b27, 324c5e9\n- lib/security/password.ts\n- lib/security/constant-time.ts"}
+{"kind":"slide","id":"sl/bwmv2l","slide":9,"title":"TRIAL & ERROR · INPUT UX","textShapes":14}
+{"kind":"textbox","id":"sh/wjatc3et","slide":9,"name":"kicker-9","text":"TRIAL & ERROR · INPUT UX","textPreview":"TRIAL & ERROR · INPUT UX","textChars":24,"textLines":1,"bbox":[56,34,520,24]}
+{"kind":"textbox","id":"sh/vi1sjid8","slide":9,"name":"title-9","text":"Trial 2 — 전화번호 입력은 형식화보다 실제 붙여넣기가 더 어려웠다","textPreview":"Trial 2 — 전화번호 입력은 형식화보다 실제 붙여넣기가 더 어려웠다","textChars":40,"textLines":1,"bbox":[56,82,1168,72]}
+{"kind":"shape","id":"sh/ahsradwn","slide":9,"name":"top-rule-9","bbox":[56,166,1168,0]}
+{"kind":"textbox","id":"sh/9gjah8v2","slide":9,"name":"footer-9","text":"컴박사 웹페이지 구축 회고  ·  2026.08.09","textPreview":"컴박사 웹페이지 구축 회고  ·  2026.08.09","textChars":29,"textLines":1,"bbox":[56,674,760,20]}
+{"kind":"textbox","id":"sh/8fa983eh","slide":9,"name":"page-9","text":"09","textPreview":"09","textChars":2,"textLines":1,"bbox":[1160,672,64,22]}
+{"kind":"shape","id":"sh/ne1sfydw","slide":9,"name":"phone-timeline","bbox":[100,346,1040,0]}
+{"kind":"shape","id":"sh/md8r6twb","slide":9,"name":"phone-dot-0","bbox":[120,334,24,24]}
+{"kind":"textbox","id":"sh/tc3atsv6","slide":9,"name":"phone-hash-0","text":"34b4778","textPreview":"34b4778","textChars":7,"textLines":1,"bbox":[110,286,140,28]}
+{"kind":"textbox","id":"sh/sbutknel","slide":9,"name":"phone-title-0","text":"정규화","textPreview":"정규화","textChars":3,"textLines":1,"bbox":[110,390,250,34]}
+{"kind":"textbox","id":"sh/ulo7itsr","slide":9,"name":"phone-body-0","text":"01033881597 →\n010-3388-1597","textPreview":"01033881597 → | 010-3388-1597","textChars":27,"textLines":2,"bbox":[110,436,260,84]}
+{"kind":"shape","id":"sh/fmxorytc","slide":9,"name":"phone-dot-1","bbox":[492,334,24,24]}
+{"kind":"textbox","id":"sh/gn6pk3ax","slide":9,"name":"phone-hash-1","text":"59073d4","textPreview":"59073d4","textChars":7,"textLines":1,"bbox":[482,286,140,28]}
+{"kind":"textbox","id":"sh/hof6tob2","slide":9,"name":"phone-title-1","text":"붙여넣기 오류","textPreview":"붙여넣기 오류","textChars":7,"textLines":1,"bbox":[482,390,250,34]}
+{"kind":"textbox","id":"sh/6hone9sf","slide":9,"name":"phone-body-1","text":"maxLength가 원본 숫자를\n먼저 잘라내는 문제 발견","textPreview":"maxLength가 원본 숫자를 | 먼저 잘라내는 문제 발견","textChars":31,"textLines":2,"bbox":[482,436,260,84]}
+{"kind":"shape","id":"sh/7ixonet0","slide":9,"name":"phone-dot-2","bbox":[864,334,24,24]}
+{"kind":"textbox","id":"sh/sj65gjal","slide":9,"name":"phone-hash-2","text":"a19a915","textPreview":"a19a915","textChars":7,"textLines":1,"bbox":[854,286,140,28]}
+{"kind":"textbox","id":"sh/tkf6pob6","slide":9,"name":"phone-title-2","text":"회귀 테스트","textPreview":"회귀 테스트","textChars":6,"textLines":1,"bbox":[854,390,250,34]}
+{"kind":"textbox","id":"sh/qd87qdsz","slide":9,"name":"phone-body-2","text":"Playwright로 입력·붙여넣기\n행동을 자동 검증","textPreview":"Playwright로 입력·붙여넣기 | 행동을 자동 검증","textChars":29,"textLines":2,"bbox":[854,436,260,84]}
+{"kind":"shape","id":"sh/rehozitk","slide":9,"name":"phone-lesson","bbox":[198,566,884,76]}
+{"kind":"textbox","id":"sh/nyt4ba9w","slide":9,"name":"phone-lesson-text","text":"교훈: 필드 제약은 최종 값뿐 아니라 입력 순서·붙여넣기·모바일 키보드까지 테스트해야 한다.","textPreview":"교훈: 필드 제약은 최종 값뿐 아니라 입력 순서·붙여넣기·모바일 키보드까지 테스트해야 한다.","textChars":51,"textLines":1,"bbox":[230,588,820,34]}
+{"kind":"notes","id":"nt/bwmv2l","slide":9,"text":"[Sources]\n- Commits 34b4778, 59073d4, a19a915\n- lib/phone.ts\n- tests/playwright_smoke.py"}
+{"kind":"slide","id":"sl/qb8kua","slide":10,"title":"TRIAL & ERROR · RELIABILITY","textShapes":9}
+{"kind":"textbox","id":"sh/i9onyxov","slide":10,"name":"kicker-10","text":"TRIAL & ERROR · RELIABILITY","textPreview":"TRIAL & ERROR · RELIABILITY","textChars":27,"textLines":1,"bbox":[56,34,520,24]}
+{"kind":"textbox","id":"sh/5cf6tcnm","slide":10,"name":"title-10","text":"Trial 3 — 알림과 백업은 ‘성공’보다 실패 후 복구가 핵심이었다","textPreview":"Trial 3 — 알림과 백업은 ‘성공’보다 실패 후 복구가 핵심이었다","textChars":39,"textLines":1,"bbox":[56,82,1168,72]}
+{"kind":"shape","id":"sh/4b6p0761","slide":10,"name":"top-rule-10","bbox":[56,166,1168,0]}
+{"kind":"textbox","id":"sh/rexovm5s","slide":10,"name":"footer-10","text":"컴박사 웹페이지 구축 회고  ·  2026.08.09","textPreview":"컴박사 웹페이지 구축 회고  ·  2026.08.09","textChars":29,"textLines":1,"bbox":[56,674,760,20]}
+{"kind":"textbox","id":"sh/6do72ho7","slide":10,"name":"page-10","text":"10","textPreview":"10","textChars":2,"textLines":1,"bbox":[1160,672,64,22]}
+{"kind":"textbox","id":"sh/t0z6xcni","slide":10,"name":"notify-title","text":"Telegram 알림","textPreview":"Telegram 알림","textChars":11,"textLines":1,"bbox":[72,190,500,34]}
+{"kind":"textbox","id":"sh/sfqp476d","slide":10,"name":"backup-title","text":"D1 백업","textPreview":"D1 백업","textChars":5,"textLines":1,"bbox":[676,190,500,34]}
+{"kind":"shape","id":"sh/f2hozm5o","slide":10,"name":"notify-panel","bbox":[72,240,520,322]}
+{"kind":"shape","id":"sh/e1876ho3","slide":10,"name":"backup-panel","bbox":[676,240,532,322]}
+{"kind":"textbox","id":"sh/s7ih0ra9","slide":10,"name":"notify-flow","text":"신청 저장\n↓\n응답 경로 밖에서 발송\n↓ 실패\n대기열 기록\n↓ 5분 cron\n재시도","textPreview":"신청 저장 | ↓ | 응답 경로 밖에서 발송 | ↓ 실패 | 대기열 기록 | ↓ 5분 cron | 재시도","textChars":46,"textLines":7,"bbox":[112,274,440,250]}
+{"kind":"textbox","id":"sh/t8ry9wbu","slide":10,"name":"backup-flow","text":"03:00  D1 → SQL + SHA-256 manifest\n03:20  서버 PC가 R2에서 다운로드\n검증 후 Windows CMS로 암호화\nGoogle Drive 또는 로컬 보관\n보존기간 365일","textPreview":"03:00  D1 → SQL + SHA-256 manifest | 03:20  서버 PC가 R2에서 다운로드 | 검증 후 Windows CMS로 암호화 | Google Drive 또는 로컬 보관 | 보존기간 365일","textChars":112,"textLines":5,"bbox":[712,278,460,244]}
+{"kind":"textbox","id":"sh/650zyhs3","slide":10,"name":"reliability-lesson","text":"교훈: 네트워크와 외부 서비스는 실패한다고 가정하고 재시도·무결성·복원 절차를 설계한다.","textPreview":"교훈: 네트워크와 외부 서비스는 실패한다고 가정하고 재시도·무결성·복원 절차를 설계한다.","textChars":49,"textLines":1,"bbox":[112,610,1056,34]}
+{"kind":"notes","id":"nt/qb8kua","slide":10,"text":"[Sources]\n- Commit 04f769d\n- Commit f74fc7a\n- Commit 056c2e2\n- README.md section: 서버 PC 신청 데이터 백업\n- wrangler.jsonc cron triggers"}
+{"kind":"slide","id":"sl/7kpdg5","slide":11,"title":"TRIAL & ERROR · OPERATIONS UX","textShapes":9}
+{"kind":"textbox","id":"sh/kzuh4vmt","slide":11,"name":"kicker-11","text":"TRIAL & ERROR · OPERATIONS UX","textPreview":"TRIAL & ERROR · OPERATIONS UX","textChars":29,"textLines":1,"bbox":[168,34,520,24]}
+{"kind":"textbox","id":"sh/jylgvql8","slide":11,"name":"title-11","text":"Trial 4 — 운영 UX는 저장·모바일에서 갈렸다","textPreview":"Trial 4 — 운영 UX는 저장·모바일에서 갈렸다","textChars":29,"textLines":1,"bbox":[168,82,1056,72]}
+{"kind":"shape","id":"sh/ixcz254n","slide":11,"name":"top-rule-11","bbox":[168,166,1056,0]}
+{"kind":"textbox","id":"sh/xw3yt03i","slide":11,"name":"footer-11","text":"컴박사 웹페이지 구축 회고  ·  2026.08.09","textPreview":"컴박사 웹페이지 구축 회고  ·  2026.08.09","textChars":29,"textLines":1,"bbox":[56,674,760,20]}
+{"kind":"textbox","id":"sh/wvux0vmx","slide":11,"name":"page-11","text":"11","textPreview":"11","textChars":2,"textLines":1,"bbox":[1160,672,64,22]}
+{"kind":"shape","id":"sh/vu1grqlc","slide":11,"name":"ux-left","bbox":[72,196,520,390]}
+{"kind":"shape","id":"sh/atsfyl4r","slide":11,"name":"ux-right","bbox":[688,196,520,390]}
+{"kind":"textbox","id":"sh/hsny5k3m","slide":11,"name":"ux-left-head","text":"저장 후 페이지 새로고침","textPreview":"저장 후 페이지 새로고침","textChars":13,"textLines":1,"bbox":[110,232,444,36]}
+{"kind":"textbox","id":"sh/grehcfm1","slide":11,"name":"ux-left-body","text":"문제\n스크롤 위치와 검색 맥락이 사라짐\n\n개선\n비동기 저장 + 완료 메시지\nURL과 스크롤 위치 유지","textPreview":"문제 | 스크롤 위치와 검색 맥락이 사라짐 |  | 개선 | 비동기 저장 + 완료 메시지 | URL과 스크롤 위치 유지","textChars":56,"textLines":6,"bbox":[110,292,444,220]}
+{"kind":"textbox","id":"sh/uls7edk7","slide":11,"name":"ux-right-head","text":"모바일에서 큰 관리 표","textPreview":"모바일에서 큰 관리 표","textChars":12,"textLines":1,"bbox":[726,232,444,36]}
+{"kind":"textbox","id":"sh/vm1ony1s","slide":11,"name":"ux-right-body","text":"문제\n열이 많아 핵심 정보와 행동이 묻힘\n\n개선\n접수 카드 + 전화 + SMS\n상세 수정으로 바로 이동","textPreview":"문제 | 열이 많아 핵심 정보와 행동이 묻힘 |  | 개선 | 접수 카드 + 전화 + SMS | 상세 수정으로 바로 이동","textChars":57,"textLines":6,"bbox":[726,292,444,220]}
+{"kind":"textbox","id":"sh/wnapg32d","slide":11,"name":"ux-test","text":"Playwright가 저장 후 스크롤 유지와 390×844 모바일 카드 표시를 고정한다.","textPreview":"Playwright가 저장 후 스크롤 유지와 390×844 모바일 카드 표시를 고정한다.","textChars":49,"textLines":1,"bbox":[170,620,940,32]}
+{"kind":"notes","id":"nt/7kpdg5","slide":11,"text":"[Sources]\n- Commit f07c936\n- components/admin-request-record-form.tsx\n- app/admin/page.tsx\n- tests/playwright_smoke.py"}
+{"kind":"slide","id":"sl/b5s8fn","slide":12,"title":"TRIAL & ERROR · GIT / DEPLOYMENT","textShapes":17}
+{"kind":"textbox","id":"sh/czm5kbud","slide":12,"name":"kicker-12","text":"TRIAL & ERROR · GIT / DEPLOYMENT","textPreview":"TRIAL & ERROR · GIT / DEPLOYMENT","textChars":32,"textLines":1,"bbox":[56,34,520,24]}
+{"kind":"textbox","id":"sh/ryd4r6d8","slide":12,"name":"title-12","text":"가장 큰 사고는 코드가 아니라 브랜치 흐름에서 발생했다","textPreview":"가장 큰 사고는 코드가 아니라 브랜치 흐름에서 발생했다","textChars":30,"textLines":1,"bbox":[56,70,1168,70]}
+{"kind":"shape","id":"sh/qx4nilcn","slide":12,"name":"top-rule-12","bbox":[56,146,1168,0]}
+{"kind":"textbox","id":"sh/14f6x0ba","slide":12,"name":"footer-12","text":"컴박사 웹페이지 구축 회고  ·  2026.08.09","textPreview":"컴박사 웹페이지 구축 회고  ·  2026.08.09","textChars":29,"textLines":1,"bbox":[56,674,760,20]}
+{"kind":"textbox","id":"sh/0365ovup","slide":12,"name":"page-12","text":"12","textPreview":"12","textChars":2,"textLines":1,"bbox":[1160,672,64,22]}
+{"kind":"shape","id":"sh/z2xovqt4","slide":12,"name":"main-line","bbox":[110,316,1030,0]}
+{"kind":"shape","id":"sh/e1onmlcj","slide":12,"name":"branch-down","bbox":[260,316,0,112]}
+{"kind":"shape","id":"sh/9sz610b6","slide":12,"name":"branch-line","bbox":[260,428,430,0]}
+{"kind":"shape","id":"sh/or65svul","slide":12,"name":"merge-one","bbox":[448,316,0,112]}
+{"kind":"shape","id":"sh/ax83md8f","slide":12,"name":"late-merge","bbox":[690,316,356,112]}
+{"kind":"shape","id":"sh/byhkvi90","slide":12,"name":"git-main-dot-0","bbox":[112,304,24,24]}
+{"kind":"textbox","id":"sh/wzqlonq5","slide":12,"name":"git-main-hash-0","text":"91f3d9c","textPreview":"91f3d9c","textChars":7,"textLines":1,"bbox":[86,252,120,26]}
+{"kind":"textbox","id":"sh/x0j2xsrq","slide":12,"name":"git-main-label-0","text":"기준 main","textPreview":"기준 main","textChars":7,"textLines":1,"bbox":[86,342,160,34]}
+{"kind":"shape","id":"sh/y1s3qx8b","slide":12,"name":"git-main-dot-1","bbox":[432,304,24,24]}
+{"kind":"textbox","id":"sh/j21kzi9w","slide":12,"name":"git-main-hash-1","text":"244825d","textPreview":"244825d","textChars":7,"textLines":1,"bbox":[406,252,120,26]}
+{"kind":"textbox","id":"sh/k3alsnqh","slide":12,"name":"git-main-label-1","text":"PR #1 병합","textPreview":"PR #1 병합","textChars":8,"textLines":1,"bbox":[406,342,160,34]}
+{"kind":"shape","id":"sh/l4j21sr2","slide":12,"name":"git-main-dot-2","bbox":[752,304,24,24]}
+{"kind":"textbox","id":"sh/e5ojet87","slide":12,"name":"git-main-hash-2","text":"7eda503","textPreview":"7eda503","textChars":7,"textLines":1,"bbox":[726,252,120,26]}
+{"kind":"textbox","id":"sh/z6xkny9s","slide":12,"name":"git-main-label-2","text":"도메인 배포","textPreview":"도메인 배포","textChars":6,"textLines":1,"bbox":[726,342,160,34]}
+{"kind":"shape","id":"sh/3ad0fupk","slide":12,"name":"git-main-dot-3","bbox":[1030,304,24,24]}
+{"kind":"textbox","id":"sh/294zmpoz","slide":12,"name":"git-main-hash-3","text":"1d9809e","textPreview":"1d9809e","textChars":7,"textLines":1,"bbox":[1004,252,120,26]}
+{"kind":"textbox","id":"sh/pcvih47a","slide":12,"name":"git-main-label-3","text":"복구 병합","textPreview":"복구 병합","textChars":5,"textLines":1,"bbox":[1004,342,160,34]}
+{"kind":"shape","id":"sh/4bmhoz6p","slide":12,"name":"git-branch-056","bbox":[436,416,24,24]}
+{"kind":"textbox","id":"sh/fmt0bap8","slide":12,"name":"git-branch-056-h","text":"056c2e2","textPreview":"056c2e2","textChars":7,"textLines":1,"bbox":[410,458,120,26]}
+{"kind":"textbox","id":"sh/ulkzipon","slide":12,"name":"git-branch-056-l","text":"백업 기능","textPreview":"백업 기능","textChars":5,"textLines":1,"bbox":[410,490,140,30]}
+{"kind":"shape","id":"sh/h8bidk7e","slide":12,"name":"git-branch-f07","bbox":[678,416,24,24]}
+{"kind":"textbox","id":"sh/gn2hkf6t","slide":12,"name":"git-branch-f07-h","text":"f07c936","textPreview":"f07c936","textChars":7,"textLines":1,"bbox":[652,458,120,26]}
+{"kind":"textbox","id":"sh/zix0neps","slide":12,"name":"git-branch-f07-l","text":"ID/PW·직원 관리\nPR 종료 후 추가됨","textPreview":"ID/PW·직원 관리 | PR 종료 후 추가됨","textChars":23,"textLines":2,"bbox":[652,490,220,56]}
+{"kind":"shape","id":"sh/ehozu9o7","slide":12,"name":"git-root-cause","bbox":[156,578,968,74]}
+{"kind":"textbox","id":"sh/wnyxobmp","slide":12,"name":"git-root-cause-text","text":"원인: PR이 이미 병합된 뒤 같은 브랜치에 새 커밋을 추가했고, main에는 포함되지 않은 채 도메인 배포가 진행됐다.","textPreview":"원인: PR이 이미 병합된 뒤 같은 브랜치에 새 커밋을 추가했고, main에는 포함되지 않은 채 도메인 배포가 진행됐다.","textChars":67,"textLines":1,"bbox":[190,598,900,38]}
+{"kind":"notes","id":"nt/b5s8fn","slide":12,"text":"[Sources]\n- GitHub PR #1 https://github.com/jung372/Computer_repair_website/pull/1\n- GitHub PR #2 https://github.com/jung372/Computer_repair_website/pull/2\n- Commits 056c2e2, f07c936, 7eda503, 1d9809e"}
+{"kind":"slide","id":"sl/2jzrbh","slide":13,"title":"BUILD RETROSPECTIVE","textShapes":15}
+{"kind":"textbox","id":"sh/szq1wny9","slide":13,"name":"kicker-13","text":"BUILD RETROSPECTIVE","textPreview":"BUILD RETROSPECTIVE","textChars":19,"textLines":1,"bbox":[56,34,520,24]}
+{"kind":"textbox","id":"sh/ryx03iho","slide":13,"name":"title-13","text":"복구는 병합·검증·배포를 한 번에 닫는 방식으로 진행했다","textPreview":"복구는 병합·검증·배포를 한 번에 닫는 방식으로 진행했다","textChars":31,"textLines":1,"bbox":[56,70,1168,70]}
+{"kind":"shape","id":"sh/6xojudg3","slide":13,"name":"top-rule-13","bbox":[56,146,1168,0]}
+{"kind":"textbox","id":"sh/5wfi18zi","slide":13,"name":"footer-13","text":"컴박사 웹페이지 구축 회고  ·  2026.08.09","textPreview":"컴박사 웹페이지 구축 회고  ·  2026.08.09","textChars":29,"textLines":1,"bbox":[56,674,760,20]}
+{"kind":"textbox","id":"sh/4v61s3yx","slide":13,"name":"page-13","text":"13","textPreview":"13","textChars":2,"textLines":1,"bbox":[1160,672,64,22]}
+{"kind":"textbox","id":"sh/jux0zyhs","slide":13,"name":"metric-1-72","text":"1","textPreview":"1","textChars":1,"textLines":1,"bbox":[72,210,240,78]}
+{"kind":"textbox","id":"sh/itojqtg7","slide":13,"name":"metric-label-1-72","text":"package.json 충돌\n두 테스트 목록 모두 유지","textPreview":"package.json 충돌 | 두 테스트 목록 모두 유지","textChars":30,"textLines":2,"bbox":[72,292,240,54]}
+{"kind":"textbox","id":"sh/hsfixozm","slide":13,"name":"metric-31-374","text":"31","textPreview":"31","textChars":2,"textLines":1,"bbox":[374,210,240,78]}
+{"kind":"textbox","id":"sh/wrm1o3y1","slide":13,"name":"metric-label-31-374","text":"회귀 테스트 통과\nfail 0","textPreview":"회귀 테스트 통과 | fail 0","textChars":16,"textLines":2,"bbox":[374,292,240,54]}
+{"kind":"textbox","id":"sh/2dsnudcr","slide":13,"name":"metric-0 / 0-676","text":"0 / 0","textPreview":"0 / 0","textChars":5,"textLines":1,"bbox":[676,210,240,78]}
+{"kind":"textbox","id":"sh/3e1o3itc","slide":13,"name":"metric-label-0 / 0-676","text":"main ↔ origin/main\nahead / behind","textPreview":"main ↔ origin/main | ahead / behind","textChars":33,"textLines":2,"bbox":[676,292,240,54]}
+{"kind":"textbox","id":"sh/4fa5wnux","slide":13,"name":"metric-#28-978","text":"#28","textPreview":"#28","textChars":3,"textLines":1,"bbox":[978,210,240,78]}
+{"kind":"textbox","id":"sh/pgj65sb2","slide":13,"name":"metric-label-#28-978","text":"GitHub Actions\n배포 성공","textPreview":"GitHub Actions | 배포 성공","textChars":20,"textLines":2,"bbox":[978,292,240,54]}
+{"kind":"shape","id":"sh/up8nqdcf","slide":13,"name":"recovery-divider","bbox":[72,390,1136,0]}
+{"kind":"textbox","id":"sh/fahozit0","slide":13,"name":"recovery-sequence-title","text":"복구 순서","textPreview":"복구 순서","textChars":5,"textLines":1,"bbox":[72,424,180,34]}
+{"kind":"textbox","id":"sh/gbq5snul","slide":13,"name":"recovery-sequence","text":"브랜치 비교  →  main 병합  →  충돌 해결  →  lint·types·build·tests  →  push  →  운영 화면 확인","textPreview":"브랜치 비교  →  main 병합  →  충돌 해결  →  lint·types·build·tests  →  push  →  운영 화면 확인","textChars":77,"textLines":1,"bbox":[72,480,1136,50]}
+{"kind":"shape","id":"sh/hcz61sb6","slide":13,"name":"recovery-proof","bbox":[212,566,856,76]}
+{"kind":"textbox","id":"sh/6l8nmtcj","slide":13,"name":"recovery-proof-text","text":"운영 페이지에서 ‘아이디’와 ‘비밀번호’ 입력란을 직접 확인하며 종료","textPreview":"운영 페이지에서 ‘아이디’와 ‘비밀번호’ 입력란을 직접 확인하며 종료","textChars":38,"textLines":1,"bbox":[250,588,780,34]}
+{"kind":"notes","id":"nt/2jzrbh","slide":13,"text":"[Sources]\n- Commit 1d9809e\n- Local validation: npm run lint, wrangler types --check, npm test\n- GitHub Actions Run #28 https://github.com/jung372/Computer_repair_website/actions/runs/31298327142\n- Production URL https://combaksa.pe.kr/admin/login"}
+{"kind":"slide","id":"sl/2qfqrv","slide":14,"title":"BUILD RETROSPECTIVE","textShapes":16}
+{"kind":"textbox","id":"sh/ql4369o7","slide":14,"name":"kicker-14","text":"BUILD RETROSPECTIVE","textPreview":"BUILD RETROSPECTIVE","textChars":19,"textLines":1,"bbox":[56,34,520,24]}
+{"kind":"textbox","id":"sh/dovmho7i","slide":14,"name":"title-14","text":"다음 프로젝트에서는 다섯 가지 통제를 기본값으로 둔다","textPreview":"다음 프로젝트에서는 다섯 가지 통제를 기본값으로 둔다","textChars":29,"textLines":1,"bbox":[56,82,1168,72]}
+{"kind":"shape","id":"sh/cnml8j6x","slide":14,"name":"top-rule-14","bbox":[56,166,1168,0]}
+{"kind":"textbox","id":"sh/zqd4jepo","slide":14,"name":"footer-14","text":"컴박사 웹페이지 구축 회고  ·  2026.08.09","textPreview":"컴박사 웹페이지 구축 회고  ·  2026.08.09","textChars":29,"textLines":1,"bbox":[56,674,760,20]}
+{"kind":"textbox","id":"sh/ep43ato3","slide":14,"name":"page-14","text":"14","textPreview":"14","textChars":2,"textLines":1,"bbox":[1160,672,64,22]}
+{"kind":"textbox","id":"sh/1svmlo7u","slide":14,"name":"controls-lead","text":"코드 품질과 배포 품질을 같은 프로세스에서 관리한다.","textPreview":"코드 품질과 배포 품질을 같은 프로세스에서 관리한다.","textChars":29,"textLines":1,"bbox":[72,188,520,72]}
+{"kind":"textbox","id":"sh/0rmlcj69","slide":14,"name":"controls-body","text":"브랜치 사고는 테스트가 잡지 못한다.\n반대로 배포 통제만으로는 입력 UX나 복원 가능성을 보장하지 못한다.\n두 영역을 함께 운영해야 한다.","textPreview":"브랜치 사고는 테스트가 잡지 못한다. | 반대로 배포 통제만으로는 입력 UX나 복원 가능성을 보장하지 못한다. | 두 영역을 함께 운영해야 한다.","textChars":77,"textLines":3,"bbox":[72,292,520,200]}
+{"kind":"shape","id":"sh/nux4nypk","slide":14,"name":"control-check-0","bbox":[688,198,28,28]}
+{"kind":"textbox","id":"sh/mtonetof","slide":14,"name":"control-checkmark-0","text":"✓","textPreview":"✓","textChars":1,"textLines":1,"bbox":[688,198,28,24]}
+{"kind":"textbox","id":"sh/c3ehorqh","slide":14,"name":"control-text-0","text":"PR 병합 후 브랜치 재사용 금지","textPreview":"PR 병합 후 브랜치 재사용 금지","textChars":18,"textLines":1,"bbox":[734,192,470,44]}
+{"kind":"shape","id":"sh/x4nyhwrm","slide":14,"name":"control-check-1","bbox":[688,276,28,28]}
+{"kind":"textbox","id":"sh/q1wzmh8b","slide":14,"name":"control-checkmark-1","text":"✓","textPreview":"✓","textChars":1,"textLines":1,"bbox":[688,276,28,24]}
+{"kind":"textbox","id":"sh/b25gfm9w","slide":14,"name":"control-text-1","text":"main 기준 재베이스 후 새 PR 생성","textPreview":"main 기준 재베이스 후 새 PR 생성","textChars":22,"textLines":1,"bbox":[734,270,470,44]}
+{"kind":"shape","id":"sh/k7yhsbqd","slide":14,"name":"control-check-2","bbox":[688,354,28,28]}
+{"kind":"textbox","id":"sh/l87ilgry","slide":14,"name":"control-checkmark-2","text":"✓","textPreview":"✓","textChars":1,"textLines":1,"bbox":[688,354,28,24]}
+{"kind":"textbox","id":"sh/y5wzq187","slide":14,"name":"control-text-2","text":"CI에 lint·types·migration·tests 고정","textPreview":"CI에 lint·types·migration·tests 고정","textChars":33,"textLines":1,"bbox":[734,348,470,44]}
+{"kind":"shape","id":"sh/z6p0j69s","slide":14,"name":"control-check-3","bbox":[688,432,28,28]}
+{"kind":"textbox","id":"sh/8vyhwbqp","slide":14,"name":"control-checkmark-3","text":"✓","textPreview":"✓","textChars":1,"textLines":1,"bbox":[688,432,28,24]}
+{"kind":"textbox","id":"sh/9w7ipgru","slide":14,"name":"control-text-3","text":"배포 뒤 핵심 화면 smoke test","textPreview":"배포 뒤 핵심 화면 smoke test","textChars":21,"textLines":1,"bbox":[734,426,470,44]}
+{"kind":"shape","id":"sh/hsny9gjy","slide":14,"name":"control-check-4","bbox":[688,510,28,28]}
+{"kind":"textbox","id":"sh/gruhgbit","slide":14,"name":"control-checkmark-4","text":"✓","textPreview":"✓","textChars":1,"textLines":1,"bbox":[688,510,28,24]}
+{"kind":"textbox","id":"sh/vqlg7618","slide":14,"name":"control-text-4","text":"백업 복원 절차와 운영 runbook 유지","textPreview":"백업 복원 절차와 운영 runbook 유지","textChars":23,"textLines":1,"bbox":[734,504,470,44]}
+{"kind":"notes","id":"nt/2qfqrv","slide":14,"text":"[Sources]\n- Lessons synthesized from repository Git history, deploy.yml, tests, backup scripts, and the f07c936 merge incident"}
+{"kind":"slide","id":"sl/mihx78","slide":15,"title":"FINAL TAKEAWAY","textShapes":5}
+{"kind":"textbox","id":"sh/x0nqp0j2","slide":15,"name":"close-kicker","text":"FINAL TAKEAWAY","textPreview":"FINAL TAKEAWAY","textChars":14,"textLines":1,"bbox":[56,48,320,28]}
+{"kind":"textbox","id":"sh/axw7e5kb","slide":15,"name":"close-title","text":"완성된 화면보다 중요한 것은\n복구 가능한 운영 과정이다","textPreview":"완성된 화면보다 중요한 것은 | 복구 가능한 운영 과정이다","textChars":30,"textLines":2,"bbox":[56,188,1080,190]}
+{"kind":"textbox","id":"sh/by58na1w","slide":15,"name":"close-body","text":"기능 · 데이터 · 보안 · 배포 · 백업이 한 흐름으로 연결될 때\n웹페이지는 비로소 운영 가능한 서비스가 된다.","textPreview":"기능 · 데이터 · 보안 · 배포 · 백업이 한 흐름으로 연결될 때 | 웹페이지는 비로소 운영 가능한 서비스가 된다.","textChars":63,"textLines":2,"bbox":[56,448,900,90]}
+{"kind":"shape","id":"sh/knypkf2d","slide":15,"name":"close-rule","bbox":[56,590,1168,0]}
+{"kind":"textbox","id":"sh/lo7qtkjy","slide":15,"name":"close-url","text":"https://combaksa.pe.kr","textPreview":"https://combaksa.pe.kr","textChars":22,"textLines":1,"bbox":[56,620,520,30]}
+{"kind":"textbox","id":"sh/y1w7i5k7","slide":15,"name":"close-date","text":"COMBAKSA · 2026.08.09","textPreview":"COMBAKSA · 2026.08.09","textChars":21,"textLines":1,"bbox":[912,620,312,30]}
+{"kind":"notes","id":"nt/mihx78","slide":15,"text":"[Sources]\n- README.md\n- Git history through commit 1d9809e\n- Production URL https://combaksa.pe.kr"}

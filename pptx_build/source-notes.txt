@@ -1,0 +1,16 @@
+Deck: 컴박사 웹페이지 구축 회고
+Audience: 웹 프로젝트를 직접 구축·운영하려는 학습자와 소규모 서비스 운영자
+Communication job: 구축 절차와 실제 시행착오를 통해, 기능 개발만이 아니라 배포·보안·복구 통제가 함께 필요하다는 점을 이해시킨다.
+
+Primary sources:
+- Repository README.md
+- Repository PRD.md
+- Git history on main through commit 1d9809e60c0192db62e62342504ecb9b2bc3e612
+- .github/workflows/deploy.yml
+- wrangler.jsonc
+- drizzle migrations 0000 through 0006
+- Tests under tests/
+- GitHub PR #1, PR #2, Actions Run #28
+- Local brand asset public/og.png
+
+No external factual claims or external image assets are used.
