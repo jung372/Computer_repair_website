@@ -32,7 +32,7 @@ function constantTimeEqual(left: Uint8Array, right: Uint8Array) {
 
 async function deriveBits(
   password: string,
-  salt: Uint8Array,
+  salt: BufferSource,
   iterations: number,
   keyLength: number,
 ) {

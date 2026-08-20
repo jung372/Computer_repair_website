@@ -1,3 +1,4 @@
+import { waitUntil } from "cloudflare:workers";
 import { getAdminUser } from "@/lib/admin-auth";
 import { assignAdminRequest, getAdminRequestRecord } from "@/data/admin-request-repository";
 import {
@@ -49,6 +50,7 @@ export async function POST(
         ? payload.assigneeAccountId.trim() || null
         : null;
       const assignment = await assignAdminRequest(publicId, staffId, admin.id);
+      waitUntil(processPendingNotifications(new URL(request.url).origin).catch(() => undefined));
       return Response.json({ message: "담당자 배정을 저장했습니다.", assignment });
     }
     if (payload.action === "update") {
@@ -56,12 +58,18 @@ export async function POST(
       return Response.json({ message: "처리 상태를 저장했습니다." });
     }
     if (payload.action === "retry-notification") {
+      if (admin.role !== "OWNER") {
+        return Response.json({ error: "운영자만 알림을 재전송할 수 있습니다." }, { status: 403 });
+      }
       const found = await retryRequestNotification(publicId);
       if (!found) return Response.json({ error: "신청을 찾을 수 없습니다." }, { status: 404 });
       await processPendingNotifications(new URL(request.url).origin);
       return Response.json({ message: "텔레그램 알림을 다시 처리했습니다." });
     }
     if (payload.action === "anonymize") {
+      if (admin.role !== "OWNER") {
+        return Response.json({ error: "운영자만 개인정보를 삭제할 수 있습니다." }, { status: 403 });
+      }
       const removed = await removeRequestPersonalData(publicId, admin.loginName);
       if (!removed) return Response.json({ error: "신청을 찾을 수 없습니다." }, { status: 404 });
       return Response.json({ message: "개인정보를 삭제했습니다." });

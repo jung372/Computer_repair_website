@@ -5,10 +5,11 @@ import { AdminAccountNav } from "@/components/admin-account-nav";
 import { AdminStatusFilter } from "@/components/admin-status-filter";
 import { StatusBadge } from "@/components/status-badge";
 import {
+  getDashboardCounts,
   getAdminRequestFilterOptions,
   listAdminRequestRecords,
 } from "@/data/admin-request-repository";
-import { listStaffAccounts } from "@/data/admin-repository";
+import { listAssignmentOptions } from "@/data/staff-slot-repository";
 import { CUSTOMER_TYPES } from "@/lib/domain";
 import { requireAdmin } from "@/lib/admin-auth";
 
@@ -54,10 +55,11 @@ export default async function AdminPage({
     completedTo: first(query.completedTo),
     statuses: selectedStatuses,
   };
-  const [requests, filterOptions, staffAccounts] = await Promise.all([
+  const [requests, filterOptions, staffAccounts, counts] = await Promise.all([
     listAdminRequestRecords(filters, 200, admin.role === "STAFF" ? admin.id : undefined),
     getAdminRequestFilterOptions(),
-    admin.role === "OWNER" ? listStaffAccounts() : Promise.resolve([]),
+    admin.role === "OWNER" ? listAssignmentOptions() : Promise.resolve([]),
+    getDashboardCounts(admin.id),
   ]);
   const customerTypes = unique([...CUSTOMER_TYPES, ...filterOptions.customerTypes]);
   const returnTo = buildAdminReturnPath(query);
@@ -80,6 +82,23 @@ export default async function AdminPage({
       </section>
 
       <section className="container admin-content">
+        <section className="admin-kpi-grid" aria-label="업무 현황">
+          <article>
+            <span>{admin.role === "OWNER" ? "담당자 미할당" : "내 전체 배정"}</span>
+            <strong>{admin.role === "OWNER" ? counts.unassigned : counts.assigned}</strong>
+            <small>건</small>
+          </article>
+          <article>
+            <span>내 미접수</span>
+            <strong>{counts.received}</strong>
+            <small>건</small>
+          </article>
+          <article>
+            <span>내 미종결</span>
+            <strong>{counts.unresolved}</strong>
+            <small>건</small>
+          </article>
+        </section>
         <form className="admin-search-panel" action="/admin" method="get">
           <div className="admin-search-heading">
             <div>
@@ -108,8 +127,8 @@ export default async function AdminPage({
                   <option value="">담당자 전체</option>
                   <option value="__UNASSIGNED__">미배정</option>
                   {staffAccounts.map((account) => (
-                    <option value={account.id} key={account.id}>
-                      {account.displayName} · {account.loginName}{account.isActive ? "" : " (차단됨)"}
+                    <option value={account.accountId} key={account.accountId}>
+                      {account.label}
                     </option>
                   ))}
                 </select>

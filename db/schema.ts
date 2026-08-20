@@ -64,6 +64,10 @@ export const notificationOutbox = sqliteTable(
     nextAttemptAt: text("next_attempt_at").notNull(),
     lastError: text("last_error"),
     sentAt: text("sent_at"),
+    eventType: text("event_type").notNull().default("NEW_REQUEST"),
+    recipientAccountId: text("recipient_account_id"),
+    telegramMessageId: text("telegram_message_id"),
+    canceledAt: text("canceled_at"),
     createdAt: text("created_at").notNull(),
     updatedAt: text("updated_at").notNull(),
   },
@@ -115,10 +119,23 @@ export const admins = sqliteTable("admins", {
   phone: text("phone").notNull().default(""),
   role: text("role").notNull().default("STAFF"),
   createdBy: text("created_by"),
+  slotSerialNo: integer("slot_serial_no"),
   isActive: integer("is_active").notNull().default(1),
   sessionVersion: integer("session_version").notNull().default(1),
   passwordChangedAt: text("password_changed_at").notNull(),
   lastLoginAt: text("last_login_at"),
+  createdAt: text("created_at").notNull(),
+  updatedAt: text("updated_at").notNull(),
+});
+
+export const staffSlots = sqliteTable("staff_slots", {
+  serialNo: integer("serial_no").primaryKey(),
+  label: text("label").notNull(),
+  telegramChatIdCiphertext: text("telegram_chat_id_ciphertext"),
+  telegramChatIdIv: text("telegram_chat_id_iv"),
+  telegramEnabled: integer("telegram_enabled").notNull().default(0),
+  telegramVerifiedAt: text("telegram_verified_at"),
+  updatedBy: text("updated_by"),
   createdAt: text("created_at").notNull(),
   updatedAt: text("updated_at").notNull(),
 });
@@ -181,4 +198,22 @@ export const requestOperations = sqliteTable(
     index("request_operations_assignee_account_idx").on(table.assigneeAccountId),
     index("request_operations_dates_idx").on(table.receivedDate, table.completedDate),
   ],
+);
+
+export const requestAssignmentHistory = sqliteTable(
+  "request_assignment_history",
+  {
+    id: text("id").primaryKey(),
+    requestId: text("request_id")
+      .notNull()
+      .references(() => serviceRequests.id, { onDelete: "cascade" }),
+    previousAccountId: text("previous_account_id"),
+    assignedAccountId: text("assigned_account_id"),
+    assigneeNameSnapshot: text("assignee_name_snapshot").notNull().default(""),
+    eventType: text("event_type").notNull(),
+    reason: text("reason"),
+    changedBy: text("changed_by").notNull(),
+    createdAt: text("created_at").notNull(),
+  },
+  (table) => [index("request_assignment_history_request_idx").on(table.requestId)],
 );

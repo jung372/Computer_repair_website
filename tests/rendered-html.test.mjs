@@ -64,6 +64,35 @@ test("includes durable private requests, personal lookup, admin and Telegram sur
   assert.match(telegram, /sendMessage/);
 });
 
+test("supports fixed staff slots, copyable Telegram text and workload counts", async () => {
+  const [schema, migration, telegram, staffRepository, staffPage, adminPage] =
+    await Promise.all([
+      readFile(new URL("db/schema.ts", root), "utf8"),
+      readFile(new URL("drizzle/0007_staff_slots_telegram.sql", root), "utf8"),
+      readFile(new URL("infrastructure/telegram.ts", root), "utf8"),
+      readFile(new URL("data/staff-slot-repository.ts", root), "utf8"),
+      readFile(new URL("app/admin/staff/page.tsx", root), "utf8"),
+      readFile(new URL("app/admin/page.tsx", root), "utf8"),
+    ]);
+
+  assert.match(schema, /staffSlots/);
+  assert.match(schema, /requestAssignmentHistory/);
+  assert.match(migration, /직원 슬롯 1/);
+  assert.match(migration, /직원 슬롯 2/);
+  assert.match(migration, /직원 슬롯 3/);
+  assert.match(migration, /DELETE FROM `admins` WHERE `role` = 'STAFF'/);
+  assert.match(telegram, /TELEGRAM_CONTENT_PROTECTION_ENABLED/);
+  assert.match(telegram, /`신청자: \$\{request\.name\}`/);
+  assert.match(telegram, /`연락처: \$\{request\.phone\}`/);
+  assert.doesNotMatch(telegram, /maskName|maskPhone/);
+  assert.match(staffRepository, /permanentlyDeleteUnusedStaff/);
+  assert.match(staffRepository, /getStaffTelegramRecipient/);
+  assert.match(staffPage, /직원 영구 삭제/);
+  assert.match(adminPage, /담당자 미할당/);
+  assert.match(adminPage, /내 미접수/);
+  assert.match(adminPage, /내 미종결/);
+});
+
 test("delivers Telegram notifications off the response path and retries them on a schedule", async () => {
   const [requestApi, workerEntry, wrangler] = await Promise.all([
     readFile(new URL("app/api/requests/route.ts", root), "utf8"),
@@ -229,7 +258,7 @@ test("separates owner and staff access, assignment, and login identity", async (
     sessionRoute,
     auth,
     staffPage,
-    staffForm,
+    staffService,
     staffRoute,
     adminPage,
     detailPage,
@@ -245,7 +274,7 @@ test("separates owner and staff access, assignment, and login identity", async (
     readFile(new URL("app/api/admin/session/route.ts", root), "utf8"),
     readFile(new URL("lib/admin-auth.ts", root), "utf8"),
     readFile(new URL("app/admin/staff/page.tsx", root), "utf8"),
-    readFile(new URL("components/staff-create-form.tsx", root), "utf8"),
+    readFile(new URL("lib/logic/staff-slot-service.ts", root), "utf8"),
     readFile(new URL("app/api/admin/staff/route.ts", root), "utf8"),
     readFile(new URL("app/admin/page.tsx", root), "utf8"),
     readFile(new URL("app/admin/requests/[publicId]/page.tsx", root), "utf8"),
@@ -266,13 +295,11 @@ test("separates owner and staff access, assignment, and login identity", async (
   assert.match(sessionRoute, /LAST_LOGIN_COOKIE/);
   assert.match(auth, /requireOwner/);
   assert.match(staffPage, /새 직원 계정/);
-  assert.match(staffPage, /StaffCreateForm/);
-  assert.match(staffForm, /pattern="\[0-9\]\{4,64\}"/);
-  assert.match(staffForm, /formatPhoneInput/);
-  assert.match(staffForm, /formatPhoneOnBlur/);
+  assert.match(staffPage, /listStaffSlots/);
+  assert.match(staffPage, /pattern="\[0-9\]\{4,64\}"/);
+  assert.match(staffService, /normalizePhone\(raw\)/);
+  assert.match(staffService, /formatPhone\(digits\)/);
   assert.match(staffRoute, /owner\.role !== "OWNER"/);
-  assert.match(staffRoute, /normalizePhone\(rawPhone\)/);
-  assert.match(staffRoute, /formatPhone\(phoneDigits\)/);
   assert.match(adminPage, /admin\.role === "STAFF" \? admin\.id/);
   assert.match(adminPage, /admin-request-card-list/);
   assert.match(adminPage, /상세보기 \/ 수정하기/);

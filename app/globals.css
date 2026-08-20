@@ -30,6 +30,175 @@
   --container: 1180px;
 }
 
+.staff-slot-grid {
+  display: grid;
+  gap: 24px;
+}
+
+.admin-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  margin-bottom: 22px;
+}
+
+.admin-kpi-grid article {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: end;
+  gap: 8px;
+  padding: 20px;
+  border: 1px solid var(--ink-200);
+  border-radius: 18px;
+  background: var(--white);
+  box-shadow: var(--shadow-sm);
+}
+
+.admin-kpi-grid span {
+  grid-column: 1 / -1;
+  color: var(--ink-600);
+  font-weight: 700;
+}
+
+.admin-kpi-grid strong {
+  color: var(--blue-700);
+  font-size: clamp(2rem, 5vw, 3.25rem);
+  line-height: 1;
+}
+
+.staff-slot-card {
+  overflow: hidden;
+  border: 1px solid var(--ink-200);
+  border-radius: 22px;
+  background: #fff;
+  box-shadow: var(--shadow-sm);
+}
+
+.staff-slot-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 22px;
+  border-bottom: 1px solid var(--ink-200);
+  background: var(--ink-50);
+}
+
+.staff-slot-header > div {
+  flex: 1;
+}
+
+.staff-slot-header h2,
+.staff-slot-section h3 {
+  margin: 0;
+}
+
+.staff-slot-header small {
+  color: var(--ink-600);
+  font-weight: 700;
+}
+
+.staff-slot-section {
+  display: grid;
+  gap: 14px;
+  padding: 22px;
+  border-bottom: 1px solid var(--ink-200);
+}
+
+.staff-slot-section:last-child {
+  border-bottom: 0;
+}
+
+.staff-slot-section h3,
+.staff-slot-section summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.staff-slot-form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.staff-slot-form label:not(.staff-slot-check) {
+  display: grid;
+  gap: 6px;
+}
+
+.staff-slot-form label span,
+.staff-slot-summary dt {
+  color: var(--ink-600);
+  font-size: .82rem;
+  font-weight: 700;
+}
+
+.staff-slot-form .button,
+.staff-slot-form p {
+  grid-column: 1 / -1;
+}
+
+.staff-slot-check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.staff-slot-check input {
+  width: auto;
+}
+
+.staff-slot-summary {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  margin: 0;
+}
+
+.staff-slot-summary div {
+  padding: 12px;
+  border-radius: 12px;
+  background: var(--ink-50);
+}
+
+.staff-slot-summary dd {
+  margin: 4px 0 0;
+  font-weight: 750;
+}
+
+.staff-slot-section details {
+  padding: 14px;
+  border: 1px solid var(--ink-200);
+  border-radius: 14px;
+}
+
+.staff-slot-section summary {
+  cursor: pointer;
+  font-weight: 750;
+}
+
+.staff-slot-section details[open] summary {
+  margin-bottom: 14px;
+}
+
+.staff-danger-zone {
+  border-color: color-mix(in srgb, var(--rose-600) 35%, var(--ink-200)) !important;
+}
+
+.staff-danger-zone form + form {
+  margin-top: 18px;
+  padding-top: 18px;
+  border-top: 1px solid var(--ink-200);
+}
+
+@media (max-width: 720px) {
+  .admin-kpi-grid,
+  .staff-slot-form,
+  .staff-slot-summary {
+    grid-template-columns: 1fr;
+  }
+}
+
 * {
   box-sizing: border-box;
 }

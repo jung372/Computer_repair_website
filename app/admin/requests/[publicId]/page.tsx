@@ -5,7 +5,7 @@ import { notFound, redirect } from "next/navigation";
 import { AdminAccountNav } from "@/components/admin-account-nav";
 import { AdminRequestRecordForm } from "@/components/admin-request-record-form";
 import { getAdminRequestRecord } from "@/data/admin-request-repository";
-import { listStaffAccounts } from "@/data/admin-repository";
+import { listAssignmentOptions } from "@/data/staff-slot-repository";
 import { listStatusHistory } from "@/data/request-repository";
 import { STATUS_LABELS } from "@/lib/domain";
 import { requireAdmin, safeAdminReturnPath } from "@/lib/admin-auth";
@@ -35,7 +35,7 @@ export default async function AdminRequestPage({
   }
   const [history, staff, query] = await Promise.all([
     listStatusHistory(request.id),
-    user.role === "OWNER" ? listStaffAccounts() : Promise.resolve([]),
+    user.role === "OWNER" ? listAssignmentOptions() : Promise.resolve([]),
     searchParams,
   ]);
   const returnTo = safeAdminReturnPath(query.returnTo ?? "/admin");
@@ -65,11 +65,10 @@ export default async function AdminRequestPage({
           request={request}
           user={user}
           staff={staff.map((account) => ({
-            id: account.id,
-            loginName: account.loginName,
-            displayName: account.displayName,
+            id: account.accountId,
+            label: account.label,
             phone: account.phone,
-            isActive: account.isActive,
+            isActive: true,
           }))}
           returnTo={returnTo}
         />
