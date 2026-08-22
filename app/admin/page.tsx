@@ -3,6 +3,7 @@ import { ArrowRight, MessageSquareText, Phone, Search } from "lucide-react";
 import Link from "next/link";
 import { AdminAccountNav } from "@/components/admin-account-nav";
 import { AdminStatusFilter } from "@/components/admin-status-filter";
+import { InlineAssignmentForm } from "@/components/inline-assignment-form";
 import { StatusBadge } from "@/components/status-badge";
 import {
   getDashboardCounts,
@@ -82,22 +83,16 @@ export default async function AdminPage({
       </section>
 
       <section className="container admin-content">
-        <section className="admin-kpi-grid" aria-label="업무 현황">
-          <article>
-            <span>{admin.role === "OWNER" ? "담당자 미할당" : "내 전체 배정"}</span>
-            <strong>{admin.role === "OWNER" ? counts.unassigned : counts.assigned}</strong>
-            <small>건</small>
-          </article>
-          <article>
-            <span>내 미접수</span>
-            <strong>{counts.received}</strong>
-            <small>건</small>
-          </article>
-          <article>
-            <span>내 미종결</span>
-            <strong>{counts.unresolved}</strong>
-            <small>건</small>
-          </article>
+        <section className={`admin-kpi-grid ${admin.role === "OWNER" ? "owner" : "staff"}`} aria-label="업무 현황">
+          {admin.role === "OWNER" && (
+            <>
+              <article><span>담당자 미할당</span><strong>{counts.unassigned}</strong><small>건</small></article>
+              <article><span>총 미접수</span><strong>{counts.totalReceived}</strong><small>건</small></article>
+              <article><span>총 미종결</span><strong>{counts.totalUnresolved}</strong><small>건</small></article>
+            </>
+          )}
+          <article><span>내 미접수</span><strong>{counts.received}</strong><small>건</small></article>
+          <article><span>내 미종결</span><strong>{counts.unresolved}</strong><small>건</small></article>
         </section>
         <form className="admin-search-panel" action="/admin" method="get">
           <div className="admin-search-heading">
@@ -192,8 +187,10 @@ export default async function AdminPage({
             <thead>
               <tr>
                 <th>번호</th>
+                <th>접수구분</th>
                 <th>고객명</th>
                 <th>휴대폰</th>
+                <th>기본주소</th>
                 <th>담당자</th>
                 <th>고객구분</th>
                 <th>처리상태</th>
@@ -204,6 +201,7 @@ export default async function AdminPage({
               {requests.map((request) => (
                 <tr key={request.id}>
                   <td className="admin-serial">{request.serialNumber}</td>
+                  <td><span className="receipt-type-chip">{request.receiptType}</span></td>
                   <td>
                     <Link
                       className="admin-customer-link"
@@ -216,11 +214,15 @@ export default async function AdminPage({
                     <a className="admin-phone" href={`tel:${request.phone}`}>{request.phone}</a>
                     <a className="admin-sms-link" href={`sms:${request.phone}`}>SMS</a>
                   </td>
+                  <td className="admin-address-cell" title={request.address1}>{request.address1}</td>
                   <td>
-                    <span>{request.assignee || "미배정"}</span>
-                    {request.assigneePhone && (
-                      <a className="admin-sms-link" href={`sms:${request.assigneePhone}`}>SMS</a>
-                    )}
+                    {admin.role === "OWNER" ? (
+                      <InlineAssignmentForm
+                        publicId={request.publicId}
+                        currentAssigneeAccountId={request.assigneeAccountId}
+                        options={staffAccounts}
+                      />
+                    ) : <span>{request.assignee || "미배정"}</span>}
                   </td>
                   <td>{request.customerType}</td>
                   <td><StatusBadge status={request.status} /></td>
@@ -238,7 +240,7 @@ export default async function AdminPage({
                 <header className="admin-request-card-header">
                   <div>
                     <strong>{request.name || "미상"}</strong>
-                    <span>{request.customerType}</span>
+                    <span>{request.receiptType} · {request.customerType}</span>
                   </div>
                   <div className="admin-request-card-reference">
                     <strong>#{request.serialNumber}</strong>
@@ -262,10 +264,18 @@ export default async function AdminPage({
                   </Link>
                   <p className="admin-request-card-symptom">{request.symptom}</p>
                   <p className="admin-request-card-description">{request.description}</p>
-                  <p className="admin-request-card-address">{request.address1}{request.address2 ? ` ${request.address2}` : ""}</p>
-                  <span className={`admin-request-assignee ${request.assignee ? "assigned" : "unassigned"}`}>
-                    {admin.role === "STAFF" ? "내 배정" : request.assignee || "미배정"}
-                  </span>
+                  <p className="admin-request-card-address">{request.address1}</p>
+                  {admin.role === "OWNER" ? (
+                    <InlineAssignmentForm
+                      publicId={request.publicId}
+                      currentAssigneeAccountId={request.assigneeAccountId}
+                      options={staffAccounts}
+                    />
+                  ) : (
+                    <span className={`admin-request-assignee ${request.assignee ? "assigned" : "unassigned"}`}>
+                      {request.assignee || "내 배정"}
+                    </span>
+                  )}
                 </div>
 
                 <Link className="admin-request-card-detail" href={detailHref}>

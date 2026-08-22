@@ -23,6 +23,7 @@ export type AdminRequestFilters = {
 
 export type RequestOperationsRecord = {
   serialNumber: number;
+  receiptType: string;
   assignee: string;
   assigneePhone: string;
   assigneeAccountId: string | null;
@@ -52,6 +53,7 @@ export type AdminRequestRecord = ServiceRequestRecord & RequestOperationsRecord;
 
 type AdminRequestRow = RequestRow & {
   serial_no: number;
+  receipt_type: string;
   assignee: string;
   assignee_phone: string;
   assignee_account_id: string | null;
@@ -86,6 +88,7 @@ export type AdminRequestRecordUpdate = {
   status: RequestStatus;
   publicNote: string;
   internalNote: string;
+  receiptType: string;
   customerType: string;
   landline: string;
   invoiceDate: string | null;
@@ -109,8 +112,9 @@ const ADMIN_REQUEST_SELECT = `
   SELECT
     sr.*,
     serial.serial_no,
-    operations.assignee,
-    operations.assignee_phone,
+    operations.receipt_type,
+    COALESCE(NULLIF(assignee_account.display_name, ''), NULLIF(assignee_account.login_name, ''), operations.assignee) AS assignee,
+    COALESCE(NULLIF(assignee_account.phone, ''), operations.assignee_phone) AS assignee_phone,
     operations.assignee_account_id,
     operations.assigned_by,
     operations.assigned_at,
@@ -135,12 +139,14 @@ const ADMIN_REQUEST_SELECT = `
   FROM service_requests sr
   INNER JOIN request_serials serial ON serial.request_id = sr.id
   INNER JOIN request_operations operations ON operations.request_id = sr.id
+  LEFT JOIN admins assignee_account ON assignee_account.id = operations.assignee_account_id
 `;
 
 function mapAdminRequest(row: AdminRequestRow): AdminRequestRecord {
   return {
     ...mapRequest(row),
     serialNumber: Number(row.serial_no),
+    receiptType: row.receipt_type,
     assignee: row.assignee,
     assigneePhone: row.assignee_phone,
     assigneeAccountId: row.assignee_account_id,
@@ -336,13 +342,14 @@ export async function updateAdminRequestRecord(
     db
       .prepare(`
         UPDATE request_operations
-        SET customer_type = ?, landline = ?, invoice_date = ?, invoice_content = ?, title = ?,
+        SET receipt_type = ?, customer_type = ?, landline = ?, invoice_date = ?, invoice_content = ?, title = ?,
             request_category = ?, received_date = ?, visit_timing = ?, visit_date = ?, completed_date = ?,
             payment_method = ?, total_amount = ?, material_cost = ?, vat_amount = ?, material_vat_amount = ?,
             technician_income = ?, office_deposit = ?, updated_at = ?
         WHERE request_id = ?
       `)
       .bind(
+        update.receiptType,
         update.customerType,
         update.landline,
         update.invoiceDate,
@@ -389,11 +396,18 @@ export async function assignAdminRequest(
   publicId: string,
   staffId: string | null,
   assignedBy: string,
+  expectedAssigneeAccountId?: string | null,
 ) {
   await ensureDatabase();
   const db = getD1();
   const request = await getAdminRequestRecord(publicId);
   if (!request) throw new Error("NOT_FOUND");
+  if (
+    expectedAssigneeAccountId !== undefined &&
+    (request.assigneeAccountId ?? null) !== expectedAssigneeAccountId
+  ) {
+    throw new Error("ASSIGNMENT_CONFLICT");
+  }
   const assignee = staffId
     ? await db
         .prepare(`
@@ -521,6 +535,8 @@ export async function getDashboardCounts(accountId: string) {
   const row = await getD1().prepare(`
     SELECT
       SUM(CASE WHEN operations.assignee_account_id IS NULL THEN 1 ELSE 0 END) AS unassigned_count,
+      SUM(CASE WHEN requests.status = 'RECEIVED' THEN 1 ELSE 0 END) AS total_received_count,
+      SUM(CASE WHEN requests.status IN (${unresolved}) THEN 1 ELSE 0 END) AS total_unresolved_count,
       SUM(CASE WHEN operations.assignee_account_id = ? AND requests.status = 'RECEIVED'
                THEN 1 ELSE 0 END) AS received_count,
       SUM(CASE WHEN operations.assignee_account_id = ?
@@ -529,14 +545,18 @@ export async function getDashboardCounts(accountId: string) {
     FROM service_requests requests
     INNER JOIN request_operations operations ON operations.request_id = requests.id
     WHERE requests.deleted_at IS NULL
-  `).bind(accountId, accountId, ...UNRESOLVED_REQUEST_STATUSES, accountId).first<{
+  `).bind(...UNRESOLVED_REQUEST_STATUSES, accountId, accountId, ...UNRESOLVED_REQUEST_STATUSES, accountId).first<{
     unassigned_count: number;
+    total_received_count: number;
+    total_unresolved_count: number;
     received_count: number;
     unresolved_count: number;
     assigned_count: number;
   }>();
   return {
     unassigned: Number(row?.unassigned_count ?? 0),
+    totalReceived: Number(row?.total_received_count ?? 0),
+    totalUnresolved: Number(row?.total_unresolved_count ?? 0),
     received: Number(row?.received_count ?? 0),
     unresolved: Number(row?.unresolved_count ?? 0),
     assigned: Number(row?.assigned_count ?? 0),

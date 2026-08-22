@@ -208,6 +208,7 @@ async function initializeDatabase() {
     db.prepare("CREATE INDEX IF NOT EXISTS request_operations_receipt_idx ON request_operations(receipt_type)"),
     db.prepare("CREATE INDEX IF NOT EXISTS request_operations_assignee_idx ON request_operations(assignee)"),
     db.prepare("CREATE INDEX IF NOT EXISTS request_operations_dates_idx ON request_operations(received_date, completed_date)"),
+    db.prepare("CREATE INDEX IF NOT EXISTS request_operations_settlement_filter_idx ON request_operations(completed_date, payment_method)"),
     db.prepare("CREATE INDEX IF NOT EXISTS request_assignment_history_request_idx ON request_assignment_history(request_id)"),
   ]);
 
@@ -295,6 +296,16 @@ async function initializeDatabase() {
       db.prepare("ALTER TABLE request_operations ADD COLUMN assigned_at TEXT"),
     ]);
   }
+  await db.prepare(`
+    UPDATE request_operations
+    SET receipt_type = CASE
+      WHEN receipt_type = '관리자접수' THEN '콜센터접수'
+      WHEN receipt_type IN ('콜센터접수', '온라인접수', '오프라인접수', '기타접수')
+        THEN receipt_type
+      ELSE '기타접수'
+    END
+    WHERE receipt_type NOT IN ('콜센터접수', '온라인접수', '오프라인접수', '기타접수')
+  `).run();
   const adminColumns = await db
     .prepare("PRAGMA table_info(admins)")
     .all<{ name: string }>();
@@ -330,6 +341,11 @@ async function initializeDatabase() {
   await db
     .prepare(
       "CREATE INDEX IF NOT EXISTS request_operations_assignee_account_idx ON request_operations(assignee_account_id)",
+    )
+    .run();
+  await db
+    .prepare(
+      "CREATE INDEX IF NOT EXISTS request_operations_settlement_assignee_idx ON request_operations(completed_date, assignee_account_id)",
     )
     .run();
   await db

@@ -5,8 +5,11 @@ import {
 } from "@/data/admin-request-repository";
 import {
   PAYMENT_METHODS,
+  RECEIPT_TYPES,
   REQUEST_STATUSES,
+  SETTLEMENT_DEFAULT_STATUSES,
   type PaymentMethod,
+  type ReceiptType,
   type RequestStatus,
 } from "@/lib/domain";
 import { deriveSettlement } from "@/lib/settlement";
@@ -74,6 +77,7 @@ export async function saveAdminRequestRecord(
   const symptom = clean(values.symptom, 120);
   const description = clean(values.description, 20_000);
   const customerType = clean(values.customerType, 40);
+  const receiptType = clean(values.receiptType, 40);
   const title = clean(values.title, 120);
   const receivedDate = optionalDate(values.receivedDate, "receivedDate", errors);
   const visitDate = optionalDate(values.visitDate, "visitDate", errors);
@@ -84,11 +88,14 @@ export async function saveAdminRequestRecord(
   if (!symptom) errors.symptom = "대표 증상을 입력해 주세요.";
   if (!description) errors.description = "장애 현상을 입력해 주세요.";
   if (!customerType) errors.customerType = "고객 구분을 입력해 주세요.";
+  if (!RECEIPT_TYPES.includes(receiptType as ReceiptType)) {
+    errors.receiptType = "접수구분을 선택해 주세요.";
+  }
   if (!title) errors.title = "제목을 입력해 주세요.";
   if (!receivedDate) errors.receivedDate = "접수일을 선택해 주세요.";
   if (
     !completedDate &&
-    ["SHIPPED", "ONSITE_COMPLETED", "COMPLETED"].includes(status)
+    ([...SETTLEMENT_DEFAULT_STATUSES, "COMPLETED"] as string[]).includes(status)
   ) {
     completedDate = todayInSeoul();
   }
@@ -127,6 +134,7 @@ export async function saveAdminRequestRecord(
     status: status as RequestStatus,
     publicNote: clean(values.publicNote, 500),
     internalNote: clean(values.internalNote, 2_000),
+    receiptType,
     customerType,
     landline: clean(values.landline, 30),
     invoiceDate,

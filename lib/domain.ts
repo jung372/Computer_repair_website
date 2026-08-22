@@ -77,8 +77,23 @@ export const STATUS_TRANSITIONS = Object.fromEntries(
 ) as Record<RequestStatus, RequestStatus[]>;
 
 export const CUSTOMER_TYPES = ["신규일반고객", "재방문고객"] as const;
+export const RECEIPT_TYPES = [
+  "콜센터접수",
+  "온라인접수",
+  "오프라인접수",
+  "기타접수",
+] as const;
+export type ReceiptType = (typeof RECEIPT_TYPES)[number];
 export const PAYMENT_METHODS = ["현금 결제", "현금영수증 결제", "카드 결제"] as const;
 export type PaymentMethod = (typeof PAYMENT_METHODS)[number];
+
+export const SETTLEMENT_DEFAULT_STATUSES = [
+  "SHIPPED",
+  "ONSITE_COMPLETED",
+  "COMPANY_UNPAID",
+  "TECH_PERSONAL_CALL",
+  "COMPANY_PERSONAL_CALL",
+] as const satisfies readonly RequestStatus[];
 
 export type Visibility = "PUBLIC" | "PRIVATE";
 

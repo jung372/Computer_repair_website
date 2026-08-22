@@ -197,6 +197,14 @@ export const requestOperations = sqliteTable(
     index("request_operations_assignee_idx").on(table.assignee),
     index("request_operations_assignee_account_idx").on(table.assigneeAccountId),
     index("request_operations_dates_idx").on(table.receivedDate, table.completedDate),
+    index("request_operations_settlement_assignee_idx").on(
+      table.completedDate,
+      table.assigneeAccountId,
+    ),
+    index("request_operations_settlement_filter_idx").on(
+      table.completedDate,
+      table.paymentMethod,
+    ),
   ],
 );
 
