@@ -30,6 +30,15 @@ export const REQUEST_STATUSES = [
 
 export type RequestStatus = (typeof REQUEST_STATUSES)[number];
 
+export const UNRESOLVED_REQUEST_STATUSES = [
+  "RECEIVED",
+  "CONSULTING",
+  "SCHEDULED",
+  "REPAIRING",
+  "COMPANY_UNPAID",
+  "ON_HOLD",
+] as const satisfies readonly RequestStatus[];
+
 export const STATUS_LABELS: Record<RequestStatus, string> = {
   RECEIVED: "접수중",
   CONSULTING: "진행중",

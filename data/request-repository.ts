@@ -31,10 +31,12 @@ export type RequestRow = {
   updated_at: string;
 };
 
-type OutboxRow = {
+export type OutboxRow = {
   id: string;
   request_id: string;
   attempts: number;
+  event_type: "NEW_REQUEST" | "STAFF_ASSIGNED";
+  recipient_account_id: string | null;
 };
 
 export function mapRequest(row: RequestRow): ServiceRequestRecord {
@@ -245,7 +247,7 @@ export async function pendingNotifications(limit = 3) {
   await ensureDatabase();
   const result = await getD1()
     .prepare(`
-      SELECT id, request_id, attempts
+      SELECT id, request_id, attempts, event_type, recipient_account_id
       FROM notification_outbox
       WHERE status IN ('PENDING', 'FAILED')
         AND attempts < 5
@@ -260,8 +262,9 @@ export async function pendingNotifications(limit = 3) {
 
 export async function markNotification(
   outbox: OutboxRow,
-  status: "SENT" | "FAILED" | "CONFIG_REQUIRED" | "DISABLED",
+  status: "SENT" | "FAILED" | "CONFIG_REQUIRED" | "DISABLED" | "CANCELED",
   error?: string,
+  telegramMessageId?: string,
 ) {
   const now = new Date();
   const delays = [60, 300, 1800, 7200, 21600];
@@ -271,7 +274,7 @@ export async function markNotification(
       .prepare(`
         UPDATE notification_outbox
         SET status = ?, attempts = ?, next_attempt_at = ?, last_error = ?,
-            sent_at = ?, updated_at = ?
+            sent_at = ?, updated_at = ?, telegram_message_id = ?
         WHERE id = ?
       `)
       .bind(
@@ -281,16 +284,28 @@ export async function markNotification(
         error?.slice(0, 240) ?? null,
         status === "SENT" ? now.toISOString() : null,
         now.toISOString(),
+        telegramMessageId ?? null,
         outbox.id,
       ),
-    getD1()
-      .prepare(`
-        UPDATE service_requests
-        SET notification_status = ?, notification_error = ?, updated_at = ?
-        WHERE id = ?
-      `)
-      .bind(status, error?.slice(0, 240) ?? null, now.toISOString(), outbox.request_id),
+    ...(outbox.event_type === "NEW_REQUEST"
+      ? [getD1()
+          .prepare(`
+            UPDATE service_requests
+            SET notification_status = ?, notification_error = ?, updated_at = ?
+            WHERE id = ?
+          `)
+          .bind(status, error?.slice(0, 240) ?? null, now.toISOString(), outbox.request_id)]
+      : []),
   ]);
+}
+
+export async function cancelNotification(outboxId: string, reason: string) {
+  const now = new Date().toISOString();
+  await getD1().prepare(`
+    UPDATE notification_outbox
+    SET status = 'CANCELED', canceled_at = ?, last_error = ?, updated_at = ?
+    WHERE id = ?
+  `).bind(now, reason.slice(0, 240), now, outboxId).run();
 }
 
 export async function getRequestById(id: string) {
@@ -328,7 +343,7 @@ export async function resetNotification(publicId: string) {
       .prepare(`
         UPDATE notification_outbox
         SET status = ?, attempts = 0, next_attempt_at = ?, last_error = NULL, updated_at = ?
-        WHERE request_id = ?
+        WHERE request_id = ? AND event_type = 'NEW_REQUEST'
       `)
       .bind(status, now, now, request.id),
     getD1()

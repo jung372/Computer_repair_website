@@ -21,8 +21,7 @@ type Amounts = {
 
 type StaffOption = {
   id: string;
-  loginName: string;
-  displayName: string;
+  label: string;
   phone: string;
   isActive: boolean;
 };
@@ -220,7 +219,7 @@ export function AdminRequestRecordForm({
                   <option value="">미배정</option>
                   {staff.map((account) => (
                     <option value={account.id} key={account.id} disabled={!account.isActive}>
-                      {account.displayName} · {account.loginName}{account.isActive ? "" : " (차단됨)"}
+                      {account.label}
                     </option>
                   ))}
                 </select>
@@ -348,7 +347,7 @@ export function AdminRequestRecordForm({
         </button>
       </div>
 
-      <div className="admin-record-secondary-actions">
+      {user.role === "OWNER" && <div className="admin-record-secondary-actions">
         <button
           className="button button-secondary"
           type="button"
@@ -360,7 +359,7 @@ export function AdminRequestRecordForm({
         <button className="button button-danger" type="button" disabled={busy} onClick={anonymize}>
           <ShieldAlert size={18} /> 개인정보 삭제
         </button>
-      </div>
+      </div>}
     </form>
   );
 }

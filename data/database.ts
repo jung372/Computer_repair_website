@@ -65,6 +65,10 @@ async function initializeDatabase() {
         next_attempt_at TEXT NOT NULL,
         last_error TEXT,
         sent_at TEXT,
+        event_type TEXT NOT NULL DEFAULT 'NEW_REQUEST',
+        recipient_account_id TEXT,
+        telegram_message_id TEXT,
+        canceled_at TEXT,
         created_at TEXT NOT NULL,
         updated_at TEXT NOT NULL,
         FOREIGN KEY (request_id) REFERENCES service_requests(id)
@@ -112,10 +116,24 @@ async function initializeDatabase() {
         phone TEXT NOT NULL DEFAULT '',
         role TEXT NOT NULL DEFAULT 'STAFF',
         created_by TEXT,
+        slot_serial_no INTEGER,
         is_active INTEGER NOT NULL DEFAULT 1,
         session_version INTEGER NOT NULL DEFAULT 1,
         password_changed_at TEXT NOT NULL,
         last_login_at TEXT,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL
+      )
+    `),
+    db.prepare(`
+      CREATE TABLE IF NOT EXISTS staff_slots (
+        serial_no INTEGER PRIMARY KEY CHECK (serial_no BETWEEN 1 AND 3),
+        label TEXT NOT NULL,
+        telegram_chat_id_ciphertext TEXT,
+        telegram_chat_id_iv TEXT,
+        telegram_enabled INTEGER NOT NULL DEFAULT 0,
+        telegram_verified_at TEXT,
+        updated_by TEXT,
         created_at TEXT NOT NULL,
         updated_at TEXT NOT NULL
       )
@@ -128,6 +146,20 @@ async function initializeDatabase() {
         client_hash TEXT,
         metadata TEXT,
         created_at TEXT NOT NULL
+      )
+    `),
+    db.prepare(`
+      CREATE TABLE IF NOT EXISTS request_assignment_history (
+        id TEXT PRIMARY KEY,
+        request_id TEXT NOT NULL,
+        previous_account_id TEXT,
+        assigned_account_id TEXT,
+        assignee_name_snapshot TEXT NOT NULL DEFAULT '',
+        event_type TEXT NOT NULL,
+        reason TEXT,
+        changed_by TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        FOREIGN KEY (request_id) REFERENCES service_requests(id) ON DELETE CASCADE
       )
     `),
     db.prepare(`
@@ -176,6 +208,7 @@ async function initializeDatabase() {
     db.prepare("CREATE INDEX IF NOT EXISTS request_operations_receipt_idx ON request_operations(receipt_type)"),
     db.prepare("CREATE INDEX IF NOT EXISTS request_operations_assignee_idx ON request_operations(assignee)"),
     db.prepare("CREATE INDEX IF NOT EXISTS request_operations_dates_idx ON request_operations(received_date, completed_date)"),
+    db.prepare("CREATE INDEX IF NOT EXISTS request_assignment_history_request_idx ON request_assignment_history(request_id)"),
   ]);
 
   await db.batch([
@@ -196,6 +229,13 @@ async function initializeDatabase() {
         CASE WHEN symptom = '' THEN '수리요청' ELSE symptom END,
         substr(created_at, 1, 10), updated_at
       FROM service_requests
+    `),
+    db.prepare(`
+      INSERT OR IGNORE INTO staff_slots (serial_no, label, created_at, updated_at)
+      VALUES
+        (1, '직원 슬롯 1', strftime('%Y-%m-%dT%H:%M:%fZ', 'now'), strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
+        (2, '직원 슬롯 2', strftime('%Y-%m-%dT%H:%M:%fZ', 'now'), strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
+        (3, '직원 슬롯 3', strftime('%Y-%m-%dT%H:%M:%fZ', 'now'), strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))
     `),
   ]);
 
@@ -271,6 +311,22 @@ async function initializeDatabase() {
       `),
     ]);
   }
+  if (!adminColumns.results.some((column) => column.name === "slot_serial_no")) {
+    await db.prepare("ALTER TABLE admins ADD COLUMN slot_serial_no INTEGER").run();
+  }
+  const outboxColumns = await db
+    .prepare("PRAGMA table_info(notification_outbox)")
+    .all<{ name: string }>();
+  for (const [name, definition] of [
+    ["event_type", "TEXT NOT NULL DEFAULT 'NEW_REQUEST'"],
+    ["recipient_account_id", "TEXT"],
+    ["telegram_message_id", "TEXT"],
+    ["canceled_at", "TEXT"],
+  ] as const) {
+    if (!outboxColumns.results.some((column) => column.name === name)) {
+      await db.prepare(`ALTER TABLE notification_outbox ADD COLUMN ${name} ${definition}`).run();
+    }
+  }
   await db
     .prepare(
       "CREATE INDEX IF NOT EXISTS request_operations_assignee_account_idx ON request_operations(assignee_account_id)",
@@ -280,5 +336,18 @@ async function initializeDatabase() {
     .prepare(
       "CREATE INDEX IF NOT EXISTS service_requests_lookup_phone_idx ON service_requests(lookup_key, phone)",
     )
+    .run();
+  await db
+    .prepare(`
+      CREATE UNIQUE INDEX IF NOT EXISTS admins_active_staff_slot_idx
+      ON admins(slot_serial_no)
+      WHERE role = 'STAFF' AND is_active = 1 AND slot_serial_no IS NOT NULL
+    `)
+    .run();
+  await db
+    .prepare(`
+      CREATE INDEX IF NOT EXISTS notification_outbox_event_idx
+      ON notification_outbox(event_type, recipient_account_id)
+    `)
     .run();
 }

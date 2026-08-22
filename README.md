@@ -10,7 +10,7 @@ Next.js 호환 App Router를 vinext로 빌드하고 Cloudflare Workers와 D1에�
 - 휴대전화 번호와 신청 비밀번호 기반 내 신청 조회
 - 비공개 신청 인증, 10분 조회 세션과 접근 횟수 제한
 - 운영자 최초 비밀번호 설정·변경
-- 운영자·직원 통합 로그인, 연락처 자동 포맷, 직원 계정 관리와 담당 신청별 접근 제어
+- 운영자·직원 통합 로그인, 고정 직원 슬롯 3개, 슬롯별 Telegram 알림과 담당 신청별 접근 제어
 - 고정 접수번호, 복합 검색, 담당자 배정·일정·계산서·정산·처리상태 관리대장
 - 텔레그램 신규 접수 알림과 실패 재처리
 - 개인정보 마스킹, 보안 헤더, 모바일 접수 카드와 컴박사 공유 미리보기
@@ -43,6 +43,7 @@ RATE_LIMIT_SECRET=change-me
 TELEGRAM_NOTIFICATION_ENABLED=false
 TELEGRAM_BOT_TOKEN=
 TELEGRAM_CHAT_ID=
+STAFF_CHAT_ID_ENCRYPTION_KEY=change-me-with-at-least-32-characters
 ```
 
 운영 환경에서는 다음 값들을 `wrangler secret put <이름>`으로 등록합니다.
@@ -53,9 +54,12 @@ TELEGRAM_CHAT_ID=
 - `REQUEST_LOOKUP_SECRET`
 - `RATE_LIMIT_SECRET`
 - `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID` — Telegram을 사용할 때만
+- `STAFF_CHAT_ID_ENCRYPTION_KEY` — 직원 슬롯별 Chat ID 암호화용, 32자 이상
 
 최초 배포 후 `/admin/setup`에서 운영자 비밀번호를 설정하고, 로그인 후
 `/admin/settings/security`에서 변경할 수 있습니다.
+직원 계정과 슬롯별 Telegram Chat ID는 `/admin/staff`에서 관리합니다.
+Telegram 접수 알림은 복사 가능한 일반 텍스트로 이름과 연락처를 표시합니다.
 
 ## 검증
 

@@ -1,8 +1,10 @@
 import {
   REQUEST_STATUSES,
+  UNRESOLVED_REQUEST_STATUSES,
   type RequestStatus,
   type ServiceRequestRecord,
 } from "@/lib/domain";
+import { getRuntimeString } from "@/lib/runtime-config";
 import { ensureDatabase, getD1 } from "./database";
 import { mapRequest, type RequestRow } from "./request-repository";
 
@@ -392,21 +394,49 @@ export async function assignAdminRequest(
   const db = getD1();
   const request = await getAdminRequestRecord(publicId);
   if (!request) throw new Error("NOT_FOUND");
-  const staff = staffId
+  const assignee = staffId
     ? await db
         .prepare(`
-          SELECT id, login_name, display_name, phone
-          FROM admins
-          WHERE id = ? AND role = 'STAFF' AND is_active = 1
+          SELECT account.id, account.login_name, account.display_name, account.phone,
+                 account.role, slots.telegram_enabled, slots.telegram_verified_at,
+                 slots.telegram_chat_id_ciphertext
+          FROM admins account
+          LEFT JOIN staff_slots slots ON slots.serial_no = account.slot_serial_no
+          WHERE account.id = ? AND account.is_active = 1
+            AND (account.role = 'OWNER' OR account.slot_serial_no IS NOT NULL)
         `)
         .bind(staffId)
-        .first<{ id: string; login_name: string; display_name: string; phone: string }>()
+        .first<{
+          id: string;
+          login_name: string;
+          display_name: string;
+          phone: string;
+          role: "OWNER" | "STAFF";
+          telegram_enabled: number | null;
+          telegram_verified_at: string | null;
+          telegram_chat_id_ciphertext: string | null;
+        }>()
     : null;
-  if (staffId && !staff) throw new Error("INVALID_ASSIGNEE");
+  if (staffId && !assignee) throw new Error("INVALID_ASSIGNEE");
   const now = new Date().toISOString();
-  const assigneeName = staff?.display_name || staff?.login_name || "";
-  const assigneePhone = staff?.phone || "";
-  await db.batch([
+  const assigneeName = assignee?.display_name || assignee?.login_name || "";
+  const assigneePhone = assignee?.phone || "";
+  if ((request.assigneeAccountId ?? null) === (assignee?.id ?? null)) {
+    return {
+      assigneeAccountId: assignee?.id ?? null,
+      assignee: assigneeName,
+      assigneePhone,
+      assignedAt: request.assignedAt ?? now,
+    };
+  }
+  const notificationReady = Boolean(
+    assignee?.role === "STAFF" &&
+    assignee.telegram_enabled === 1 &&
+    assignee.telegram_verified_at &&
+    assignee.telegram_chat_id_ciphertext &&
+    getRuntimeString("TELEGRAM_BOT_TOKEN"),
+  );
+  const statements: D1PreparedStatement[] = [
     db
       .prepare(`
         UPDATE request_operations
@@ -414,7 +444,32 @@ export async function assignAdminRequest(
             assigned_by = ?, assigned_at = ?, updated_at = ?
         WHERE request_id = ?
       `)
-      .bind(staff?.id ?? null, assigneeName, assigneePhone, assignedBy, now, now, request.id),
+      .bind(assignee?.id ?? null, assigneeName, assigneePhone, assignedBy, now, now, request.id),
+    db
+      .prepare(`
+        UPDATE notification_outbox
+        SET status = 'CANCELED', canceled_at = ?, updated_at = ?
+        WHERE request_id = ? AND event_type = 'STAFF_ASSIGNED'
+          AND status IN ('PENDING', 'FAILED', 'CONFIG_REQUIRED')
+      `)
+      .bind(now, now, request.id),
+    db
+      .prepare(`
+        INSERT INTO request_assignment_history (
+          id, request_id, previous_account_id, assigned_account_id,
+          assignee_name_snapshot, event_type, changed_by, created_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+      `)
+      .bind(
+        crypto.randomUUID(),
+        request.id,
+        request.assigneeAccountId,
+        assignee?.id ?? null,
+        assigneeName,
+        assignee ? "ASSIGNED" : "UNASSIGNED",
+        assignedBy,
+        now,
+      ),
     db
       .prepare(`
         INSERT INTO admin_audit_logs
@@ -428,15 +483,62 @@ export async function assignAdminRequest(
           requestId: request.id,
           publicId,
           previousStaffId: request.assigneeAccountId,
-          staffId: staff?.id ?? null,
+          staffId: assignee?.id ?? null,
         }),
         now,
       ),
-  ]);
+  ];
+  if (assignee?.role === "STAFF") {
+    statements.push(
+      db.prepare(`
+        INSERT INTO notification_outbox (
+          id, request_id, channel, status, attempts, next_attempt_at,
+          created_at, updated_at, event_type, recipient_account_id
+        ) VALUES (?, ?, 'TELEGRAM', ?, 0, ?, ?, ?, 'STAFF_ASSIGNED', ?)
+      `).bind(
+        crypto.randomUUID(),
+        request.id,
+        notificationReady ? "PENDING" : "CONFIG_REQUIRED",
+        now,
+        now,
+        now,
+        assignee.id,
+      ),
+    );
+  }
+  await db.batch(statements);
   return {
-    assigneeAccountId: staff?.id ?? null,
+    assigneeAccountId: assignee?.id ?? null,
     assignee: assigneeName,
     assigneePhone,
     assignedAt: now,
+  };
+}
+
+export async function getDashboardCounts(accountId: string) {
+  await ensureDatabase();
+  const unresolved = UNRESOLVED_REQUEST_STATUSES.map(() => "?").join(", ");
+  const row = await getD1().prepare(`
+    SELECT
+      SUM(CASE WHEN operations.assignee_account_id IS NULL THEN 1 ELSE 0 END) AS unassigned_count,
+      SUM(CASE WHEN operations.assignee_account_id = ? AND requests.status = 'RECEIVED'
+               THEN 1 ELSE 0 END) AS received_count,
+      SUM(CASE WHEN operations.assignee_account_id = ?
+                AND requests.status IN (${unresolved}) THEN 1 ELSE 0 END) AS unresolved_count,
+      SUM(CASE WHEN operations.assignee_account_id = ? THEN 1 ELSE 0 END) AS assigned_count
+    FROM service_requests requests
+    INNER JOIN request_operations operations ON operations.request_id = requests.id
+    WHERE requests.deleted_at IS NULL
+  `).bind(accountId, accountId, ...UNRESOLVED_REQUEST_STATUSES, accountId).first<{
+    unassigned_count: number;
+    received_count: number;
+    unresolved_count: number;
+    assigned_count: number;
+  }>();
+  return {
+    unassigned: Number(row?.unassigned_count ?? 0),
+    received: Number(row?.received_count ?? 0),
+    unresolved: Number(row?.unresolved_count ?? 0),
+    assigned: Number(row?.assigned_count ?? 0),
   };
 }
