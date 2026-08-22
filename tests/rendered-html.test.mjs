@@ -89,6 +89,8 @@ test("supports fixed staff slots, copyable Telegram text and workload counts", a
   assert.match(staffRepository, /getStaffTelegramRecipient/);
   assert.match(staffPage, /직원 영구 삭제/);
   assert.match(adminPage, /담당자 미할당/);
+  assert.match(adminPage, /총 미접수/);
+  assert.match(adminPage, /총 미종결/);
   assert.match(adminPage, /내 미접수/);
   assert.match(adminPage, /내 미종결/);
 });
@@ -203,7 +205,7 @@ test("provides an admin operations ledger, filters, stable serials and editable 
     ]);
 
   assert.match(adminPage, /접수내역 검색/);
-  assert.match(adminPage, /번호[\s\S]*고객명[\s\S]*휴대폰[\s\S]*담당자[\s\S]*고객구분[\s\S]*처리상태[\s\S]*접수일/);
+  assert.match(adminPage, /번호[\s\S]*접수구분[\s\S]*고객명[\s\S]*휴대폰[\s\S]*기본주소[\s\S]*담당자[\s\S]*고객구분[\s\S]*처리상태[\s\S]*접수일/);
   assert.match(adminPage, /integratedFrom/);
   assert.match(adminPage, /AdminStatusFilter/);
   assert.match(detailPage, /AdminRequestRecordForm/);
@@ -215,7 +217,7 @@ test("provides an admin operations ledger, filters, stable serials and editable 
   assert.match(migration, /AUTOINCREMENT/);
 });
 
-test("drops the receipt-type field and derives settlement amounts on the server", async () => {
+test("restores the controlled receipt type and derives settlement amounts on the server", async () => {
   const [adminPage, recordForm, recordService, repository, settlement] = await Promise.all([
     readFile(new URL("app/admin/page.tsx", root), "utf8"),
     readFile(new URL("components/admin-request-record-form.tsx", root), "utf8"),
@@ -224,15 +226,13 @@ test("drops the receipt-type field and derives settlement amounts on the server"
     readFile(new URL("lib/settlement.ts", root), "utf8"),
   ]);
 
-  // 접수구분은 입력 폼, 목록 열, 검색 필터에서 모두 사라진다.
-  assert.doesNotMatch(adminPage, /접수구분|receiptType|RECEIPT_TYPES/);
-  // 고객접수구분(requestCategory)은 남으므로 접수구분 라벨과 필드명만 정확히 검사한다.
-  assert.doesNotMatch(recordForm, /label="접수구분|receiptType/);
+  assert.match(adminPage, /접수구분/);
+  assert.match(recordForm, /label="접수구분 \*"/);
+  assert.match(recordForm, /RECEIPT_TYPES\.map/);
   assert.match(recordForm, /label="고객접수구분"/);
-  assert.doesNotMatch(recordService, /receiptType/);
-  assert.doesNotMatch(repository, /receipt_type/);
-  // 컬럼 자체는 남기므로 UPDATE 문에서만 빠져야 한다.
-  assert.match(repository, /UPDATE request_operations\s+SET customer_type = \?/);
+  assert.match(recordService, /RECEIPT_TYPES\.includes/);
+  assert.match(repository, /operations\.receipt_type/);
+  assert.match(repository, /UPDATE request_operations\s+SET receipt_type = \?/);
 
   // 두 부가세·기사수익은 읽기 전용 표시이며 사무실입금액 입력란은 없다.
   assert.doesNotMatch(recordForm, /사무실입금액|admin-calculator-button|calculateSettlement/);
@@ -269,6 +269,7 @@ test("separates owner and staff access, assignment, and login identity", async (
     cleanupMigration,
     css,
     layout,
+    staffPhoneInput,
   ] = await Promise.all([
     readFile(new URL("app/admin/login/page.tsx", root), "utf8"),
     readFile(new URL("app/api/admin/session/route.ts", root), "utf8"),
@@ -285,6 +286,7 @@ test("separates owner and staff access, assignment, and login identity", async (
     readFile(new URL("drizzle/0006_clear_legacy_assignee.sql", root), "utf8"),
     readFile(new URL("app/globals.css", root), "utf8"),
     readFile(new URL("app/layout.tsx", root), "utf8"),
+    readFile(new URL("components/staff-phone-input.tsx", root), "utf8"),
   ]);
 
   assert.match(loginPage, /name="loginName"/);
@@ -304,6 +306,7 @@ test("separates owner and staff access, assignment, and login identity", async (
   assert.match(adminPage, /admin-request-card-list/);
   assert.match(adminPage, /상세보기 \/ 수정하기/);
   assert.match(adminPage, /staffAccounts\.map/);
+  assert.match(adminPage, /InlineAssignmentForm/);
   assert.match(detailPage, /user\.role === "STAFF" \? user\.id/);
   assert.match(recordForm, /action: "assign"/);
   assert.match(recordForm, /href=\{returnTo\}/);
@@ -323,6 +326,34 @@ test("separates owner and staff access, assignment, and login identity", async (
   assert.match(layout, /siteName: "컴박사"/);
   assert.match(layout, /og\.png\?v=combaksa-202608/);
   assert.doesNotMatch(layout, /바로온 컴퓨터/);
+  assert.match(staffPhoneInput, /formatPhoneInput/);
+  assert.match(staffPhoneInput, /formatPhoneOnBlur/);
+});
+
+test("provides role-scoped monthly settlement reports and totals", async () => {
+  const [page, repository, nav, migration, domain] = await Promise.all([
+    readFile(new URL("app/admin/settlements/page.tsx", root), "utf8"),
+    readFile(new URL("data/settlement-repository.ts", root), "utf8"),
+    readFile(new URL("components/admin-account-nav.tsx", root), "utf8"),
+    readFile(new URL("drizzle/0008_settlement_and_receipt_type.sql", root), "utf8"),
+    readFile(new URL("lib/domain.ts", root), "utf8"),
+  ]);
+
+  assert.match(nav, /\/admin\/settlements/);
+  assert.match(page, /금월/);
+  assert.match(page, /총수금액/);
+  assert.match(page, /자재비/);
+  assert.match(page, /부가세/);
+  assert.match(page, /수익금/);
+  assert.match(page, /미수금/);
+  assert.match(page, /admin\.role === "STAFF" \? admin\.id/);
+  assert.match(repository, /operations\.assignee_account_id = \?/);
+  assert.match(repository, /SUM\(operations\.technician_income\)/);
+  assert.match(repository, /COMPANY_UNPAID/);
+  assert.match(migration, /관리자접수/);
+  assert.match(migration, /콜센터접수/);
+  assert.match(domain, /RECEIPT_TYPES/);
+  assert.match(domain, /SETTLEMENT_DEFAULT_STATUSES/);
 });
 
 test("lifts the description length cap and stops collecting a preferred visit time", async () => {

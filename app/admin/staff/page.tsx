@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { KeyRound, Send, Trash2, UserPlus, UsersRound } from "lucide-react";
 import { AdminAccountNav } from "@/components/admin-account-nav";
+import { StaffPhoneInput } from "@/components/staff-phone-input";
 import { listStaffSlots, type StaffSlotView } from "@/data/staff-slot-repository";
 import { requireOwner } from "@/lib/admin-auth";
 
@@ -116,7 +117,7 @@ function VacantSlot({ slot }: { slot: StaffSlotView }) {
         <input type="hidden" name="slotSerialNo" value={slot.serialNo} />
         <label><span>직원명</span><input name="displayName" maxLength={30} required /></label>
         <label><span>로그인 아이디</span><input name="loginName" minLength={3} maxLength={30} pattern="[a-z0-9._-]{3,30}" required /></label>
-        <label><span>연락처</span><input name="phone" type="tel" placeholder="010-0000-0000" /></label>
+        <label><span>연락처</span><StaffPhoneInput id={`staff-phone-new-${slot.serialNo}`} /></label>
         <label><span>숫자 비밀번호</span><input name="password" type="password" inputMode="numeric" minLength={4} maxLength={64} pattern="[0-9]{4,64}" required /></label>
         <button className="button button-primary" type="submit">이 슬롯에 직원 등록</button>
       </form>
@@ -142,7 +143,7 @@ function OccupiedSlot({ slot }: { slot: StaffSlotView }) {
           <input type="hidden" name="accountId" value={slot.accountId ?? ""} />
           <label><span>직원명</span><input name="displayName" defaultValue={slot.displayName} maxLength={30} required /></label>
           <label><span>로그인 아이디</span><input name="loginName" defaultValue={slot.loginName} minLength={3} maxLength={30} pattern="[a-z0-9._-]{3,30}" required /></label>
-          <label><span>연락처</span><input name="phone" type="tel" defaultValue={slot.phone} /></label>
+          <label><span>연락처</span><StaffPhoneInput id={`staff-phone-edit-${slot.serialNo}`} defaultValue={slot.phone} /></label>
           <p>로그인 ID를 바꾸면 새 직원으로 처리되어 과거 업무는 보이지 않고, 기존 미해결 업무는 미배정으로 전환됩니다.</p>
           <label><span>운영자 현재 비밀번호</span><input name="currentPassword" type="password" autoComplete="current-password" required /></label>
           <button className="button button-secondary" type="submit">직원 정보 저장</button>

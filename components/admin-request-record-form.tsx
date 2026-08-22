@@ -8,6 +8,7 @@ import {
   ADMIN_OPERATIONAL_STATUSES,
   CUSTOMER_TYPES,
   PAYMENT_METHODS,
+  RECEIPT_TYPES,
   STATUS_LABELS,
   type PaymentMethod,
   type RequestStatus,
@@ -130,6 +131,7 @@ export function AdminRequestRecordForm({
     const result = await send({
       action: "assign",
       assigneeAccountId: selectedStaffId,
+      expectedAssigneeAccountId: assignment.id,
     });
     if (!result?.assignment) return;
     setAssignment({
@@ -202,6 +204,11 @@ export function AdminRequestRecordForm({
           <div><h2>배정과 일정</h2><p>접수 분류, 담당자와 주요 처리 일자를 관리합니다.</p></div>
         </div>
         <div className="admin-record-grid">
+          <RecordField label="접수구분 *" name="receiptType" error={errors.receiptType}>
+            <select id="receiptType" name="receiptType" defaultValue={request.receiptType} required>
+              {RECEIPT_TYPES.map((value) => <option key={value}>{value}</option>)}
+            </select>
+          </RecordField>
           <RecordField label="고객접수구분" name="requestCategory" error={errors.requestCategory}>
             <input id="requestCategory" name="requestCategory" defaultValue={request.requestCategory} maxLength={80} placeholder="예: 출장수리" />
           </RecordField>

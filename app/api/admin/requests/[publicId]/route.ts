@@ -28,6 +28,7 @@ export async function POST(
       publicNote?: unknown;
       internalNote?: unknown;
       assigneeAccountId?: unknown;
+      expectedAssigneeAccountId?: unknown;
     };
 
     const visibleRequest = await getAdminRequestRecord(
@@ -49,7 +50,15 @@ export async function POST(
       const staffId = typeof payload.assigneeAccountId === "string"
         ? payload.assigneeAccountId.trim() || null
         : null;
-      const assignment = await assignAdminRequest(publicId, staffId, admin.id);
+      const expectedAssigneeAccountId = typeof payload.expectedAssigneeAccountId === "string"
+        ? payload.expectedAssigneeAccountId.trim() || null
+        : undefined;
+      const assignment = await assignAdminRequest(
+        publicId,
+        staffId,
+        admin.id,
+        expectedAssigneeAccountId,
+      );
       waitUntil(processPendingNotifications(new URL(request.url).origin).catch(() => undefined));
       return Response.json({ message: "담당자 배정을 저장했습니다.", assignment });
     }
@@ -89,11 +98,12 @@ export async function POST(
       INVALID_STATUS: "올바른 상태를 선택해 주세요.",
       INVALID_TRANSITION: "현재 상태에서 변경할 수 없는 단계입니다.",
       INVALID_ASSIGNEE: "활성 상태인 직원을 선택해 주세요.",
+      ASSIGNMENT_CONFLICT: "담당자가 이미 변경되었습니다. 최신 목록을 확인해 주세요.",
       REOPEN_REASON_REQUIRED: "완료된 접수를 다시 열 때 고객 공개 사유가 필요합니다.",
     };
     return Response.json(
       { error: messages[code] ?? "작업을 처리하지 못했습니다." },
-      { status: code === "INVALID_ORIGIN" ? 403 : 400 },
+      { status: code === "INVALID_ORIGIN" ? 403 : code === "ASSIGNMENT_CONFLICT" ? 409 : 400 },
     );
   }
 }
