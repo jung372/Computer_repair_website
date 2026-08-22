@@ -120,7 +120,7 @@ export default async function SettlementsPage({
         </div>
       </section>
 
-      <section className="container admin-content settlement-content">
+      <section className="container admin-content admin-content-wide settlement-content">
         <form className="settlement-search-panel" action="/admin/settlements" method="get">
           <input type="hidden" name="searched" value="1" />
           <div className="admin-search-heading">

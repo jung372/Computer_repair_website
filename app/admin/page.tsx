@@ -6,6 +6,7 @@ import { AdminStatusFilter } from "@/components/admin-status-filter";
 import { InlineAssignmentForm } from "@/components/inline-assignment-form";
 import { StatusBadge } from "@/components/status-badge";
 import {
+  countAdminRequestRecords,
   getDashboardCounts,
   getAdminRequestFilterOptions,
   listAdminRequestRecords,
@@ -13,6 +14,7 @@ import {
 import { listAssignmentOptions } from "@/data/staff-slot-repository";
 import { CUSTOMER_TYPES } from "@/lib/domain";
 import { requireAdmin } from "@/lib/admin-auth";
+import { getPagination } from "@/lib/pagination";
 
 export const metadata: Metadata = {
   title: "운영자 대시보드",
@@ -22,6 +24,7 @@ export const metadata: Metadata = {
 export const dynamic = "force-dynamic";
 
 type AdminSearchParams = Record<string, string | string[] | undefined>;
+const ADMIN_PAGE_SIZE = 200;
 
 function first(value: string | string[] | undefined) {
   return Array.isArray(value) ? value[0] ?? "" : value ?? "";
@@ -56,14 +59,22 @@ export default async function AdminPage({
     completedTo: first(query.completedTo),
     statuses: selectedStatuses,
   };
-  const [requests, filterOptions, staffAccounts, counts] = await Promise.all([
-    listAdminRequestRecords(filters, 200, admin.role === "STAFF" ? admin.id : undefined),
+  const assignedAccountId = admin.role === "STAFF" ? admin.id : undefined;
+  const [totalRequests, filterOptions, staffAccounts, counts] = await Promise.all([
+    countAdminRequestRecords(filters, assignedAccountId),
     getAdminRequestFilterOptions(),
     admin.role === "OWNER" ? listAssignmentOptions() : Promise.resolve([]),
     getDashboardCounts(admin.id),
   ]);
+  const pagination = getPagination(first(query.page), totalRequests, ADMIN_PAGE_SIZE);
+  const requests = await listAdminRequestRecords(
+    filters,
+    pagination.pageSize,
+    assignedAccountId,
+    pagination.offset,
+  );
   const customerTypes = unique([...CUSTOMER_TYPES, ...filterOptions.customerTypes]);
-  const returnTo = buildAdminReturnPath(query);
+  const returnTo = buildAdminPagePath(query, pagination.page);
 
   return (
     <main id="main-content" className="admin-shell">
@@ -82,7 +93,7 @@ export default async function AdminPage({
         </div>
       </section>
 
-      <section className="container admin-content">
+      <section className="container admin-content admin-content-wide">
         <section className={`admin-kpi-grid ${admin.role === "OWNER" ? "owner" : "staff"}`} aria-label="업무 현황">
           {admin.role === "OWNER" && (
             <>
@@ -100,7 +111,7 @@ export default async function AdminPage({
               <span className="eyebrow">Request search</span>
               <h2>접수내역 검색</h2>
             </div>
-            <p>현재 조건에 맞는 접수 <strong>{requests.length}</strong>건</p>
+            <p>현재 조건에 맞는 접수 <strong>{totalRequests}</strong>건</p>
           </div>
 
           <div className={`admin-search-grid ${admin.role === "STAFF" ? "staff-scope" : ""}`}>
@@ -178,7 +189,7 @@ export default async function AdminPage({
             <span className="eyebrow">Request list</span>
             <h2>접수내역</h2>
           </div>
-          <small>최신 접수번호 순 · 최대 200건</small>
+          <small>최신 접수번호 순 · 페이지당 {pagination.pageSize}건</small>
         </div>
         {requests.length ? (
           <>
@@ -285,6 +296,7 @@ export default async function AdminPage({
             );
           })}
         </div>
+        <AdminPagination query={query} {...pagination} />
           </>
         ) : (
           <div className="empty-state">
@@ -297,17 +309,44 @@ export default async function AdminPage({
   );
 }
 
-function buildAdminReturnPath(query: AdminSearchParams) {
+function buildAdminPagePath(query: AdminSearchParams, page: number) {
   const parameters = new URLSearchParams();
   for (const [key, value] of Object.entries(query)) {
+    if (key === "page") continue;
     if (Array.isArray(value)) {
       for (const item of value) parameters.append(key, item);
     } else if (value) {
       parameters.set(key, value);
     }
   }
-  const search = parameters.toString();
-  return search ? `/admin?${search}` : "/admin";
+  parameters.set("page", String(page));
+  return `/admin?${parameters.toString()}`;
+}
+
+function AdminPagination({
+  query,
+  page,
+  totalPages,
+  totalItems,
+}: {
+  query: AdminSearchParams;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+  totalItems: number;
+  offset: number;
+}) {
+  return (
+    <nav className="admin-pagination" aria-label="접수내역 페이지">
+      {page > 1 ? (
+        <Link className="button button-secondary" href={buildAdminPagePath(query, page - 1)}>이전</Link>
+      ) : <span className="button button-secondary disabled" aria-disabled="true">이전</span>}
+      <strong>{page} / {totalPages} 페이지 · 전체 {totalItems.toLocaleString("ko-KR")}건</strong>
+      {page < totalPages ? (
+        <Link className="button button-secondary" href={buildAdminPagePath(query, page + 1)}>다음</Link>
+      ) : <span className="button button-secondary disabled" aria-disabled="true">다음</span>}
+    </nav>
+  );
 }
 
 function DateRange({

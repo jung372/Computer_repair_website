@@ -213,12 +213,10 @@ function addIntegratedDateRange(
   }
 }
 
-export async function listAdminRequestRecords(
-  filters: AdminRequestFilters = {},
-  limit = 200,
+function buildAdminRequestConditions(
+  filters: AdminRequestFilters,
   assignedAccountId?: string,
 ) {
-  await ensureDatabase();
   const clauses = ["sr.deleted_at IS NULL"];
   const values: unknown[] = [];
   if (assignedAccountId) {
@@ -273,13 +271,43 @@ export async function listAdminRequestRecords(
     clauses.push(`sr.status IN (${statuses.map(() => "?").join(", ")})`);
     values.push(...statuses);
   }
+  return { clauses, values };
+}
+
+export async function countAdminRequestRecords(
+  filters: AdminRequestFilters = {},
+  assignedAccountId?: string,
+) {
+  await ensureDatabase();
+  const { clauses, values } = buildAdminRequestConditions(filters, assignedAccountId);
+  const row = await getD1()
+    .prepare(`
+      SELECT COUNT(*) AS total_count
+      FROM service_requests sr
+      INNER JOIN request_operations operations ON operations.request_id = sr.id
+      WHERE ${clauses.join(" AND ")}
+    `)
+    .bind(...values)
+    .first<{ total_count: number }>();
+  return Number(row?.total_count ?? 0);
+}
+
+export async function listAdminRequestRecords(
+  filters: AdminRequestFilters = {},
+  limit = 200,
+  assignedAccountId?: string,
+  offset = 0,
+) {
+  await ensureDatabase();
+  const { clauses, values } = buildAdminRequestConditions(filters, assignedAccountId);
   values.push(Math.max(1, Math.min(limit, 500)));
+  values.push(Math.max(0, Math.floor(offset)));
   const result = await getD1()
     .prepare(`
       ${ADMIN_REQUEST_SELECT}
       WHERE ${clauses.join(" AND ")}
       ORDER BY serial.serial_no DESC
-      LIMIT ?
+      LIMIT ? OFFSET ?
     `)
     .bind(...values)
     .all<AdminRequestRow>();

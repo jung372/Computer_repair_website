@@ -212,6 +212,11 @@ test("provides an admin operations ledger, filters, stable serials and editable 
   assert.match(recordForm, /계산서 발행일자/);
   assert.match(recordForm, /관리자메모/);
   assert.match(repository, /ORDER BY serial\.serial_no DESC/);
+  assert.match(repository, /COUNT\(\*\) AS total_count/);
+  assert.match(repository, /LIMIT \? OFFSET \?/);
+  assert.match(adminPage, /AdminPagination/);
+  assert.match(adminPage, />이전</);
+  assert.match(adminPage, />다음</);
   assert.match(schema, /request_serials/);
   assert.match(schema, /request_operations/);
   assert.match(migration, /AUTOINCREMENT/);

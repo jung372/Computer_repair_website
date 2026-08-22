@@ -281,6 +281,10 @@ p {
   margin-inline: auto;
 }
 
+.admin-content-wide {
+  width: min(calc(100% - 32px), 1480px);
+}
+
 .section {
   padding: 104px 0;
 }
@@ -3778,24 +3782,38 @@ p {
 }
 
 .admin-operations-table {
-  min-width: 1420px;
+  min-width: 1180px;
+  table-layout: fixed;
 }
 
 .admin-operations-table th {
-  padding-block: 15px;
+  padding: 13px 8px;
   background: #eef3f8;
   color: var(--ink-700);
 }
 
 .admin-operations-table td {
+  overflow: hidden;
+  padding: 13px 8px;
+  text-overflow: ellipsis;
   vertical-align: middle;
 }
 
 .admin-operations-table td:nth-child(2),
 .admin-operations-table td:nth-child(3) {
-  min-width: 100px;
+  min-width: 0;
   white-space: nowrap;
 }
+
+.admin-operations-table th:nth-child(1) { width: 54px; }
+.admin-operations-table th:nth-child(2) { width: 94px; }
+.admin-operations-table th:nth-child(3) { width: 88px; }
+.admin-operations-table th:nth-child(4) { width: 142px; }
+.admin-operations-table th:nth-child(5) { width: 184px; }
+.admin-operations-table th:nth-child(6) { width: 184px; }
+.admin-operations-table th:nth-child(7) { width: 106px; }
+.admin-operations-table th:nth-child(8) { width: 112px; }
+.admin-operations-table th:nth-child(9) { width: 92px; }
 
 .receipt-type-chip {
   display: inline-flex;
@@ -3810,7 +3828,7 @@ p {
 
 .admin-address-cell {
   overflow: hidden;
-  max-width: 220px;
+  max-width: 184px;
   color: var(--ink-600);
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -3818,14 +3836,15 @@ p {
 
 .inline-assignment {
   display: grid;
-  min-width: 220px;
+  width: 168px;
+  min-width: 0;
   gap: 4px;
 }
 
 .inline-assignment > div {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 6px;
+  grid-template-columns: 124px 40px;
+  gap: 4px;
 }
 
 .inline-assignment select,
@@ -3838,12 +3857,14 @@ p {
 }
 
 .inline-assignment select {
+  width: 124px;
   min-width: 0;
-  padding: 5px 8px;
+  padding: 5px 6px;
 }
 
 .inline-assignment button {
-  padding: 5px 9px;
+  width: 40px;
+  padding: 5px 3px;
   background: var(--ink-900);
   color: var(--white);
   cursor: pointer;
@@ -3953,6 +3974,35 @@ p {
 
 .admin-request-card-body .inline-assignment {
   margin-top: 10px;
+}
+
+.admin-pagination {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 12px;
+  margin-top: 18px;
+}
+
+.admin-pagination > :first-child {
+  justify-self: start;
+}
+
+.admin-pagination > :last-child {
+  justify-self: end;
+}
+
+.admin-pagination strong {
+  color: var(--ink-600);
+  font-size: .8rem;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+
+.admin-pagination .disabled {
+  cursor: default;
+  opacity: .45;
+  pointer-events: none;
 }
 
 .admin-request-card-title {
@@ -4661,8 +4711,32 @@ p {
 }
 
 .settlement-table {
-  min-width: 1320px;
+  min-width: 1180px;
+  table-layout: fixed;
 }
+
+.settlement-table th,
+.settlement-table td {
+  overflow: hidden;
+  padding-inline: 8px;
+  text-overflow: ellipsis;
+}
+
+.settlement-table td:nth-child(2) {
+  min-width: 0;
+  white-space: nowrap;
+}
+
+.settlement-table th:nth-child(1) { width: 10%; }
+.settlement-table th:nth-child(2) { width: 11%; }
+.settlement-table th:nth-child(3) { width: 8%; }
+.settlement-table th:nth-child(4) { width: 10%; }
+.settlement-table th:nth-child(5) { width: 10%; }
+.settlement-table th:nth-child(6) { width: 10%; }
+.settlement-table th:nth-child(7) { width: 9%; }
+.settlement-table th:nth-child(8) { width: 9%; }
+.settlement-table th:nth-child(9) { width: 10%; }
+.settlement-table th:nth-child(10) { width: 13%; }
 
 .settlement-money {
   text-align: right;
