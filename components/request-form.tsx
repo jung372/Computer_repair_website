@@ -234,7 +234,7 @@ export function RequestForm({ initialDevice = "", initialSymptom = "" }: Request
           <ShieldCheck size={20} aria-hidden="true" />
           <span>
             <strong>서비스 접수에 필요한 개인정보 처리 안내</strong>
-            <small>연락처·기본주소·대표증상은 접수 처리와 운영자 Telegram 알림에 사용합니다. 별도 체크 없이 신청할 수 있으며 자세한 내용은 <Link href="/privacy" target="_blank" rel="noreferrer">개인정보 처리방침</Link>에서 확인할 수 있습니다.</small>
+            <small>연락처·기본주소·대표증상은 접수처리에 사용합니다. 자세한 내용은 <Link href="/privacy" target="_blank" rel="noreferrer">개인정보 처리방침</Link>에서 확인할 수 있습니다.</small>
           </span>
         </div>
       </section>
