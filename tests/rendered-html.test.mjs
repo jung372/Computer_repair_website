@@ -64,6 +64,25 @@ test("includes durable private requests, personal lookup, admin and Telegram sur
   assert.match(telegram, /sendMessage/);
 });
 
+test("starts the mobile request form above the fold and collapses optional fields", async () => {
+  const [page, form, css] = await Promise.all([
+    readFile(new URL("app/requests/new/page.tsx", root), "utf8"),
+    readFile(new URL("components/request-form.tsx", root), "utf8"),
+    readFile(new URL("app/globals.css", root), "utf8"),
+  ]);
+
+  assert.match(page, /className="form-page-side"/);
+  assert.match(form, /약 2분이면 신청 완료/);
+  assert.match(form, /className="optional-section-toggle"/);
+  assert.match(form, /aria-expanded=\{optionalOpen\}/);
+  assert.ok(form.indexOf('name="phone"') < form.indexOf('name="name"'));
+  assert.ok(form.indexOf('name="address1"') < form.indexOf('name="address2"'));
+  assert.match(css, /@media \(max-width: 840px\)[\s\S]*?\.form-page-side\s*\{\s*display: none/);
+  assert.match(css, /body:has\(\.form-page\) \.mobile-actions\s*\{\s*display: none/);
+  assert.match(css, /\.optional-form-content\.is-open\s*\{\s*display: block/);
+  assert.match(css, /\.form-intro-mobile-copy\s*\{[\s\S]*?display: flex/);
+});
+
 test("supports fixed staff slots, copyable Telegram text and workload counts", async () => {
   const [schema, migration, telegram, staffRepository, staffPage, adminPage] =
     await Promise.all([

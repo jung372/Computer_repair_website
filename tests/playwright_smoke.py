@@ -60,6 +60,19 @@ with sync_playwright() as playwright:
     assert page.get_by_label("신청 조회 비밀번호").get_attribute("minlength") == "4"
     assert page.get_by_label("신청 조회 비밀번호").get_attribute("maxlength") == "20"
 
+    # 모바일은 홍보 패널과 중복 하단 메뉴 없이 첫 화면에서 바로 입력한다.
+    page.set_viewport_size({"width": 390, "height": 844})
+    assert not page.locator(".form-page-side").is_visible()
+    assert page.get_by_text("약 2분이면 신청 완료", exact=True).is_visible()
+    assert not page.locator(".mobile-actions").is_visible()
+    phone_box = page.get_by_label("연락처 *").bounding_box()
+    assert phone_box and phone_box["y"] < 220, phone_box
+    assert not page.get_by_label("이름").is_visible()
+    page.get_by_role("button", name=re.compile("추가 정보 입력")).click()
+    assert page.get_by_label("이름").is_visible()
+    page.screenshot(path=str(ARTIFACTS / "request-mobile.png"), full_page=False)
+    page.set_viewport_size({"width": 1440, "height": 1000})
+
     # 연락처는 무엇을 입력하든 정규 형식으로 수렴해야 한다.
     phone_field = page.get_by_label("연락처 *")
     # maxlength가 있으면 브라우저가 정규화 전에 원본을 잘라 국제번호 붙여넣기가 깨진다.
