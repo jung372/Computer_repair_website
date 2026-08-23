@@ -9,6 +9,7 @@ import {
 import { assertLookupSecretReady } from "@/data/security-settings-repository";
 import {
   DEVICE_TYPES,
+  UNSPECIFIED_DEVICE_TYPE,
   type DeviceType,
   type ServiceRequestRecord,
 } from "@/lib/domain";
@@ -16,9 +17,8 @@ import { getInitialNotificationStatus } from "@/lib/notification-config";
 import { formatPhone, normalizePhone } from "@/lib/phone";
 import { createLookupKey } from "@/lib/security/lookup-key";
 import { hashPassword, verifyPassword } from "@/lib/security/password";
-import { generateLookupCode } from "@/lib/security/generated-lookup-code";
 
-const PRIVACY_NOTICE_VERSION = "2026-08-23.v3";
+const PRIVACY_NOTICE_VERSION = "2026-08-23.v4";
 const PRIVACY_LEGAL_BASIS = "PIPA_15_1_4_CONTRACT_REQUEST";
 // 고객이 쓴 내용을 조용히 잘라내지 않기 위한 방어선. 화면에는 제한을 두지 않는다.
 const DESCRIPTION_LIMIT = 20_000;
@@ -76,17 +76,14 @@ export async function createServiceRequest(input: unknown) {
   const symptom = clean(values.symptom, 120);
   const description = clean(values.description, DESCRIPTION_LIMIT);
   const submittedPassword = typeof values.password === "string" ? values.password : "";
-  const generatedLookupCode = submittedPassword ? null : generateLookupCode();
-  const lookupCredential = generatedLookupCode ?? submittedPassword;
   const passwordLength = Array.from(submittedPassword).length;
   const deviceType = DEVICE_TYPES.includes(values.deviceType as DeviceType)
     ? (values.deviceType as DeviceType)
-    : null;
+    : UNSPECIFIED_DEVICE_TYPE;
 
   if (values.website) fields.website = "자동 신청으로 판단되었습니다.";
   if (phone.length < 10 || phone.length > 11) fields.phone = "연락처 10~11자리를 확인해 주세요.";
   if (!address1) fields.address1 = "기본 주소를 입력해 주세요.";
-  if (!deviceType) fields.deviceType = "기기 종류를 선택해 주세요.";
   if (!symptom) fields.symptom = "대표 증상을 입력해 주세요.";
   if (
     typeof values.description === "string" &&
@@ -99,11 +96,15 @@ export async function createServiceRequest(input: unknown) {
   }
   if (Object.keys(fields).length) throw new RequestValidationError(fields);
 
-  await assertLookupSecretReady();
-  const [accessPasswordHash, lookupKey] = await Promise.all([
-    hashPassword(lookupCredential),
-    createLookupKey(phone, lookupCredential),
-  ]);
+  let accessPasswordHash: string | null = null;
+  let lookupKey: string | null = null;
+  if (submittedPassword) {
+    await assertLookupSecretReady();
+    [accessPasswordHash, lookupKey] = await Promise.all([
+      hashPassword(submittedPassword),
+      createLookupKey(phone, submittedPassword),
+    ]);
+  }
   const now = new Date();
   const timestamp = now.toISOString();
   const request: ServiceRequestRecord & {
@@ -122,7 +123,7 @@ export async function createServiceRequest(input: unknown) {
     address1,
     address2,
     regionPublic: publicRegion(address1),
-    deviceType: deviceType!,
+    deviceType,
     manufacturerModel,
     symptom,
     description,
@@ -144,7 +145,7 @@ export async function createServiceRequest(input: unknown) {
     privacyNoticePresentedAt: timestamp,
   };
   await insertRequest(request);
-  return { request, generatedLookupCode };
+  return { request };
 }
 
 export async function getRequestDetail(publicId: string) {

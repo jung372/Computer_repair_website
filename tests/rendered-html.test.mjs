@@ -75,12 +75,17 @@ test("starts the mobile request form above the fold and collapses optional field
   assert.match(form, /약 2분이면 신청 완료/);
   assert.match(form, /className="optional-section-toggle"/);
   assert.match(form, /aria-expanded=\{optionalOpen\}/);
-  assert.ok(form.indexOf('name="phone"') < form.indexOf('name="name"'));
+  assert.ok(form.indexOf('name="name"') < form.indexOf('name="phone"'));
+  assert.ok(form.indexOf('name="symptom"') < form.indexOf('name="password"'));
+  assert.ok(form.indexOf('className="optional-form-section"') < form.indexOf('name="deviceType"'));
   assert.ok(form.indexOf('name="address1"') < form.indexOf('name="address2"'));
+  assert.doesNotMatch(form, /name="deviceType"[\s\S]{0,180}required/);
+  assert.match(form, /field-mobile-inline/);
   assert.match(css, /@media \(max-width: 840px\)[\s\S]*?\.form-page-side\s*\{\s*display: none/);
   assert.match(css, /body:has\(\.form-page\) \.mobile-actions\s*\{\s*display: none/);
   assert.match(css, /\.optional-form-content\.is-open\s*\{\s*display: block/);
   assert.match(css, /\.form-intro-mobile-copy\s*\{[\s\S]*?display: flex/);
+  assert.match(css, /\.field-mobile-inline\s*\{[\s\S]*?grid-template-columns: 88px minmax\(0, 1fr\)/);
 });
 
 test("supports fixed staff slots, copyable Telegram text and workload counts", async () => {

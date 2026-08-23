@@ -1,17 +1,10 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
-import { generateLookupCode } from "../lib/security/generated-lookup-code.ts";
 
 const root = new URL("../", import.meta.url);
 
-test("generates high-entropy lookup codes in a human-readable format", () => {
-  const codes = new Set(Array.from({ length: 200 }, () => generateLookupCode()));
-  assert.equal(codes.size, 200);
-  for (const code of codes) assert.match(code, /^[2-9A-HJ-NP-Z]{4}(?:-[2-9A-HJ-NP-Z]{4}){2}$/);
-});
-
-test("makes description, password and consent interaction optional", async () => {
+test("makes device, description, password and consent interaction optional", async () => {
   const [form, service, api] = await Promise.all([
     readFile(new URL("components/request-form.tsx", root), "utf8"),
     readFile(new URL("lib/logic/request-service.ts", root), "utf8"),
@@ -20,11 +13,27 @@ test("makes description, password and consent interaction optional", async () =>
 
   assert.doesNotMatch(form, /name="description"[\s\S]{0,180}required/);
   assert.doesNotMatch(form, /name="password"[\s\S]{0,220}required/);
+  assert.doesNotMatch(form, /name="deviceType"[\s\S]{0,180}required/);
   assert.doesNotMatch(form, /name="privacyConsent"|type="checkbox"/);
-  assert.match(service, /generatedLookupCode = submittedPassword \? null : generateLookupCode\(\)/);
+  assert.match(service, /UNSPECIFIED_DEVICE_TYPE/);
+  assert.match(service, /if \(submittedPassword\) \{/);
+  assert.match(service, /let accessPasswordHash: string \| null = null/);
+  assert.doesNotMatch(service, /generateLookupCode|generatedLookupCode/);
   assert.doesNotMatch(service, /fields\.privacyConsent/);
-  assert.match(api, /generatedLookupCode/);
+  assert.doesNotMatch(api, /generatedLookupCode/);
   assert.match(api, /"Cache-Control": "private, no-store"/);
+});
+
+test("keeps provider names out of the ordinary customer journey", async () => {
+  const customerFiles = await Promise.all([
+    readFile(new URL("app/page.tsx", root), "utf8"),
+    readFile(new URL("components/request-form.tsx", root), "utf8"),
+    readFile(new URL("components/request-lookup-form.tsx", root), "utf8"),
+    readFile(new URL("components/private-unlock.tsx", root), "utf8"),
+    readFile(new URL("app/requests/page.tsx", root), "utf8"),
+  ]);
+
+  for (const contents of customerFiles) assert.doesNotMatch(contents, /Telegram|텔레그램/);
 });
 
 test("limits owner Telegram PII and protects and expires the message", async () => {

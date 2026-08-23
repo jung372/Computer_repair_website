@@ -1,13 +1,16 @@
 export const DEVICE_TYPES = ["desktop", "laptop", "monitor", "apple", "data-recovery", "other"] as const;
+export const UNSPECIFIED_DEVICE_TYPE = "unspecified" as const;
 export type DeviceType = (typeof DEVICE_TYPES)[number];
+export type StoredDeviceType = DeviceType | typeof UNSPECIFIED_DEVICE_TYPE;
 
-export const DEVICE_LABELS: Record<DeviceType, string> = {
+export const DEVICE_LABELS: Record<StoredDeviceType, string> = {
   desktop: "컴퓨터",
   laptop: "노트북",
   monitor: "모니터",
   apple: "애플기기",
   "data-recovery": "데이터 복구",
   other: "기타기기",
+  unspecified: "미입력",
 };
 
 export const REQUEST_STATUSES = [
@@ -189,7 +192,7 @@ export type ServiceRequestRecord = {
   address1: string;
   address2: string;
   regionPublic: string;
-  deviceType: DeviceType;
+  deviceType: StoredDeviceType;
   manufacturerModel: string;
   symptom: string;
   description: string;
@@ -219,7 +222,7 @@ export type CreateRequestInput = {
   phone: string;
   address1: string;
   address2?: string;
-  deviceType: string;
+  deviceType?: string;
   manufacturerModel?: string;
   symptom: string;
   description?: string;

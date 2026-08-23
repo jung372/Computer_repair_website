@@ -39,7 +39,7 @@ export async function POST(request: Request) {
       return Response.json({ error: "지원하지 않는 요청 형식입니다." }, { status: 415 });
     }
     const payload = await request.json();
-    const { request: created, generatedLookupCode } = await createServiceRequest(payload);
+    const { request: created } = await createServiceRequest(payload);
     await recordAccessFailure(submissionKey);
     const session = await createCustomerLookupSession([created.id]).catch(() => null);
     // Telegram can take seconds to answer, so the customer gets their receipt
@@ -54,7 +54,7 @@ export async function POST(request: Request) {
       );
     }
     return Response.json(
-      { publicId: created.publicId, generatedLookupCode },
+      { publicId: created.publicId },
       { status: 201, headers },
     );
   } catch (error) {

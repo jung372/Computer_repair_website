@@ -1895,31 +1895,6 @@ p {
   text-underline-offset: 2px;
 }
 
-.request-success-panel {
-  max-width: 720px;
-  margin-inline: auto;
-}
-
-.generated-lookup-notice code {
-  display: block;
-  width: fit-content;
-  margin: 12px 0 8px;
-  padding: 11px 14px;
-  border: 1px solid var(--blue-200);
-  border-radius: 8px;
-  background: #fff;
-  color: var(--ink-900);
-  font-size: clamp(1.05rem, 4vw, 1.35rem);
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  user-select: all;
-}
-
-.request-success-actions {
-  justify-content: flex-end;
-  flex-wrap: wrap;
-}
-
 .consent-check small {
   margin-top: 4px;
   color: var(--ink-500);
@@ -3442,6 +3417,33 @@ p {
 
   .field-wide {
     grid-column: auto;
+  }
+
+  .field-mobile-inline {
+    display: grid;
+    grid-template-columns: 88px minmax(0, 1fr);
+    align-items: center;
+    gap: 0 10px;
+  }
+
+  .field-mobile-inline > label {
+    grid-column: 1;
+    grid-row: 1;
+    margin: 0;
+    line-height: 1.25;
+  }
+
+  .field-mobile-inline > input,
+  .field-mobile-inline > select,
+  .field-mobile-inline > textarea {
+    min-width: 0;
+    grid-column: 2;
+    grid-row: 1;
+  }
+
+  .field-mobile-inline > small,
+  .field-mobile-inline > .field-error {
+    grid-column: 2;
   }
 
   .optional-form-section {

@@ -44,7 +44,7 @@ export function RequestLookupForm() {
         <div>
           <span className="eyebrow">Private lookup</span>
           <h2>내 신청 불러오기</h2>
-          <p>휴대전화 번호와 직접 지정한 비밀번호 또는 자동 조회코드를 입력하세요.</p>
+          <p>신청할 때 입력한 휴대전화 번호와 조회 비밀번호를 입력하세요.</p>
         </div>
       </div>
       <label htmlFor="lookup-phone">휴대전화 번호</label>
@@ -63,7 +63,7 @@ export function RequestLookupForm() {
           required
         />
       </div>
-      <label htmlFor="lookup-password">신청 비밀번호 또는 자동 조회코드</label>
+      <label htmlFor="lookup-password">신청 조회 비밀번호</label>
       <div className="unlock-input">
         <KeyRound size={18} aria-hidden="true" />
         <input

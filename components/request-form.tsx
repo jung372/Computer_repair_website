@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronDown, Clock3, LockKeyhole, Send, ShieldCheck } from "lucide-react";
+import { ChevronDown, Clock3, Send, ShieldCheck } from "lucide-react";
 import Link from "next/link";
 import { useState, type FormEvent } from "react";
 import { DEVICE_LABELS, DEVICE_TYPES } from "@/lib/domain";
@@ -16,11 +16,6 @@ export function RequestForm({ initialDevice = "", initialSymptom = "" }: Request
   const [submitting, setSubmitting] = useState(false);
   const [phone, setPhone] = useState("");
   const [optionalOpen, setOptionalOpen] = useState(false);
-  const [copied, setCopied] = useState(false);
-  const [success, setSuccess] = useState<{
-    publicId: string;
-    generatedLookupCode: string;
-  } | null>(null);
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -40,19 +35,11 @@ export function RequestForm({ initialDevice = "", initialSymptom = "" }: Request
       });
       const result = (await response.json()) as {
         publicId?: string;
-        generatedLookupCode?: string | null;
         error?: string;
         fields?: Record<string, string>;
       };
       if (!response.ok || !result.publicId) {
         setErrors(result.fields ?? { form: result.error ?? "신청을 저장하지 못했습니다." });
-        return;
-      }
-      if (result.generatedLookupCode) {
-        setSuccess({
-          publicId: result.publicId,
-          generatedLookupCode: result.generatedLookupCode,
-        });
         return;
       }
       window.location.assign(`/requests/${result.publicId}?submitted=1`);
@@ -61,44 +48,6 @@ export function RequestForm({ initialDevice = "", initialSymptom = "" }: Request
     } finally {
       setSubmitting(false);
     }
-  }
-
-  async function copyLookupCode() {
-    if (!success) return;
-    try {
-      await navigator.clipboard.writeText(success.generatedLookupCode);
-      setCopied(true);
-    } catch {
-      setCopied(false);
-    }
-  }
-
-  if (success) {
-    return (
-      <section className="request-form request-success-panel" aria-labelledby="request-success-title">
-        <div className="form-intro">
-          <span className="eyebrow">Request received</span>
-          <h1 id="request-success-title">서비스 신청이 완료되었습니다.</h1>
-          <p>접수번호와 자동 조회코드를 안전한 곳에 보관해 주세요.</p>
-        </div>
-        <div className="private-request-notice generated-lookup-notice">
-          <LockKeyhole size={24} aria-hidden="true" />
-          <span>
-            <strong>자동 조회코드</strong>
-            <code>{success.generatedLookupCode}</code>
-            <small>이 화면을 벗어나면 코드를 다시 표시하지 않습니다. 화면 캡처도 권장합니다.</small>
-          </span>
-        </div>
-        <div className="form-submit request-success-actions">
-          <button className="button button-secondary" type="button" onClick={copyLookupCode}>
-            {copied ? "복사 완료" : "조회코드 복사"}
-          </button>
-          <Link className="button button-primary" href={`/requests/${success.publicId}?submitted=1`}>
-            신청내역 확인
-          </Link>
-        </div>
-      </section>
-    );
   }
 
   return (
@@ -118,7 +67,16 @@ export function RequestForm({ initialDevice = "", initialSymptom = "" }: Request
           <div><h2>필수 접수 정보</h2><p>연락받을 정보와 기기 증상을 입력해 주세요.</p></div>
         </div>
         <div className="form-grid">
-          <Field label="연락처 *" name="phone" error={errors.phone}>
+          <Field label="이름" name="name" error={errors.name} mobileInline>
+            <input
+              id="name"
+              name="name"
+              autoComplete="name"
+              maxLength={30}
+              placeholder="미입력 시 미상으로 저장"
+            />
+          </Field>
+          <Field label="연락처 *" name="phone" error={errors.phone} mobileInline>
             <input
               id="phone"
               name="phone"
@@ -132,22 +90,14 @@ export function RequestForm({ initialDevice = "", initialSymptom = "" }: Request
               required
             />
           </Field>
-          <Field label="기본 주소 *" name="address1" error={errors.address1} wide>
+          <Field label="기본주소 *" name="address1" error={errors.address1} wide mobileInline>
             <input
               id="address1"
               name="address1"
               autoComplete="street-address"
-              placeholder="예: 서울시 강남구 테헤란로"
+              placeholder="예: 서울시 강남구"
               required
             />
-          </Field>
-          <Field label="기기 종류 *" name="deviceType" error={errors.deviceType}>
-            <select id="deviceType" name="deviceType" defaultValue={initialDevice} required>
-              <option value="">기기를 선택하세요</option>
-              {DEVICE_TYPES.map((type) => (
-                <option value={type} key={type}>{DEVICE_LABELS[type]}</option>
-              ))}
-            </select>
           </Field>
           <Field label="대표 증상 *" name="symptom" error={errors.symptom} wide>
             <input
@@ -158,6 +108,24 @@ export function RequestForm({ initialDevice = "", initialSymptom = "" }: Request
               placeholder="예: 전원은 켜지지만 화면이 나오지 않아요"
               required
             />
+          </Field>
+          <Field
+            label="조회 비밀번호"
+            name="password"
+            error={errors.password}
+            wide
+            mobileInline
+          >
+            <input
+              id="password"
+              name="password"
+              type="password"
+              minLength={4}
+              maxLength={20}
+              autoComplete="new-password"
+              placeholder="입력 시 신청내역 조회 가능"
+            />
+            <small>입력하는 경우 4~20자로 설정해 주세요.</small>
           </Field>
           <div aria-hidden="true" className="honeypot">
             <label htmlFor="website">웹사이트</label>
@@ -186,14 +154,13 @@ export function RequestForm({ initialDevice = "", initialSymptom = "" }: Request
             <div><h2>추가 정보</h2><p>필요한 경우에만 입력해 주세요.</p></div>
           </div>
           <div className="form-grid">
-            <Field label="이름" name="name" error={errors.name}>
-              <input
-                id="name"
-                name="name"
-                autoComplete="name"
-                maxLength={30}
-                placeholder="미입력 시 미상으로 저장"
-              />
+            <Field label="기기 종류" name="deviceType" error={errors.deviceType}>
+              <select id="deviceType" name="deviceType" defaultValue={initialDevice}>
+                <option value="">선택하지 않음</option>
+                {DEVICE_TYPES.map((type) => (
+                  <option value={type} key={type}>{DEVICE_LABELS[type]}</option>
+                ))}
+              </select>
             </Field>
             <Field label="상세 주소" name="address2" error={errors.address2}>
               <input
@@ -219,25 +186,6 @@ export function RequestForm({ initialDevice = "", initialSymptom = "" }: Request
               />
               <small>추가로 전달할 내용이 있을 때만 적어 주세요.</small>
             </Field>
-            <div className="private-request-notice optional-lookup-notice">
-              <LockKeyhole size={22} aria-hidden="true" />
-              <span>
-                <strong>신청 내용은 공개되지 않습니다.</strong>
-                <small>비밀번호를 비워두면 자동 조회코드가 발급됩니다.</small>
-              </span>
-            </div>
-            <Field label="신청 조회 비밀번호" name="password" error={errors.password} wide>
-              <input
-                id="password"
-                name="password"
-                type="password"
-                minLength={4}
-                maxLength={20}
-                autoComplete="new-password"
-                placeholder="비워두면 자동 조회코드가 발급됩니다"
-              />
-              <small>직접 지정하려면 4~20자로 입력해 주세요.</small>
-            </Field>
           </div>
         </div>
       </section>
@@ -251,7 +199,7 @@ export function RequestForm({ initialDevice = "", initialSymptom = "" }: Request
       </div>
 
       <div className="form-submit">
-        <p>휴대전화 번호와 직접 지정한 비밀번호 또는 자동 조회코드로 신청을 확인할 수 있습니다.</p>
+        <p>조회 비밀번호를 입력한 신청은 연락처와 비밀번호로 다시 확인할 수 있습니다.</p>
         <button className="button button-primary button-large" disabled={submitting}>
           <Send size={19} aria-hidden="true" />
           {submitting ? "안전하게 저장하는 중..." : "서비스 신청하기"}
@@ -266,16 +214,18 @@ function Field({
   name,
   error,
   wide,
+  mobileInline,
   children,
 }: {
   label: string;
   name: string;
   error?: string;
   wide?: boolean;
+  mobileInline?: boolean;
   children: React.ReactNode;
 }) {
   return (
-    <div className={`field ${wide ? "field-wide" : ""}`}>
+    <div className={`field ${wide ? "field-wide" : ""} ${mobileInline ? "field-mobile-inline" : ""}`}>
       <label htmlFor={name}>{label}</label>
       {children}
       {error && <p className="field-error" role="alert">{error}</p>}
