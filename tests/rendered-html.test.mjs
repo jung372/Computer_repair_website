@@ -88,11 +88,14 @@ test("supports fixed staff slots, copyable Telegram text and workload counts", a
   assert.match(staffRepository, /permanentlyDeleteUnusedStaff/);
   assert.match(staffRepository, /getStaffTelegramRecipient/);
   assert.match(staffPage, /직원 영구 삭제/);
-  assert.match(adminPage, /담당자 미할당/);
+  assert.match(adminPage, /담당자 미배정/);
   assert.match(adminPage, /총 미접수/);
   assert.match(adminPage, /총 미종결/);
   assert.match(adminPage, /내 미접수/);
   assert.match(adminPage, /내 미종결/);
+  assert.match(adminPage, /DashboardCard/);
+  assert.match(adminPage, /buildAdminDashboardFilterHref/);
+  assert.match(adminPage, /aria-current/);
 });
 
 test("delivers Telegram notifications off the response path and retries them on a schedule", async () => {
@@ -194,9 +197,10 @@ test("removes public request discovery and postal code collection from customer 
 });
 
 test("provides an admin operations ledger, filters, stable serials and editable details", async () => {
-  const [adminPage, detailPage, recordForm, repository, schema, migration] =
+  const [adminPage, statusFilter, detailPage, recordForm, repository, schema, migration] =
     await Promise.all([
       readFile(new URL("app/admin/page.tsx", root), "utf8"),
+      readFile(new URL("components/admin-status-filter.tsx", root), "utf8"),
       readFile(new URL("app/admin/requests/[publicId]/page.tsx", root), "utf8"),
       readFile(new URL("components/admin-request-record-form.tsx", root), "utf8"),
       readFile(new URL("data/admin-request-repository.ts", root), "utf8"),
@@ -217,6 +221,8 @@ test("provides an admin operations ledger, filters, stable serials and editable 
   assert.match(adminPage, /AdminPagination/);
   assert.match(adminPage, />이전</);
   assert.match(adminPage, />다음</);
+  assert.match(statusFilter, /hiddenStatuses/);
+  assert.match(statusFilter, /type="hidden" name="status"/);
   assert.match(schema, /request_serials/);
   assert.match(schema, /request_operations/);
   assert.match(migration, /AUTOINCREMENT/);

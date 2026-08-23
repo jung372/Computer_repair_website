@@ -39,6 +39,89 @@ export const UNRESOLVED_REQUEST_STATUSES = [
   "ON_HOLD",
 ] as const satisfies readonly RequestStatus[];
 
+export const ADMIN_DASHBOARD_FILTER_KEYS = [
+  "unassigned",
+  "total-received",
+  "total-unresolved",
+  "my-received",
+  "my-unresolved",
+] as const;
+
+export type AdminDashboardFilterKey =
+  (typeof ADMIN_DASHBOARD_FILTER_KEYS)[number];
+export type AdminDashboardRole = "OWNER" | "STAFF";
+
+export type AdminDashboardFilter = {
+  assignee: string;
+  statuses: RequestStatus[];
+};
+
+export function getAdminDashboardFilter(
+  key: AdminDashboardFilterKey,
+  role: AdminDashboardRole,
+  accountId: string,
+): AdminDashboardFilter | null {
+  if (role === "STAFF" && !key.startsWith("my-")) return null;
+
+  switch (key) {
+    case "unassigned":
+      return { assignee: "__UNASSIGNED__", statuses: [] };
+    case "total-received":
+      return { assignee: "", statuses: ["RECEIVED"] };
+    case "total-unresolved":
+      return { assignee: "", statuses: [...UNRESOLVED_REQUEST_STATUSES] };
+    case "my-received":
+      return {
+        assignee: role === "OWNER" ? accountId : "",
+        statuses: ["RECEIVED"],
+      };
+    case "my-unresolved":
+      return {
+        assignee: role === "OWNER" ? accountId : "",
+        statuses: [...UNRESOLVED_REQUEST_STATUSES],
+      };
+  }
+}
+
+export function buildAdminDashboardFilterHref(
+  key: AdminDashboardFilterKey,
+  role: AdminDashboardRole,
+  accountId: string,
+) {
+  const filter = getAdminDashboardFilter(key, role, accountId);
+  if (!filter) return "/admin";
+
+  const parameters = new URLSearchParams({ dashboard: key });
+  if (filter.assignee) parameters.set("assignee", filter.assignee);
+  for (const status of filter.statuses) parameters.append("status", status);
+  return `/admin?${parameters.toString()}`;
+}
+
+export function isAdminDashboardFilterActive(
+  selectedKey: string,
+  key: AdminDashboardFilterKey,
+  current: { assignee: string; statuses: string[] },
+  role: AdminDashboardRole,
+  accountId: string,
+) {
+  if (selectedKey !== key) return false;
+  const expected = getAdminDashboardFilter(key, role, accountId);
+  if (!expected || current.assignee !== expected.assignee) return false;
+
+  const currentStatuses = normalizeRequestStatuses(current.statuses);
+  const expectedStatuses = normalizeRequestStatuses(expected.statuses);
+  return currentStatuses.length === expectedStatuses.length
+    && currentStatuses.every((status, index) => status === expectedStatuses[index]);
+}
+
+function normalizeRequestStatuses(statuses: readonly string[]) {
+  return [...new Set(statuses)]
+    .filter((status): status is RequestStatus =>
+      REQUEST_STATUSES.includes(status as RequestStatus),
+    )
+    .sort();
+}
+
 export const STATUS_LABELS: Record<RequestStatus, string> = {
   RECEIVED: "접수중",
   CONSULTING: "진행중",

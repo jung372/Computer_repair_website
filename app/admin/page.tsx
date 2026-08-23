@@ -12,7 +12,14 @@ import {
   listAdminRequestRecords,
 } from "@/data/admin-request-repository";
 import { listAssignmentOptions } from "@/data/staff-slot-repository";
-import { CUSTOMER_TYPES } from "@/lib/domain";
+import {
+  ADMIN_DASHBOARD_FILTER_KEYS,
+  buildAdminDashboardFilterHref,
+  CUSTOMER_TYPES,
+  isAdminDashboardFilterActive,
+  type AdminDashboardFilterKey,
+  type AdminDashboardRole,
+} from "@/lib/domain";
 import { requireAdmin } from "@/lib/admin-auth";
 import { getPagination } from "@/lib/pagination";
 
@@ -75,6 +82,22 @@ export default async function AdminPage({
   );
   const customerTypes = unique([...CUSTOMER_TYPES, ...filterOptions.customerTypes]);
   const returnTo = buildAdminPagePath(query, pagination.page);
+  const selectedDashboard = first(query.dashboard);
+  const activeDashboard = ADMIN_DASHBOARD_FILTER_KEYS.find((key) =>
+    isAdminDashboardFilterActive(
+      selectedDashboard,
+      key,
+      filters,
+      admin.role,
+      admin.id,
+    ),
+  );
+  const dashboardCardProps = {
+    selectedDashboard,
+    filters,
+    role: admin.role,
+    accountId: admin.id,
+  };
 
   return (
     <main id="main-content" className="admin-shell">
@@ -97,15 +120,16 @@ export default async function AdminPage({
         <section className={`admin-kpi-grid ${admin.role === "OWNER" ? "owner" : "staff"}`} aria-label="업무 현황">
           {admin.role === "OWNER" && (
             <>
-              <article><span>담당자 미할당</span><strong>{counts.unassigned}</strong><small>건</small></article>
-              <article><span>총 미접수</span><strong>{counts.totalReceived}</strong><small>건</small></article>
-              <article><span>총 미종결</span><strong>{counts.totalUnresolved}</strong><small>건</small></article>
+              <DashboardCard filterKey="unassigned" label="담당자 미배정" count={counts.unassigned} {...dashboardCardProps} />
+              <DashboardCard filterKey="total-received" label="총 미접수" count={counts.totalReceived} {...dashboardCardProps} />
+              <DashboardCard filterKey="total-unresolved" label="총 미종결" count={counts.totalUnresolved} {...dashboardCardProps} />
             </>
           )}
-          <article><span>내 미접수</span><strong>{counts.received}</strong><small>건</small></article>
-          <article><span>내 미종결</span><strong>{counts.unresolved}</strong><small>건</small></article>
+          <DashboardCard filterKey="my-received" label="내 미접수" count={counts.received} {...dashboardCardProps} />
+          <DashboardCard filterKey="my-unresolved" label="내 미종결" count={counts.unresolved} {...dashboardCardProps} />
         </section>
         <form className="admin-search-panel" action="/admin" method="get">
+          {activeDashboard && <input type="hidden" name="dashboard" value={activeDashboard} />}
           <div className="admin-search-heading">
             <div>
               <span className="eyebrow">Request search</span>
@@ -306,6 +330,42 @@ export default async function AdminPage({
         )}
       </section>
     </main>
+  );
+}
+
+function DashboardCard({
+  filterKey,
+  label,
+  count,
+  selectedDashboard,
+  filters,
+  role,
+  accountId,
+}: {
+  filterKey: AdminDashboardFilterKey;
+  label: string;
+  count: number;
+  selectedDashboard: string;
+  filters: { assignee: string; statuses: string[] };
+  role: AdminDashboardRole;
+  accountId: string;
+}) {
+  const active = isAdminDashboardFilterActive(
+    selectedDashboard,
+    filterKey,
+    filters,
+    role,
+    accountId,
+  );
+  return (
+    <Link
+      className={`admin-kpi-card${active ? " active" : ""}`}
+      href={buildAdminDashboardFilterHref(filterKey, role, accountId)}
+      aria-current={active ? "page" : undefined}
+      aria-label={`${label} ${count}건 접수내역 보기`}
+    >
+      <span>{label}</span><strong>{count}</strong><small>건</small>
+    </Link>
   );
 }
 
