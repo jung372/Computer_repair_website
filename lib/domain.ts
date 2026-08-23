@@ -222,8 +222,8 @@ export type CreateRequestInput = {
   deviceType: string;
   manufacturerModel?: string;
   symptom: string;
-  description: string;
-  password: string;
-  privacyConsent: boolean;
+  description?: string;
+  password?: string;
+  privacyConsent?: boolean;
   website?: string;
 };

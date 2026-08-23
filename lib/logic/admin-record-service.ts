@@ -86,7 +86,6 @@ export async function saveAdminRequestRecord(
 
   if (!address1) errors.address1 = "기본 주소를 입력해 주세요.";
   if (!symptom) errors.symptom = "대표 증상을 입력해 주세요.";
-  if (!description) errors.description = "장애 현상을 입력해 주세요.";
   if (!customerType) errors.customerType = "고객 구분을 입력해 주세요.";
   if (!RECEIPT_TYPES.includes(receiptType as ReceiptType)) {
     errors.receiptType = "접수구분을 선택해 주세요.";

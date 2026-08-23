@@ -39,6 +39,9 @@ async function initializeDatabase() {
         notification_error TEXT,
         privacy_consent_version TEXT NOT NULL,
         privacy_consented_at TEXT NOT NULL,
+        privacy_legal_basis TEXT NOT NULL DEFAULT 'CONSENT',
+        privacy_notice_version TEXT NOT NULL DEFAULT '',
+        privacy_notice_presented_at TEXT NOT NULL DEFAULT '',
         created_at TEXT NOT NULL,
         updated_at TEXT NOT NULL,
         deleted_at TEXT
@@ -68,6 +71,11 @@ async function initializeDatabase() {
         event_type TEXT NOT NULL DEFAULT 'NEW_REQUEST',
         recipient_account_id TEXT,
         telegram_message_id TEXT,
+        telegram_chat_id_hash TEXT,
+        telegram_delete_after TEXT,
+        telegram_deleted_at TEXT,
+        telegram_delete_attempts INTEGER NOT NULL DEFAULT 0,
+        telegram_delete_error TEXT,
         canceled_at TEXT,
         created_at TEXT NOT NULL,
         updated_at TEXT NOT NULL,
@@ -333,9 +341,26 @@ async function initializeDatabase() {
     ["recipient_account_id", "TEXT"],
     ["telegram_message_id", "TEXT"],
     ["canceled_at", "TEXT"],
+    ["telegram_chat_id_hash", "TEXT"],
+    ["telegram_delete_after", "TEXT"],
+    ["telegram_deleted_at", "TEXT"],
+    ["telegram_delete_attempts", "INTEGER NOT NULL DEFAULT 0"],
+    ["telegram_delete_error", "TEXT"],
   ] as const) {
     if (!outboxColumns.results.some((column) => column.name === name)) {
       await db.prepare(`ALTER TABLE notification_outbox ADD COLUMN ${name} ${definition}`).run();
+    }
+  }
+  const requestColumns = await db
+    .prepare("PRAGMA table_info(service_requests)")
+    .all<{ name: string }>();
+  for (const [name, definition] of [
+    ["privacy_legal_basis", "TEXT NOT NULL DEFAULT 'CONSENT'"],
+    ["privacy_notice_version", "TEXT NOT NULL DEFAULT ''"],
+    ["privacy_notice_presented_at", "TEXT NOT NULL DEFAULT ''"],
+  ] as const) {
+    if (!requestColumns.results.some((column) => column.name === name)) {
+      await db.prepare(`ALTER TABLE service_requests ADD COLUMN ${name} ${definition}`).run();
     }
   }
   await db
@@ -364,6 +389,12 @@ async function initializeDatabase() {
     .prepare(`
       CREATE INDEX IF NOT EXISTS notification_outbox_event_idx
       ON notification_outbox(event_type, recipient_account_id)
+    `)
+    .run();
+  await db
+    .prepare(`
+      CREATE INDEX IF NOT EXISTS notification_outbox_telegram_delete_idx
+      ON notification_outbox(event_type, telegram_delete_after, telegram_deleted_at)
     `)
     .run();
 }

@@ -82,9 +82,11 @@ test("supports fixed staff slots, copyable Telegram text and workload counts", a
   assert.match(migration, /직원 슬롯 3/);
   assert.match(migration, /DELETE FROM `admins` WHERE `role` = 'STAFF'/);
   assert.match(telegram, /TELEGRAM_CONTENT_PROTECTION_ENABLED/);
-  assert.match(telegram, /`신청자: \$\{request\.name\}`/);
-  assert.match(telegram, /`연락처: \$\{request\.phone\}`/);
-  assert.doesNotMatch(telegram, /maskName|maskPhone/);
+  assert.match(telegram, /`기본주소: \$\{request\.address1\}`/);
+  assert.match(telegram, /`휴대폰: \$\{request\.phone\}`/);
+  assert.match(telegram, /`기본 증상: \$\{request\.symptom\.slice/);
+  assert.doesNotMatch(telegram, /`신청자: \$\{request\.name\}`/);
+  assert.doesNotMatch(telegram, /request\.address2|request\.description/);
   assert.match(staffRepository, /permanentlyDeleteUnusedStaff/);
   assert.match(staffRepository, /getStaffTelegramRecipient/);
   assert.match(staffPage, /직원 영구 삭제/);
@@ -110,10 +112,13 @@ test("delivers Telegram notifications off the response path and retries them on 
   assert.doesNotMatch(requestApi, /await processPendingNotifications\(/);
   assert.match(workerEntry, /async scheduled\(/);
   assert.match(workerEntry, /processPendingNotifications\(/);
+  assert.match(workerEntry, /deleteExpiredTelegramNotifications\(/);
   // The backup shares the crons array now, so check that the retry schedule is
   // present rather than pinning the array's formatting.
   assert.match(wrangler, /"\*\/5 \* \* \* \*"/);
   assert.match(wrangler, /"TELEGRAM_NOTIFICATION_ENABLED": "true"/);
+  assert.match(wrangler, /"TELEGRAM_CONTENT_PROTECTION_ENABLED": "true"/);
+  assert.match(wrangler, /"TELEGRAM_PII_MODE": "FULL"/);
   assert.match(wrangler, /"PUBLIC_BASE_URL"/);
 });
 

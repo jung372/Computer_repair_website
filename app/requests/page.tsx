@@ -9,7 +9,7 @@ import { getCustomerLookupRequests } from "@/lib/logic/customer-lookup";
 
 export const metadata: Metadata = {
   title: "내 신청 조회",
-  description: "휴대전화 번호와 신청 비밀번호로 본인의 서비스 신청만 확인하세요.",
+  description: "휴대전화 번호와 신청 비밀번호 또는 자동 조회코드로 본인의 서비스 신청만 확인하세요.",
   robots: { index: false, follow: false },
 };
 
@@ -58,7 +58,7 @@ export default async function RequestsPage() {
                 <h2>내 정보는<br />목록에 공개되지 않습니다.</h2>
                 <p>이름, 지역, 증상 같은 신청 정보는 공개 게시판에 표시하지 않습니다.</p>
                 <ul>
-                  <li><ShieldCheck size={18} aria-hidden="true" /> 휴대전화 번호와 비밀번호 모두 확인</li>
+                  <li><ShieldCheck size={18} aria-hidden="true" /> 휴대전화 번호와 비밀번호 또는 조회코드 확인</li>
                   <li><ShieldCheck size={18} aria-hidden="true" /> 조회 권한은 10분 후 자동 만료</li>
                   <li><ShieldCheck size={18} aria-hidden="true" /> 5회 실패 시 15분 동안 입력 제한</li>
                 </ul>

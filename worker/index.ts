@@ -1,7 +1,10 @@
 /** Cloudflare Worker entry point for the computer repair service. */
 import handler from "vinext/server/app-router-entry";
 import { runDailyBackup } from "../infrastructure/backup";
-import { processPendingNotifications } from "../infrastructure/telegram";
+import {
+  deleteExpiredTelegramNotifications,
+  processPendingNotifications,
+} from "../infrastructure/telegram";
 import { getCanonicalRedirectUrl } from "../lib/canonical-url";
 import { getRuntimeString } from "../lib/runtime-config";
 
@@ -87,10 +90,13 @@ const worker = {
     }
 
     ctx.waitUntil(
-      processPendingNotifications(
-        getRuntimeString("PUBLIC_BASE_URL"),
-        SCHEDULED_NOTIFICATION_BATCH,
-      ).catch((error: unknown) => {
+      Promise.all([
+        processPendingNotifications(
+          getRuntimeString("PUBLIC_BASE_URL"),
+          SCHEDULED_NOTIFICATION_BATCH,
+        ),
+        deleteExpiredTelegramNotifications(SCHEDULED_NOTIFICATION_BATCH),
+      ]).catch((error: unknown) => {
         console.error(JSON.stringify({
           message: "Scheduled notification flush failed",
           error: error instanceof Error ? error.message : String(error),

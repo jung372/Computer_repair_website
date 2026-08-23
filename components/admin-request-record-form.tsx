@@ -189,8 +189,8 @@ export function AdminRequestRecordForm({
           <RecordField label="대표 증상 *" name="symptom" error={errors.symptom} wide>
             <input id="symptom" name="symptom" defaultValue={request.symptom} maxLength={120} required />
           </RecordField>
-          <RecordField label="장애현상 *" name="description" error={errors.description} wide>
-            <textarea id="description" name="description" rows={7} maxLength={20000} defaultValue={request.description} required />
+          <RecordField label="상세 접수 내용" name="description" error={errors.description} wide>
+            <textarea id="description" name="description" rows={7} maxLength={20000} defaultValue={request.description} placeholder="고객이 상세내용을 입력하지 않을 수 있습니다." />
           </RecordField>
           <RecordField label="관리자메모" name="internalNote" error={errors.internalNote} wide>
             <textarea id="internalNote" name="internalNote" rows={5} maxLength={2000} defaultValue={request.internalNote} placeholder="고객에게 보이지 않는 메모" />

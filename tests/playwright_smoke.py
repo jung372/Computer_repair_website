@@ -57,8 +57,8 @@ with sync_playwright() as playwright:
     page.goto(f"{BASE_URL}/requests/new", wait_until="networkidle")
     assert page.locator('input[name="postalCode"]').count() == 0
     assert page.locator('input[value="PUBLIC"]').count() == 0
-    assert page.get_by_label("신청 조회 비밀번호 *").get_attribute("minlength") == "4"
-    assert page.get_by_label("신청 조회 비밀번호 *").get_attribute("maxlength") == "20"
+    assert page.get_by_label("신청 조회 비밀번호").get_attribute("minlength") == "4"
+    assert page.get_by_label("신청 조회 비밀번호").get_attribute("maxlength") == "20"
 
     # 연락처는 무엇을 입력하든 정규 형식으로 수렴해야 한다.
     phone_field = page.get_by_label("연락처 *")
@@ -107,14 +107,13 @@ with sync_playwright() as playwright:
     assert page.get_by_label("희망 방문 일시").count() == 0
     # 상세 접수 내용은 길이 제한이 없어야 하므로 옛 상한(2,000자)을 넘겨 확인한다.
     long_description = "어제부터 전원 버튼을 눌러도 컴퓨터가 켜지지 않습니다. " * 120
-    description_field = page.get_by_label("상세 접수 내용 *")
+    description_field = page.get_by_label("상세 접수 내용")
     description_field.fill(long_description)
     assert len(description_field.input_value()) == len(long_description), (
         f"상세 접수 내용이 잘렸습니다: {len(description_field.input_value())}"
         f" / {len(long_description)}"
     )
-    page.get_by_label("신청 조회 비밀번호 *").fill("test1234")
-    page.get_by_label(re.compile("개인정보 수집")).check()
+    page.get_by_label("신청 조회 비밀번호").fill("test1234")
     page.get_by_role("button", name="서비스 신청하기").click()
     page.wait_for_url(re.compile(r"/requests/R-\d{8}-[A-F0-9]{6}\?submitted=1"))
     page.wait_for_load_state("networkidle")

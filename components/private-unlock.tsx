@@ -31,9 +31,9 @@ export function PrivateUnlock({ publicId }: { publicId: string }) {
       <span className="unlock-icon"><LockKeyhole size={30} aria-hidden="true" /></span>
       <span className="eyebrow">Private request</span>
       <h1>비공개 신청입니다</h1>
-      <p>신청할 때 설정한 비밀번호를 입력하면 접수 내용과 진행 상태를 확인할 수 있습니다.</p>
+      <p>신청할 때 설정한 비밀번호 또는 발급받은 자동 조회코드를 입력하면 접수 내용과 진행 상태를 확인할 수 있습니다.</p>
       <form onSubmit={unlock}>
-        <label htmlFor="unlock-password">비밀번호</label>
+        <label htmlFor="unlock-password">비밀번호 또는 자동 조회코드</label>
         <div className="unlock-input">
           <KeyRound size={18} aria-hidden="true" />
           <input

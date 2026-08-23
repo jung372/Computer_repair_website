@@ -1,6 +1,7 @@
 "use client";
 
 import { LockKeyhole, Send, ShieldCheck } from "lucide-react";
+import Link from "next/link";
 import { useState, type FormEvent } from "react";
 import { DEVICE_LABELS, DEVICE_TYPES } from "@/lib/domain";
 import { formatPhoneInput, formatPhoneOnBlur } from "@/lib/phone";
@@ -14,6 +15,11 @@ export function RequestForm({ initialDevice = "", initialSymptom = "" }: Request
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
   const [phone, setPhone] = useState("");
+  const [copied, setCopied] = useState(false);
+  const [success, setSuccess] = useState<{
+    publicId: string;
+    generatedLookupCode: string;
+  } | null>(null);
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -29,16 +35,23 @@ export function RequestForm({ initialDevice = "", initialSymptom = "" }: Request
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
           ...payload,
-          privacyConsent: form.get("privacyConsent") === "on",
         }),
       });
       const result = (await response.json()) as {
         publicId?: string;
+        generatedLookupCode?: string | null;
         error?: string;
         fields?: Record<string, string>;
       };
       if (!response.ok || !result.publicId) {
         setErrors(result.fields ?? { form: result.error ?? "신청을 저장하지 못했습니다." });
+        return;
+      }
+      if (result.generatedLookupCode) {
+        setSuccess({
+          publicId: result.publicId,
+          generatedLookupCode: result.generatedLookupCode,
+        });
         return;
       }
       window.location.assign(`/requests/${result.publicId}?submitted=1`);
@@ -47,6 +60,44 @@ export function RequestForm({ initialDevice = "", initialSymptom = "" }: Request
     } finally {
       setSubmitting(false);
     }
+  }
+
+  async function copyLookupCode() {
+    if (!success) return;
+    try {
+      await navigator.clipboard.writeText(success.generatedLookupCode);
+      setCopied(true);
+    } catch {
+      setCopied(false);
+    }
+  }
+
+  if (success) {
+    return (
+      <section className="request-form request-success-panel" aria-labelledby="request-success-title">
+        <div className="form-intro">
+          <span className="eyebrow">Request received</span>
+          <h1 id="request-success-title">서비스 신청이 완료되었습니다.</h1>
+          <p>접수번호와 자동 조회코드를 안전한 곳에 보관해 주세요.</p>
+        </div>
+        <div className="private-request-notice generated-lookup-notice">
+          <LockKeyhole size={24} aria-hidden="true" />
+          <span>
+            <strong>자동 조회코드</strong>
+            <code>{success.generatedLookupCode}</code>
+            <small>이 화면을 벗어나면 코드를 다시 표시하지 않습니다. 화면 캡처도 권장합니다.</small>
+          </span>
+        </div>
+        <div className="form-submit request-success-actions">
+          <button className="button button-secondary" type="button" onClick={copyLookupCode}>
+            {copied ? "복사 완료" : "조회코드 복사"}
+          </button>
+          <Link className="button button-primary" href={`/requests/${success.publicId}?submitted=1`}>
+            신청내역 확인
+          </Link>
+        </div>
+      </section>
+    );
   }
 
   return (
@@ -143,15 +194,14 @@ export function RequestForm({ initialDevice = "", initialSymptom = "" }: Request
               required
             />
           </Field>
-          <Field label="상세 접수 내용 *" name="description" error={errors.description} wide>
+          <Field label="상세 접수 내용" name="description" error={errors.description} wide>
             <textarea
               id="description"
               name="description"
               rows={7}
               placeholder="언제부터, 어떤 상황에서 증상이 발생하는지 적어 주세요."
-              required
             />
-            <small>길이 제한은 없습니다. 떠오르는 내용을 자유롭게 적어 주세요.</small>
+            <small>선택 입력입니다. 추가로 전달할 내용이 있을 때만 적어 주세요.</small>
           </Field>
         </div>
       </section>
@@ -159,16 +209,16 @@ export function RequestForm({ initialDevice = "", initialSymptom = "" }: Request
       <section className="form-section">
         <div className="form-section-heading">
           <span>03</span>
-          <div><h2>조회 비밀번호와 동의</h2><p>모든 신청은 비공개로 저장되며 본인만 조회할 수 있습니다.</p></div>
+          <div><h2>조회 방법과 개인정보 처리 안내</h2><p>모든 신청은 비공개로 저장되며 본인만 조회할 수 있습니다.</p></div>
         </div>
         <div className="private-request-notice">
           <LockKeyhole size={22} aria-hidden="true" />
           <span>
             <strong>신청 내용은 공개되지 않습니다.</strong>
-            <small>휴대전화 번호와 아래 비밀번호가 모두 일치할 때만 조회할 수 있어요.</small>
+            <small>휴대전화 번호와 직접 지정한 비밀번호 또는 자동 조회코드가 일치할 때만 조회할 수 있어요.</small>
           </span>
         </div>
-        <Field label="신청 조회 비밀번호 *" name="password" error={errors.password} wide>
+        <Field label="신청 조회 비밀번호" name="password" error={errors.password} wide>
           <input
             id="password"
             name="password"
@@ -176,23 +226,21 @@ export function RequestForm({ initialDevice = "", initialSymptom = "" }: Request
             minLength={4}
             maxLength={20}
             autoComplete="new-password"
-            required
+            placeholder="비워두면 자동 조회코드가 발급됩니다"
           />
-          <small>4~20자로 입력해 주세요. 보안을 위해 8자 이상을 권장합니다.</small>
+          <small>선택 입력입니다. 직접 지정하려면 4~20자로 입력해 주세요.</small>
         </Field>
-        <label className="consent-check">
-          <input type="checkbox" name="privacyConsent" required />
+        <div className="consent-check privacy-processing-notice">
           <ShieldCheck size={20} aria-hidden="true" />
           <span>
-            <strong>[필수] 개인정보 수집·이용에 동의합니다.</strong>
-            <small>수리 상담을 위해 연락처와 주소를 수집하며, 이름은 선택 입력입니다. 서비스 종료 후 1년 보관합니다.</small>
+            <strong>서비스 접수에 필요한 개인정보 처리 안내</strong>
+            <small>연락처·기본주소·대표증상은 접수 처리와 운영자 Telegram 알림에 사용합니다. 별도 체크 없이 신청할 수 있으며 자세한 내용은 <Link href="/privacy" target="_blank" rel="noreferrer">개인정보 처리방침</Link>에서 확인할 수 있습니다.</small>
           </span>
-        </label>
-        {errors.privacyConsent && <p className="field-error">{errors.privacyConsent}</p>}
+        </div>
       </section>
 
       <div className="form-submit">
-        <p>휴대전화 번호와 비밀번호로 언제든 내 신청을 확인할 수 있습니다.</p>
+        <p>휴대전화 번호와 직접 지정한 비밀번호 또는 자동 조회코드로 신청을 확인할 수 있습니다.</p>
         <button className="button button-primary button-large" disabled={submitting}>
           <Send size={19} aria-hidden="true" />
           {submitting ? "안전하게 저장하는 중..." : "서비스 신청하기"}

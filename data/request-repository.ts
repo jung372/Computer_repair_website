@@ -39,6 +39,13 @@ export type OutboxRow = {
   recipient_account_id: string | null;
 };
 
+export type TelegramDeletionRow = {
+  id: string;
+  telegram_message_id: string;
+  telegram_chat_id_hash: string;
+  telegram_delete_attempts: number;
+};
+
 export function mapRequest(row: RequestRow): ServiceRequestRecord {
   return {
     id: row.id,
@@ -70,6 +77,9 @@ export async function insertRequest(
   request: ServiceRequestRecord & {
     privacyConsentVersion: string;
     privacyConsentedAt: string;
+    privacyLegalBasis: string;
+    privacyNoticeVersion: string;
+    privacyNoticePresentedAt: string;
   },
 ) {
   await ensureDatabase();
@@ -84,8 +94,9 @@ export async function insertRequest(
           device_type, manufacturer_model, symptom, description, visibility,
           access_password_hash, lookup_key, status, preferred_at, internal_note,
           notification_status, privacy_consent_version, privacy_consented_at,
+          privacy_legal_basis, privacy_notice_version, privacy_notice_presented_at,
           created_at, updated_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, '', ?, ?, ?, ?, ?)
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, '', ?, ?, ?, ?, ?, ?, ?, ?)
       `)
       .bind(
         request.id,
@@ -108,6 +119,9 @@ export async function insertRequest(
         request.notificationStatus,
         request.privacyConsentVersion,
         request.privacyConsentedAt,
+        request.privacyLegalBasis,
+        request.privacyNoticeVersion,
+        request.privacyNoticePresentedAt,
         now,
         now,
       ),
@@ -265,6 +279,7 @@ export async function markNotification(
   status: "SENT" | "FAILED" | "CONFIG_REQUIRED" | "DISABLED" | "CANCELED",
   error?: string,
   telegramMessageId?: string,
+  telegramRetention?: { chatIdHash: string; deleteAfter: string },
 ) {
   const now = new Date();
   const delays = [60, 300, 1800, 7200, 21600];
@@ -274,7 +289,10 @@ export async function markNotification(
       .prepare(`
         UPDATE notification_outbox
         SET status = ?, attempts = ?, next_attempt_at = ?, last_error = ?,
-            sent_at = ?, updated_at = ?, telegram_message_id = ?
+            sent_at = ?, updated_at = ?, telegram_message_id = ?,
+            telegram_chat_id_hash = ?, telegram_delete_after = ?,
+            telegram_deleted_at = NULL, telegram_delete_attempts = 0,
+            telegram_delete_error = NULL
         WHERE id = ?
       `)
       .bind(
@@ -285,6 +303,8 @@ export async function markNotification(
         status === "SENT" ? now.toISOString() : null,
         now.toISOString(),
         telegramMessageId ?? null,
+        telegramRetention?.chatIdHash ?? null,
+        telegramRetention?.deleteAfter ?? null,
         outbox.id,
       ),
     ...(outbox.event_type === "NEW_REQUEST"
@@ -297,6 +317,47 @@ export async function markNotification(
           .bind(status, error?.slice(0, 240) ?? null, now.toISOString(), outbox.request_id)]
       : []),
   ]);
+}
+
+export async function pendingTelegramDeletions(limit = 10) {
+  await ensureDatabase();
+  const result = await getD1()
+    .prepare(`
+      SELECT id, telegram_message_id, telegram_chat_id_hash, telegram_delete_attempts
+      FROM notification_outbox
+      WHERE event_type = 'NEW_REQUEST'
+        AND status = 'SENT'
+        AND telegram_message_id IS NOT NULL
+        AND telegram_chat_id_hash IS NOT NULL
+        AND telegram_delete_after IS NOT NULL
+        AND telegram_delete_after <= ?
+        AND telegram_deleted_at IS NULL
+        AND telegram_delete_attempts < 12
+      ORDER BY telegram_delete_after ASC
+      LIMIT ?
+    `)
+    .bind(new Date().toISOString(), limit)
+    .all<TelegramDeletionRow>();
+  return result.results;
+}
+
+export async function markTelegramDeleted(outboxId: string) {
+  const now = new Date().toISOString();
+  await getD1().prepare(`
+    UPDATE notification_outbox
+    SET telegram_deleted_at = ?, telegram_delete_error = NULL, updated_at = ?
+    WHERE id = ?
+  `).bind(now, now, outboxId).run();
+}
+
+export async function markTelegramDeleteFailed(outboxId: string, error: string) {
+  const now = new Date().toISOString();
+  await getD1().prepare(`
+    UPDATE notification_outbox
+    SET telegram_delete_attempts = telegram_delete_attempts + 1,
+        telegram_delete_error = ?, updated_at = ?
+    WHERE id = ?
+  `).bind(error.slice(0, 240), now, outboxId).run();
 }
 
 export async function cancelNotification(outboxId: string, reason: string) {
@@ -342,7 +403,11 @@ export async function resetNotification(publicId: string) {
     getD1()
       .prepare(`
         UPDATE notification_outbox
-        SET status = ?, attempts = 0, next_attempt_at = ?, last_error = NULL, updated_at = ?
+        SET status = ?, attempts = 0, next_attempt_at = ?, last_error = NULL,
+            telegram_message_id = NULL, telegram_chat_id_hash = NULL,
+            telegram_delete_after = NULL, telegram_deleted_at = NULL,
+            telegram_delete_attempts = 0, telegram_delete_error = NULL,
+            updated_at = ?
         WHERE request_id = ? AND event_type = 'NEW_REQUEST'
       `)
       .bind(status, now, now, request.id),
