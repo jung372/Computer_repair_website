@@ -15,6 +15,8 @@ test("makes device, description, password and consent interaction optional", asy
   assert.doesNotMatch(form, /name="password"[\s\S]{0,220}required/);
   assert.doesNotMatch(form, /name="deviceType"[\s\S]{0,180}required/);
   assert.doesNotMatch(form, /name="privacyConsent"|type="checkbox"/);
+  assert.match(form, /입력 정보는 접수에 사용합니다/);
+  assert.match(form, /aria-label="개인정보 처리방침 새 창에서 열기"/);
   assert.match(service, /UNSPECIFIED_DEVICE_TYPE/);
   assert.match(service, /if \(submittedPassword\) \{/);
   assert.match(service, /let accessPasswordHash: string \| null = null/);

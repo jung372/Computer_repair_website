@@ -194,7 +194,14 @@ export function RequestForm({ initialDevice = "", initialSymptom = "" }: Request
         <ShieldCheck size={20} aria-hidden="true" />
         <span>
           <strong>개인정보 처리 안내</strong>
-          <small>연락처·기본주소·대표증상은 접수처리에 사용합니다. <Link href="/privacy" target="_blank" rel="noreferrer">개인정보 처리방침</Link></small>
+          <small>
+            입력 정보는 접수에 사용합니다. <Link
+              href="/privacy"
+              target="_blank"
+              rel="noreferrer"
+              aria-label="개인정보 처리방침 새 창에서 열기"
+            >처리방침</Link>
+          </small>
         </span>
       </div>
 
