@@ -306,6 +306,11 @@ with sync_playwright() as playwright:
     assert page.get_by_role("heading", name="내 배정 신청").is_visible()
     assert page.get_by_role("link", name="직원 관리").count() == 0
     assert page.get_by_role("table").locator("tbody tr").count() == 1
+    page.get_by_role("link", name="미상").first.click()
+    page.wait_for_url(re.compile(r"/admin/requests/R-\d{8}-[A-F0-9]{6}"))
+    page.wait_for_load_state("networkidle")
+    assert page.get_by_label("자재비").count() == 0
+    assert page.get_by_text("운영자만 입력·수정", exact=True).is_visible()
 
     mobile = browser.new_page(viewport={"width": 390, "height": 844})
     mobile.goto(f"{BASE_URL}/admin", wait_until="networkidle")

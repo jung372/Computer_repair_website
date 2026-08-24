@@ -9,6 +9,7 @@ import {
 import { processPendingNotifications } from "@/infrastructure/telegram";
 import { assertSameOrigin } from "@/lib/security/request-guard";
 import {
+  AdminRecordAuthorizationError,
   AdminRecordValidationError,
   saveAdminRequestRecord,
 } from "@/lib/logic/admin-record-service";
@@ -85,6 +86,9 @@ export async function POST(
     }
     return Response.json({ error: "지원하지 않는 작업입니다." }, { status: 400 });
   } catch (error) {
+    if (error instanceof AdminRecordAuthorizationError) {
+      return Response.json({ error: error.message }, { status: 403 });
+    }
     if (error instanceof AdminRecordValidationError) {
       return Response.json(
         { error: error.message, fields: error.fields },

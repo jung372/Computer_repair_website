@@ -258,10 +258,11 @@ test("provides an admin operations ledger, filters, stable serials and editable 
 });
 
 test("restores the controlled receipt type and derives settlement amounts on the server", async () => {
-  const [adminPage, recordForm, recordService, repository, settlement] = await Promise.all([
+  const [adminPage, recordForm, recordService, recordRoute, repository, settlement] = await Promise.all([
     readFile(new URL("app/admin/page.tsx", root), "utf8"),
     readFile(new URL("components/admin-request-record-form.tsx", root), "utf8"),
     readFile(new URL("lib/logic/admin-record-service.ts", root), "utf8"),
+    readFile(new URL("app/api/admin/requests/[publicId]/route.ts", root), "utf8"),
     readFile(new URL("data/admin-request-repository.ts", root), "utf8"),
     readFile(new URL("lib/settlement.ts", root), "utf8"),
   ]);
@@ -282,12 +283,17 @@ test("restores the controlled receipt type and derives settlement amounts on the
   assert.match(recordForm, /deriveSettlement\(\s*paymentMethod,\s*amounts\.totalAmount,\s*amounts\.materialCost/);
   assert.match(recordForm, /현금 결제 시 0원/);
   assert.match(recordForm, /PAYMENT_METHODS\.map/);
+  assert.match(recordForm, /user\.role === "OWNER" \? \([\s\S]{0,200}<AmountField label="자재비"/);
+  assert.match(recordForm, /hint="운영자만 입력·수정"/);
 
   // 서버가 클라이언트 값을 믿지 않고 다시 계산한다.
   assert.match(recordService, /deriveSettlement\(\s*paymentMethod as PaymentMethod \| "",\s*totalAmount,\s*materialCost/);
   assert.doesNotMatch(recordService, /values\.(?:totalVatAmount|materialVatAmount|technicianIncome|officeDeposit)/);
   assert.match(recordService, /자재비와 자재비 부가세의 합계/);
   assert.match(recordService, /PAYMENT_METHODS\.includes/);
+  assert.match(recordService, /actor\.role !== "OWNER"[\s\S]{0,160}hasOwnProperty\.call\(values, "materialCost"\)/);
+  assert.match(recordService, /actor\.role === "OWNER"[\s\S]{0,120}request\.materialCost/);
+  assert.match(recordRoute, /AdminRecordAuthorizationError[\s\S]{0,180}status: 403/);
   assert.match(settlement, /VAT_DIVISOR = 11/);
   assert.match(settlement, /MATERIAL_VAT_DIVISOR = 10/);
 });
