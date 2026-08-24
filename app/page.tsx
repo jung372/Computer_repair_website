@@ -47,15 +47,24 @@ export default async function Home() {
               <Link className="button button-primary button-large" href="/requests/new">
                 서비스 신청 <ArrowRight size={19} aria-hidden="true" />
               </Link>
-              <a className="button button-ghost button-large" href={phoneHref}>
-                <PhoneCall size={19} aria-hidden="true" /> 전화 상담
-              </a>
+              <Link className="button button-ghost button-large hero-mobile-lookup" href="/requests">
+                <SearchCheck size={19} aria-hidden="true" /> 내 신청 조회
+              </Link>
             </div>
             <div className="hero-trust">
               <span><ShieldCheck size={16} /> 비공개 접수</span>
               <span><BadgeCheck size={16} /> 진단 후 견적</span>
               <span><MessageSquareText size={16} /> 진행상태 확인</span>
             </div>
+            <a className="hero-mobile-phone" href={phoneHref} aria-label={`빠른 전화상담 ${config.phone}`}>
+              <span className="hero-mobile-phone-icon">
+                <PhoneCall size={22} aria-hidden="true" />
+              </span>
+              <span>
+                <small>빠른 전화상담</small>
+                <strong>{config.phone}</strong>
+              </span>
+            </a>
           </div>
           <div className="hero-visual" aria-label="수리 접수 진행 예시">
             <div className="diagnostic-card">

@@ -666,6 +666,11 @@ p {
   color: #6fb2ff;
 }
 
+.hero-mobile-lookup,
+.hero-mobile-phone {
+  display: none;
+}
+
 .hero-visual {
   position: relative;
 }
@@ -3185,7 +3190,7 @@ p {
     bottom: 0;
     left: 0;
     display: grid;
-    grid-template-columns: 1fr 1.15fr;
+    grid-template-columns: 1fr;
     min-height: 64px;
     box-shadow: 0 -8px 30px rgba(7, 17, 31, 0.16);
   }
@@ -3217,9 +3222,63 @@ p {
   }
 
   .hero-kicker,
-  .hero-actions,
   .hero-trust {
     justify-content: center;
+  }
+
+  .hero-actions {
+    display: grid;
+    width: min(100%, 480px);
+    grid-template-columns: 1fr 1fr;
+    margin-inline: auto;
+  }
+
+  .hero-mobile-lookup {
+    display: inline-flex;
+  }
+
+  .hero-mobile-phone {
+    display: flex;
+    width: min(100%, 430px);
+    min-height: 68px;
+    align-items: center;
+    justify-content: center;
+    gap: 13px;
+    margin: 24px auto 0;
+    border: 1px solid rgba(111, 178, 255, 0.32);
+    border-radius: 16px;
+    background: rgba(7, 27, 49, 0.72);
+    box-shadow: 0 16px 42px rgba(3, 12, 24, 0.22);
+    text-align: left;
+    backdrop-filter: blur(12px);
+  }
+
+  .hero-mobile-phone-icon {
+    display: grid;
+    width: 42px;
+    height: 42px;
+    place-items: center;
+    border-radius: 13px;
+    background: rgba(39, 132, 245, 0.18);
+    color: #80bdff;
+  }
+
+  .hero-mobile-phone small,
+  .hero-mobile-phone strong {
+    display: block;
+  }
+
+  .hero-mobile-phone small {
+    margin-bottom: 2px;
+    color: #aabed4;
+    font-size: 0.72rem;
+    font-weight: 700;
+  }
+
+  .hero-mobile-phone strong {
+    color: var(--white);
+    font-size: 1.1rem;
+    letter-spacing: 0.025em;
   }
 
   .hero-copy > p {
@@ -3581,8 +3640,7 @@ p {
   }
 
   .hero-actions {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
+    gap: 9px;
   }
 
   .button-large {

@@ -67,10 +67,6 @@ export function SiteHeader() {
         </div>
       </header>
       <div className="mobile-actions" aria-label="빠른 메뉴">
-        <a href={phoneHref}>
-          <Phone size={18} aria-hidden="true" />
-          전화 상담
-        </a>
         <Link href="/requests/new">서비스 신청</Link>
       </div>
     </>

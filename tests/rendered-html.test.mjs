@@ -224,6 +224,24 @@ test("removes public request discovery and postal code collection from customer 
   assert.match(`${header}\n${footer}`, /내 신청 조회/);
 });
 
+test("keeps phone consultation focused on the responsive home quick-contact card", async () => {
+  const [home, header, css] = await Promise.all([
+    readFile(new URL("app/page.tsx", root), "utf8"),
+    readFile(new URL("components/site-header.tsx", root), "utf8"),
+    readFile(new URL("app/globals.css", root), "utf8"),
+  ]);
+
+  assert.match(home, /hero-mobile-lookup[^>]+href="\/requests"/);
+  assert.match(home, /className="hero-mobile-phone"/);
+  assert.match(home, /빠른 전화상담/);
+  assert.doesNotMatch(home, />\s*전화 상담\s*</);
+  assert.doesNotMatch(header, />\s*전화 상담\s*</);
+  assert.match(header, /mobile-actions[\s\S]+href="\/requests\/new"/);
+  assert.match(css, /\.hero-mobile-lookup,\s*\.hero-mobile-phone\s*\{\s*display: none/);
+  assert.match(css, /\.mobile-actions\s*\{[\s\S]*?grid-template-columns: 1fr/);
+  assert.match(css, /\.hero-mobile-phone\s*\{[\s\S]*?display: flex/);
+});
+
 test("provides an admin operations ledger, filters, stable serials and editable details", async () => {
   const [adminPage, statusFilter, detailPage, recordForm, repository, schema, migration] =
     await Promise.all([
