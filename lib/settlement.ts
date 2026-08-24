@@ -1,6 +1,6 @@
 import type { PaymentMethod } from "@/lib/domain";
 
-// 현금영수증·카드 결제의 총수금액은 부가세를 포함하므로 1/11로 역산한다.
+// 모든 결제의 총수금액은 부가세를 포함하므로 1/11로 역산한다.
 export const VAT_DIVISOR = 11;
 export const MATERIAL_VAT_DIVISOR = 10;
 
@@ -20,9 +20,7 @@ export function deriveSettlement(
   totalAmount: number,
   materialCost: number,
 ): DerivedSettlement {
-  const totalVatAmount = paymentMethod === "현금영수증 결제" || paymentMethod === "카드 결제"
-    ? Math.round(totalAmount / VAT_DIVISOR)
-    : 0;
+  const totalVatAmount = paymentMethod ? Math.round(totalAmount / VAT_DIVISOR) : 0;
   const materialVatAmount = Math.round(materialCost / MATERIAL_VAT_DIVISOR);
   const technicianIncome = Math.max(
     0,

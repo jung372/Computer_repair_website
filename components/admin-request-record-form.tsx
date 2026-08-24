@@ -315,7 +315,7 @@ export function AdminRequestRecordForm({
           <DerivedAmountField
             label="총수금액 부가세"
             value={settlement.totalVatAmount}
-            hint={paymentMethod === "현금 결제" ? "현금 결제 시 0원" : "총수금액 ÷ 11"}
+            hint="총수금액 ÷ 11"
           />
           {user.role === "OWNER" ? (
             <AmountField label="자재비" name="materialCost" value={amounts.materialCost} error={errors.materialCost} setAmounts={setAmounts} />

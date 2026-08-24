@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
+  ADMIN_DASHBOARD_FILTER_KEYS,
   buildAdminDashboardFilterHref,
   getAdminDashboardFilter,
   isAdminDashboardFilterActive,
@@ -9,16 +10,19 @@ import {
 
 const ownerId = "owner-account-id";
 
+test("exposes only the requested dashboard cards", () => {
+  assert.deepEqual(ADMIN_DASHBOARD_FILTER_KEYS, [
+    "unassigned",
+    "total-unresolved",
+    "my-unresolved",
+  ]);
+});
+
 test("maps owner dashboard cards to canonical request filters", () => {
   assert.equal(
     buildAdminDashboardFilterHref("unassigned", "OWNER", ownerId),
     "/admin?dashboard=unassigned&assignee=__UNASSIGNED__",
   );
-  assert.equal(
-    buildAdminDashboardFilterHref("my-received", "OWNER", ownerId),
-    `/admin?dashboard=my-received&assignee=${ownerId}&status=RECEIVED`,
-  );
-
   const unresolved = new URL(
     buildAdminDashboardFilterHref("total-unresolved", "OWNER", ownerId),
     "https://combaksa.pe.kr",
@@ -33,13 +37,13 @@ test("maps owner dashboard cards to canonical request filters", () => {
 
 test("limits staff dashboard cards to the signed-in account scope", () => {
   assert.equal(getAdminDashboardFilter("unassigned", "STAFF", "staff-id"), null);
-  assert.deepEqual(getAdminDashboardFilter("my-received", "STAFF", "staff-id"), {
+  assert.deepEqual(getAdminDashboardFilter("my-unresolved", "STAFF", "staff-id"), {
     assignee: "",
-    statuses: ["RECEIVED"],
+    statuses: [...UNRESOLVED_REQUEST_STATUSES],
   });
   assert.equal(
-    buildAdminDashboardFilterHref("my-received", "STAFF", "staff-id"),
-    "/admin?dashboard=my-received&status=RECEIVED",
+    buildAdminDashboardFilterHref("my-unresolved", "STAFF", "staff-id"),
+    `/admin?dashboard=my-unresolved&${UNRESOLVED_REQUEST_STATUSES.map((status) => `status=${status}`).join("&")}`,
   );
 });
 

@@ -115,10 +115,9 @@ test("supports fixed staff slots, copyable Telegram text and workload counts", a
   assert.match(staffRepository, /getStaffTelegramRecipient/);
   assert.match(staffPage, /직원 영구 삭제/);
   assert.match(adminPage, /담당자 미배정/);
-  assert.match(adminPage, /총 미접수/);
   assert.match(adminPage, /총 미종결/);
-  assert.match(adminPage, /내 미접수/);
   assert.match(adminPage, /내 미종결/);
+  assert.doesNotMatch(adminPage, /총 미접수|내 미접수/);
   assert.match(adminPage, /DashboardCard/);
   assert.match(adminPage, /buildAdminDashboardFilterHref/);
   assert.match(adminPage, /aria-current/);
@@ -240,6 +239,7 @@ test("provides an admin operations ledger, filters, stable serials and editable 
   assert.match(adminPage, /접수내역 검색/);
   assert.match(adminPage, /번호[\s\S]*접수구분[\s\S]*고객명[\s\S]*휴대폰[\s\S]*기본주소[\s\S]*담당자[\s\S]*고객구분[\s\S]*처리상태[\s\S]*접수일/);
   assert.match(adminPage, /integratedFrom/);
+  assert.doesNotMatch(adminPage, /receivedFrom|receivedTo|completedFrom|completedTo/);
   assert.match(adminPage, /AdminStatusFilter/);
   assert.match(detailPage, /AdminRequestRecordForm/);
   assert.match(recordForm, /계산서 발행일자/);
@@ -281,7 +281,7 @@ test("restores the controlled receipt type and derives settlement amounts on the
   assert.match(recordForm, /label="자재비 부가세"/);
   assert.match(recordForm, /label="기사수익"/);
   assert.match(recordForm, /deriveSettlement\(\s*paymentMethod,\s*amounts\.totalAmount,\s*amounts\.materialCost/);
-  assert.match(recordForm, /현금 결제 시 0원/);
+  assert.match(recordForm, /hint="총수금액 ÷ 11"/);
   assert.match(recordForm, /PAYMENT_METHODS\.map/);
   assert.match(recordForm, /user\.role === "OWNER" \? \([\s\S]{0,200}<AmountField label="자재비"/);
   assert.match(recordForm, /hint="운영자만 입력·수정"/);

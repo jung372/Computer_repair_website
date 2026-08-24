@@ -60,10 +60,6 @@ export default async function AdminPage({
     customerType: first(query.customerType),
     integratedFrom: first(query.integratedFrom),
     integratedTo: first(query.integratedTo),
-    receivedFrom: first(query.receivedFrom),
-    receivedTo: first(query.receivedTo),
-    completedFrom: first(query.completedFrom),
-    completedTo: first(query.completedTo),
     statuses: selectedStatuses,
   };
   const assignedAccountId = admin.role === "STAFF" ? admin.id : undefined;
@@ -121,11 +117,9 @@ export default async function AdminPage({
           {admin.role === "OWNER" && (
             <>
               <DashboardCard filterKey="unassigned" label="담당자 미배정" count={counts.unassigned} {...dashboardCardProps} />
-              <DashboardCard filterKey="total-received" label="총 미접수" count={counts.totalReceived} {...dashboardCardProps} />
               <DashboardCard filterKey="total-unresolved" label="총 미종결" count={counts.totalUnresolved} {...dashboardCardProps} />
             </>
           )}
-          <DashboardCard filterKey="my-received" label="내 미접수" count={counts.received} {...dashboardCardProps} />
           <DashboardCard filterKey="my-unresolved" label="내 미종결" count={counts.unresolved} {...dashboardCardProps} />
         </section>
         <form className="admin-search-panel" action="/admin" method="get">
@@ -181,20 +175,6 @@ export default async function AdminPage({
               from={filters.integratedFrom}
               to={filters.integratedTo}
               hint="접수일과 완료일을 함께 검색합니다."
-            />
-            <DateRange
-              label="접수일"
-              fromName="receivedFrom"
-              toName="receivedTo"
-              from={filters.receivedFrom}
-              to={filters.receivedTo}
-            />
-            <DateRange
-              label="완료일"
-              fromName="completedFrom"
-              toName="completedTo"
-              from={filters.completedFrom}
-              to={filters.completedTo}
             />
           </div>
 

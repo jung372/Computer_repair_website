@@ -238,7 +238,7 @@ with sync_playwright() as playwright:
     page.get_by_label("고객분류 *").select_option(label="재방문고객")
 
     # 결제방법·총수금액·자재비를 입력하면 두 부가세와 기사수익이 즉시 파생되어야 한다.
-    page.get_by_label("결제방법").select_option(label="카드 결제")
+    page.get_by_label("결제방법").select_option(label="카드결제")
     page.get_by_label("총수금액").fill("1100000")
     page.get_by_label("자재비").fill("100000")
     settlement = page.locator(".admin-derived-amount")
@@ -264,7 +264,7 @@ with sync_playwright() as playwright:
     assert page.get_by_label("방문구분").input_value() == "즉시"
     # 저장 후에도 파생 금액이 유지되고, 고객이 쓴 긴 접수 내용이 잘리지 않아야 한다.
     assert page.get_by_label("총수금액").input_value() == "1100000"
-    assert page.get_by_label("결제방법").input_value() == "카드 결제"
+    assert page.get_by_label("결제방법").input_value() == "카드결제"
     assert page.locator(".admin-derived-amount").nth(2).inner_text().startswith("890,000 원")
     saved_description = page.get_by_label("장애현상 *").input_value()
     assert len(saved_description) == len(long_description.strip()), (

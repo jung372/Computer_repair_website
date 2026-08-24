@@ -121,7 +121,7 @@ export async function saveAdminRequestRecord(
     paymentMethod &&
     !PAYMENT_METHODS.includes(paymentMethod as PaymentMethod)
   ) {
-    errors.paymentMethod = "현금 결제, 현금영수증 결제, 카드 결제 중에서 선택해 주세요.";
+    errors.paymentMethod = `${PAYMENT_METHODS.join(", ")} 중에서 선택해 주세요.`;
   }
   const settlement = deriveSettlement(
     paymentMethod as PaymentMethod | "",

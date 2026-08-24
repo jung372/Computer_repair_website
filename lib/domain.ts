@@ -44,9 +44,7 @@ export const UNRESOLVED_REQUEST_STATUSES = [
 
 export const ADMIN_DASHBOARD_FILTER_KEYS = [
   "unassigned",
-  "total-received",
   "total-unresolved",
-  "my-received",
   "my-unresolved",
 ] as const;
 
@@ -69,15 +67,8 @@ export function getAdminDashboardFilter(
   switch (key) {
     case "unassigned":
       return { assignee: "__UNASSIGNED__", statuses: [] };
-    case "total-received":
-      return { assignee: "", statuses: ["RECEIVED"] };
     case "total-unresolved":
       return { assignee: "", statuses: [...UNRESOLVED_REQUEST_STATUSES] };
-    case "my-received":
-      return {
-        assignee: role === "OWNER" ? accountId : "",
-        statuses: ["RECEIVED"],
-      };
     case "my-unresolved":
       return {
         assignee: role === "OWNER" ? accountId : "",
@@ -170,7 +161,13 @@ export const RECEIPT_TYPES = [
   "기타접수",
 ] as const;
 export type ReceiptType = (typeof RECEIPT_TYPES)[number];
-export const PAYMENT_METHODS = ["현금 결제", "현금영수증 결제", "카드 결제"] as const;
+export const PAYMENT_METHODS = [
+  "현금결제",
+  "카드결제",
+  "현금+카드",
+  "현금+계좌",
+  "계좌+카드",
+] as const;
 export type PaymentMethod = (typeof PAYMENT_METHODS)[number];
 
 export const SETTLEMENT_DEFAULT_STATUSES = [
