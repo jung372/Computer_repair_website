@@ -50,15 +50,31 @@ with sync_playwright() as playwright:
     page.goto(f"{BASE_URL}/requests", wait_until="networkidle")
     assert page.get_by_role("heading", name="내 신청 조회", exact=True).is_visible()
     assert page.get_by_label("휴대전화 번호").is_visible()
-    assert page.get_by_label("신청 비밀번호").is_visible()
+    assert page.get_by_label("신청 조회 비밀번호").is_visible()
     assert page.get_by_text("전체 상태").count() == 0
     page.screenshot(path=str(ARTIFACTS / "lookup-desktop.png"), full_page=True)
 
     page.goto(f"{BASE_URL}/requests/new", wait_until="networkidle")
     assert page.locator('input[name="postalCode"]').count() == 0
     assert page.locator('input[value="PUBLIC"]').count() == 0
-    assert page.get_by_label("신청 조회 비밀번호 *").get_attribute("minlength") == "4"
-    assert page.get_by_label("신청 조회 비밀번호 *").get_attribute("maxlength") == "20"
+    assert page.get_by_label("조회 비밀번호").get_attribute("minlength") == "4"
+    assert page.get_by_label("조회 비밀번호").get_attribute("maxlength") == "20"
+
+    # 모바일은 홍보 패널과 중복 하단 메뉴 없이 첫 화면에서 바로 입력한다.
+    page.set_viewport_size({"width": 390, "height": 844})
+    assert not page.locator(".form-page-side").is_visible()
+    assert page.get_by_text("약 2분이면 신청 완료", exact=True).is_visible()
+    assert not page.locator(".mobile-actions").is_visible()
+    phone_box = page.get_by_label("연락처 *").bounding_box()
+    assert phone_box and phone_box["y"] < 220, phone_box
+    assert page.get_by_label("이름").is_visible()
+    assert page.get_by_label("이름").bounding_box()["y"] < phone_box["y"]
+    assert page.get_by_label("조회 비밀번호").is_visible()
+    assert not page.get_by_label("기기 종류").is_visible()
+    page.get_by_role("button", name=re.compile("추가 정보 입력")).click()
+    assert page.get_by_label("기기 종류").is_visible()
+    page.screenshot(path=str(ARTIFACTS / "request-mobile.png"), full_page=False)
+    page.set_viewport_size({"width": 1440, "height": 1000})
 
     # 연락처는 무엇을 입력하든 정규 형식으로 수렴해야 한다.
     phone_field = page.get_by_label("연락처 *")
@@ -90,7 +106,7 @@ with sync_playwright() as playwright:
     ]:
         phone_field.fill("")
         phone_field.fill(pasted)
-        page.get_by_label("기본 주소 *").click()
+        page.get_by_label("기본주소 *").click()
         assert phone_field.input_value() == expected, (
             f"붙여넣기 {pasted!r} -> {phone_field.input_value()!r}, 기대 {expected!r}"
         )
@@ -100,26 +116,25 @@ with sync_playwright() as playwright:
     phone_field.click()
     phone_field.press_sequentially("01012345678")
     assert phone_field.input_value() == "010-1234-5678"
-    page.get_by_label("기본 주소 *").fill("서울시 강남구 테헤란로")
-    page.get_by_label("기기 종류 *").select_option("desktop")
+    page.get_by_label("기본주소 *").fill("서울시 강남구 테헤란로")
     page.get_by_label("대표 증상 *").fill("전원이 켜지지 않아요")
     # 희망 방문 일시는 더 이상 수집하지 않는다.
     assert page.get_by_label("희망 방문 일시").count() == 0
     # 상세 접수 내용은 길이 제한이 없어야 하므로 옛 상한(2,000자)을 넘겨 확인한다.
     long_description = "어제부터 전원 버튼을 눌러도 컴퓨터가 켜지지 않습니다. " * 120
-    description_field = page.get_by_label("상세 접수 내용 *")
+    description_field = page.get_by_label("상세 접수 내용")
     description_field.fill(long_description)
     assert len(description_field.input_value()) == len(long_description), (
         f"상세 접수 내용이 잘렸습니다: {len(description_field.input_value())}"
         f" / {len(long_description)}"
     )
-    page.get_by_label("신청 조회 비밀번호 *").fill("test1234")
-    page.get_by_label(re.compile("개인정보 수집")).check()
+    page.get_by_label("조회 비밀번호").fill("test1234")
     page.get_by_role("button", name="서비스 신청하기").click()
     page.wait_for_url(re.compile(r"/requests/R-\d{8}-[A-F0-9]{6}\?submitted=1"))
     page.wait_for_load_state("networkidle")
     assert page.get_by_text("서비스 신청이 완료되었습니다.").is_visible()
     assert page.get_by_text("전원이 켜지지 않아요", exact=True).is_visible()
+    assert page.get_by_text("미입력", exact=True).is_visible()
     assert page.get_by_text("희망 일정").count() == 0
     detail_description = page.locator(".request-description p").inner_text()
     assert len(detail_description) == len(long_description.strip()), (
@@ -223,7 +238,7 @@ with sync_playwright() as playwright:
     page.get_by_label("고객분류 *").select_option(label="재방문고객")
 
     # 결제방법·총수금액·자재비를 입력하면 두 부가세와 기사수익이 즉시 파생되어야 한다.
-    page.get_by_label("결제방법").select_option(label="카드 결제")
+    page.get_by_label("결제방법").select_option(label="카드결제")
     page.get_by_label("총수금액").fill("1100000")
     page.get_by_label("자재비").fill("100000")
     settlement = page.locator(".admin-derived-amount")
@@ -249,7 +264,7 @@ with sync_playwright() as playwright:
     assert page.get_by_label("방문구분").input_value() == "즉시"
     # 저장 후에도 파생 금액이 유지되고, 고객이 쓴 긴 접수 내용이 잘리지 않아야 한다.
     assert page.get_by_label("총수금액").input_value() == "1100000"
-    assert page.get_by_label("결제방법").input_value() == "카드 결제"
+    assert page.get_by_label("결제방법").input_value() == "카드결제"
     assert page.locator(".admin-derived-amount").nth(2).inner_text().startswith("890,000 원")
     saved_description = page.get_by_label("장애현상 *").input_value()
     assert len(saved_description) == len(long_description.strip()), (
@@ -291,6 +306,11 @@ with sync_playwright() as playwright:
     assert page.get_by_role("heading", name="내 배정 신청").is_visible()
     assert page.get_by_role("link", name="직원 관리").count() == 0
     assert page.get_by_role("table").locator("tbody tr").count() == 1
+    page.get_by_role("link", name="미상").first.click()
+    page.wait_for_url(re.compile(r"/admin/requests/R-\d{8}-[A-F0-9]{6}"))
+    page.wait_for_load_state("networkidle")
+    assert page.get_by_label("자재비").count() == 0
+    assert page.get_by_text("운영자만 입력·수정", exact=True).is_visible()
 
     mobile = browser.new_page(viewport={"width": 390, "height": 844})
     mobile.goto(f"{BASE_URL}/admin", wait_until="networkidle")

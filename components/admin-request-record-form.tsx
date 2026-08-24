@@ -189,8 +189,8 @@ export function AdminRequestRecordForm({
           <RecordField label="대표 증상 *" name="symptom" error={errors.symptom} wide>
             <input id="symptom" name="symptom" defaultValue={request.symptom} maxLength={120} required />
           </RecordField>
-          <RecordField label="장애현상 *" name="description" error={errors.description} wide>
-            <textarea id="description" name="description" rows={7} maxLength={20000} defaultValue={request.description} required />
+          <RecordField label="상세 접수 내용" name="description" error={errors.description} wide>
+            <textarea id="description" name="description" rows={7} maxLength={20000} defaultValue={request.description} placeholder="고객이 상세내용을 입력하지 않을 수 있습니다." />
           </RecordField>
           <RecordField label="관리자메모" name="internalNote" error={errors.internalNote} wide>
             <textarea id="internalNote" name="internalNote" rows={5} maxLength={2000} defaultValue={request.internalNote} placeholder="고객에게 보이지 않는 메모" />
@@ -292,7 +292,11 @@ export function AdminRequestRecordForm({
           <span>04</span>
           <div>
             <h2>결제와 정산</h2>
-            <p>결제방법·총수금액·자재비를 입력하면 두 부가세와 기사수익이 자동 계산됩니다.</p>
+            <p>
+              {user.role === "OWNER"
+                ? "결제방법·총수금액·자재비를 입력하면 두 부가세와 기사수익이 자동 계산됩니다."
+                : "결제방법·총수금액을 입력하면 정산 금액이 자동 계산되며, 자재비는 운영자만 수정합니다."}
+            </p>
           </div>
         </div>
         <div className="admin-record-grid">
@@ -311,9 +315,13 @@ export function AdminRequestRecordForm({
           <DerivedAmountField
             label="총수금액 부가세"
             value={settlement.totalVatAmount}
-            hint={paymentMethod === "현금 결제" ? "현금 결제 시 0원" : "총수금액 ÷ 11"}
+            hint="총수금액 ÷ 11"
           />
-          <AmountField label="자재비" name="materialCost" value={amounts.materialCost} error={errors.materialCost} setAmounts={setAmounts} />
+          {user.role === "OWNER" ? (
+            <AmountField label="자재비" name="materialCost" value={amounts.materialCost} error={errors.materialCost} setAmounts={setAmounts} />
+          ) : (
+            <DerivedAmountField label="자재비" value={amounts.materialCost} hint="운영자만 입력·수정" />
+          )}
           <DerivedAmountField label="자재비 부가세" value={settlement.materialVatAmount} hint="자재비 × 10%" />
           <DerivedAmountField
             label="기사수익"

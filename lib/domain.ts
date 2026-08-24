@@ -1,13 +1,16 @@
 export const DEVICE_TYPES = ["desktop", "laptop", "monitor", "apple", "data-recovery", "other"] as const;
+export const UNSPECIFIED_DEVICE_TYPE = "unspecified" as const;
 export type DeviceType = (typeof DEVICE_TYPES)[number];
+export type StoredDeviceType = DeviceType | typeof UNSPECIFIED_DEVICE_TYPE;
 
-export const DEVICE_LABELS: Record<DeviceType, string> = {
+export const DEVICE_LABELS: Record<StoredDeviceType, string> = {
   desktop: "컴퓨터",
   laptop: "노트북",
   monitor: "모니터",
   apple: "애플기기",
   "data-recovery": "데이터 복구",
   other: "기타기기",
+  unspecified: "미입력",
 };
 
 export const REQUEST_STATUSES = [
@@ -38,6 +41,80 @@ export const UNRESOLVED_REQUEST_STATUSES = [
   "COMPANY_UNPAID",
   "ON_HOLD",
 ] as const satisfies readonly RequestStatus[];
+
+export const ADMIN_DASHBOARD_FILTER_KEYS = [
+  "unassigned",
+  "total-unresolved",
+  "my-unresolved",
+] as const;
+
+export type AdminDashboardFilterKey =
+  (typeof ADMIN_DASHBOARD_FILTER_KEYS)[number];
+export type AdminDashboardRole = "OWNER" | "STAFF";
+
+export type AdminDashboardFilter = {
+  assignee: string;
+  statuses: RequestStatus[];
+};
+
+export function getAdminDashboardFilter(
+  key: AdminDashboardFilterKey,
+  role: AdminDashboardRole,
+  accountId: string,
+): AdminDashboardFilter | null {
+  if (role === "STAFF" && !key.startsWith("my-")) return null;
+
+  switch (key) {
+    case "unassigned":
+      return { assignee: "__UNASSIGNED__", statuses: [] };
+    case "total-unresolved":
+      return { assignee: "", statuses: [...UNRESOLVED_REQUEST_STATUSES] };
+    case "my-unresolved":
+      return {
+        assignee: role === "OWNER" ? accountId : "",
+        statuses: [...UNRESOLVED_REQUEST_STATUSES],
+      };
+  }
+}
+
+export function buildAdminDashboardFilterHref(
+  key: AdminDashboardFilterKey,
+  role: AdminDashboardRole,
+  accountId: string,
+) {
+  const filter = getAdminDashboardFilter(key, role, accountId);
+  if (!filter) return "/admin";
+
+  const parameters = new URLSearchParams({ dashboard: key });
+  if (filter.assignee) parameters.set("assignee", filter.assignee);
+  for (const status of filter.statuses) parameters.append("status", status);
+  return `/admin?${parameters.toString()}`;
+}
+
+export function isAdminDashboardFilterActive(
+  selectedKey: string,
+  key: AdminDashboardFilterKey,
+  current: { assignee: string; statuses: string[] },
+  role: AdminDashboardRole,
+  accountId: string,
+) {
+  if (selectedKey !== key) return false;
+  const expected = getAdminDashboardFilter(key, role, accountId);
+  if (!expected || current.assignee !== expected.assignee) return false;
+
+  const currentStatuses = normalizeRequestStatuses(current.statuses);
+  const expectedStatuses = normalizeRequestStatuses(expected.statuses);
+  return currentStatuses.length === expectedStatuses.length
+    && currentStatuses.every((status, index) => status === expectedStatuses[index]);
+}
+
+function normalizeRequestStatuses(statuses: readonly string[]) {
+  return [...new Set(statuses)]
+    .filter((status): status is RequestStatus =>
+      REQUEST_STATUSES.includes(status as RequestStatus),
+    )
+    .sort();
+}
 
 export const STATUS_LABELS: Record<RequestStatus, string> = {
   RECEIVED: "접수중",
@@ -84,7 +161,13 @@ export const RECEIPT_TYPES = [
   "기타접수",
 ] as const;
 export type ReceiptType = (typeof RECEIPT_TYPES)[number];
-export const PAYMENT_METHODS = ["현금 결제", "현금영수증 결제", "카드 결제"] as const;
+export const PAYMENT_METHODS = [
+  "현금결제",
+  "카드결제",
+  "현금+카드",
+  "현금+계좌",
+  "계좌+카드",
+] as const;
 export type PaymentMethod = (typeof PAYMENT_METHODS)[number];
 
 export const SETTLEMENT_DEFAULT_STATUSES = [
@@ -106,7 +189,7 @@ export type ServiceRequestRecord = {
   address1: string;
   address2: string;
   regionPublic: string;
-  deviceType: DeviceType;
+  deviceType: StoredDeviceType;
   manufacturerModel: string;
   symptom: string;
   description: string;
@@ -136,11 +219,11 @@ export type CreateRequestInput = {
   phone: string;
   address1: string;
   address2?: string;
-  deviceType: string;
+  deviceType?: string;
   manufacturerModel?: string;
   symptom: string;
-  description: string;
-  password: string;
-  privacyConsent: boolean;
+  description?: string;
+  password?: string;
+  privacyConsent?: boolean;
   website?: string;
 };

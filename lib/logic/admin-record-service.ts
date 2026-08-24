@@ -20,6 +20,8 @@ export class AdminRecordValidationError extends Error {
   }
 }
 
+export class AdminRecordAuthorizationError extends Error {}
+
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
@@ -86,7 +88,6 @@ export async function saveAdminRequestRecord(
 
   if (!address1) errors.address1 = "기본 주소를 입력해 주세요.";
   if (!symptom) errors.symptom = "대표 증상을 입력해 주세요.";
-  if (!description) errors.description = "장애 현상을 입력해 주세요.";
   if (!customerType) errors.customerType = "고객 구분을 입력해 주세요.";
   if (!RECEIPT_TYPES.includes(receiptType as ReceiptType)) {
     errors.receiptType = "접수구분을 선택해 주세요.";
@@ -100,18 +101,27 @@ export async function saveAdminRequestRecord(
     completedDate = todayInSeoul();
   }
 
-  // 운영자는 결제방법, 총수금액과 자재비만 입력한다. 부가세·기사수익·사무실입금액은
+  // 운영자는 결제방법, 총수금액과 자재비를 입력한다. 직원은 기존 자재비를 조회만
+  // 할 수 있으며, 부가세·기사수익·사무실입금액은
   // 클라이언트가 보낸 값을 믿지 않고 항상 서버에서 다시 계산한다.
   const paymentMethod = clean(values.paymentMethod, 40);
   const totalAmount = amount(values.totalAmount, "totalAmount", errors);
-  const materialCost = amount(values.materialCost, "materialCost", errors);
+  if (
+    actor.role !== "OWNER" &&
+    Object.prototype.hasOwnProperty.call(values, "materialCost")
+  ) {
+    throw new AdminRecordAuthorizationError("자재비는 운영자만 입력하거나 수정할 수 있습니다.");
+  }
+  const materialCost = actor.role === "OWNER"
+    ? amount(values.materialCost, "materialCost", errors)
+    : request.materialCost;
   if (!paymentMethod && (totalAmount > 0 || materialCost > 0)) {
     errors.paymentMethod = "금액을 입력할 때는 결제방법을 선택해 주세요.";
   } else if (
     paymentMethod &&
     !PAYMENT_METHODS.includes(paymentMethod as PaymentMethod)
   ) {
-    errors.paymentMethod = "현금 결제, 현금영수증 결제, 카드 결제 중에서 선택해 주세요.";
+    errors.paymentMethod = `${PAYMENT_METHODS.join(", ")} 중에서 선택해 주세요.`;
   }
   const settlement = deriveSettlement(
     paymentMethod as PaymentMethod | "",
@@ -122,7 +132,8 @@ export async function saveAdminRequestRecord(
     materialCost + settlement.materialVatAmount >
     totalAmount - settlement.totalVatAmount
   ) {
-    errors.materialCost = "자재비와 자재비 부가세의 합계가 정산 가능한 금액을 초과할 수 없습니다.";
+    errors[actor.role === "OWNER" ? "materialCost" : "totalAmount"] =
+      "자재비와 자재비 부가세의 합계가 정산 가능한 금액을 초과할 수 없습니다.";
   }
 
   const update: AdminRequestRecordUpdate = {

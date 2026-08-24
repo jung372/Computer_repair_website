@@ -14,10 +14,6 @@ export type AdminRequestFilters = {
   customerType?: string;
   integratedFrom?: string;
   integratedTo?: string;
-  receivedFrom?: string;
-  receivedTo?: string;
-  completedFrom?: string;
-  completedTo?: string;
   statuses?: string[];
 };
 
@@ -173,23 +169,6 @@ function mapAdminRequest(row: AdminRequestRow): AdminRequestRecord {
   };
 }
 
-function addDateRange(
-  clauses: string[],
-  values: unknown[],
-  field: string,
-  from?: string,
-  to?: string,
-) {
-  if (from) {
-    clauses.push(`${field} >= ?`);
-    values.push(from);
-  }
-  if (to) {
-    clauses.push(`${field} <= ?`);
-    values.push(to);
-  }
-}
-
 function addIntegratedDateRange(
   clauses: string[],
   values: unknown[],
@@ -213,12 +192,10 @@ function addIntegratedDateRange(
   }
 }
 
-export async function listAdminRequestRecords(
-  filters: AdminRequestFilters = {},
-  limit = 200,
+function buildAdminRequestConditions(
+  filters: AdminRequestFilters,
   assignedAccountId?: string,
 ) {
-  await ensureDatabase();
   const clauses = ["sr.deleted_at IS NULL"];
   const values: unknown[] = [];
   if (assignedAccountId) {
@@ -252,20 +229,6 @@ export async function listAdminRequestRecords(
     filters.integratedFrom,
     filters.integratedTo,
   );
-  addDateRange(
-    clauses,
-    values,
-    "operations.received_date",
-    filters.receivedFrom,
-    filters.receivedTo,
-  );
-  addDateRange(
-    clauses,
-    values,
-    "operations.completed_date",
-    filters.completedFrom,
-    filters.completedTo,
-  );
   const statuses = (filters.statuses ?? []).filter((status) =>
     REQUEST_STATUSES.includes(status as RequestStatus),
   );
@@ -273,13 +236,43 @@ export async function listAdminRequestRecords(
     clauses.push(`sr.status IN (${statuses.map(() => "?").join(", ")})`);
     values.push(...statuses);
   }
+  return { clauses, values };
+}
+
+export async function countAdminRequestRecords(
+  filters: AdminRequestFilters = {},
+  assignedAccountId?: string,
+) {
+  await ensureDatabase();
+  const { clauses, values } = buildAdminRequestConditions(filters, assignedAccountId);
+  const row = await getD1()
+    .prepare(`
+      SELECT COUNT(*) AS total_count
+      FROM service_requests sr
+      INNER JOIN request_operations operations ON operations.request_id = sr.id
+      WHERE ${clauses.join(" AND ")}
+    `)
+    .bind(...values)
+    .first<{ total_count: number }>();
+  return Number(row?.total_count ?? 0);
+}
+
+export async function listAdminRequestRecords(
+  filters: AdminRequestFilters = {},
+  limit = 200,
+  assignedAccountId?: string,
+  offset = 0,
+) {
+  await ensureDatabase();
+  const { clauses, values } = buildAdminRequestConditions(filters, assignedAccountId);
   values.push(Math.max(1, Math.min(limit, 500)));
+  values.push(Math.max(0, Math.floor(offset)));
   const result = await getD1()
     .prepare(`
       ${ADMIN_REQUEST_SELECT}
       WHERE ${clauses.join(" AND ")}
       ORDER BY serial.serial_no DESC
-      LIMIT ?
+      LIMIT ? OFFSET ?
     `)
     .bind(...values)
     .all<AdminRequestRow>();
@@ -535,30 +528,20 @@ export async function getDashboardCounts(accountId: string) {
   const row = await getD1().prepare(`
     SELECT
       SUM(CASE WHEN operations.assignee_account_id IS NULL THEN 1 ELSE 0 END) AS unassigned_count,
-      SUM(CASE WHEN requests.status = 'RECEIVED' THEN 1 ELSE 0 END) AS total_received_count,
       SUM(CASE WHEN requests.status IN (${unresolved}) THEN 1 ELSE 0 END) AS total_unresolved_count,
-      SUM(CASE WHEN operations.assignee_account_id = ? AND requests.status = 'RECEIVED'
-               THEN 1 ELSE 0 END) AS received_count,
       SUM(CASE WHEN operations.assignee_account_id = ?
-                AND requests.status IN (${unresolved}) THEN 1 ELSE 0 END) AS unresolved_count,
-      SUM(CASE WHEN operations.assignee_account_id = ? THEN 1 ELSE 0 END) AS assigned_count
+                AND requests.status IN (${unresolved}) THEN 1 ELSE 0 END) AS unresolved_count
     FROM service_requests requests
     INNER JOIN request_operations operations ON operations.request_id = requests.id
     WHERE requests.deleted_at IS NULL
-  `).bind(...UNRESOLVED_REQUEST_STATUSES, accountId, accountId, ...UNRESOLVED_REQUEST_STATUSES, accountId).first<{
+  `).bind(...UNRESOLVED_REQUEST_STATUSES, accountId, ...UNRESOLVED_REQUEST_STATUSES).first<{
     unassigned_count: number;
-    total_received_count: number;
     total_unresolved_count: number;
-    received_count: number;
     unresolved_count: number;
-    assigned_count: number;
   }>();
   return {
     unassigned: Number(row?.unassigned_count ?? 0),
-    totalReceived: Number(row?.total_received_count ?? 0),
     totalUnresolved: Number(row?.total_unresolved_count ?? 0),
-    received: Number(row?.received_count ?? 0),
     unresolved: Number(row?.unresolved_count ?? 0),
-    assigned: Number(row?.assigned_count ?? 0),
   };
 }

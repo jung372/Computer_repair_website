@@ -64,6 +64,30 @@ test("includes durable private requests, personal lookup, admin and Telegram sur
   assert.match(telegram, /sendMessage/);
 });
 
+test("starts the mobile request form above the fold and collapses optional fields", async () => {
+  const [page, form, css] = await Promise.all([
+    readFile(new URL("app/requests/new/page.tsx", root), "utf8"),
+    readFile(new URL("components/request-form.tsx", root), "utf8"),
+    readFile(new URL("app/globals.css", root), "utf8"),
+  ]);
+
+  assert.match(page, /className="form-page-side"/);
+  assert.match(form, /약 2분이면 신청 완료/);
+  assert.match(form, /className="optional-section-toggle"/);
+  assert.match(form, /aria-expanded=\{optionalOpen\}/);
+  assert.ok(form.indexOf('name="name"') < form.indexOf('name="phone"'));
+  assert.ok(form.indexOf('name="symptom"') < form.indexOf('name="password"'));
+  assert.ok(form.indexOf('className="optional-form-section"') < form.indexOf('name="deviceType"'));
+  assert.ok(form.indexOf('name="address1"') < form.indexOf('name="address2"'));
+  assert.doesNotMatch(form, /name="deviceType"[\s\S]{0,180}required/);
+  assert.match(form, /field-mobile-inline/);
+  assert.match(css, /@media \(max-width: 840px\)[\s\S]*?\.form-page-side\s*\{\s*display: none/);
+  assert.match(css, /body:has\(\.form-page\) \.mobile-actions\s*\{\s*display: none/);
+  assert.match(css, /\.optional-form-content\.is-open\s*\{\s*display: block/);
+  assert.match(css, /\.form-intro-mobile-copy\s*\{[\s\S]*?display: flex/);
+  assert.match(css, /\.field-mobile-inline\s*\{[\s\S]*?grid-template-columns: 88px minmax\(0, 1fr\)/);
+});
+
 test("supports fixed staff slots, copyable Telegram text and workload counts", async () => {
   const [schema, migration, telegram, staffRepository, staffPage, adminPage] =
     await Promise.all([
@@ -82,17 +106,21 @@ test("supports fixed staff slots, copyable Telegram text and workload counts", a
   assert.match(migration, /직원 슬롯 3/);
   assert.match(migration, /DELETE FROM `admins` WHERE `role` = 'STAFF'/);
   assert.match(telegram, /TELEGRAM_CONTENT_PROTECTION_ENABLED/);
-  assert.match(telegram, /`신청자: \$\{request\.name\}`/);
-  assert.match(telegram, /`연락처: \$\{request\.phone\}`/);
-  assert.doesNotMatch(telegram, /maskName|maskPhone/);
+  assert.match(telegram, /`기본주소: \$\{request\.address1\}`/);
+  assert.match(telegram, /`휴대폰: \$\{request\.phone\}`/);
+  assert.match(telegram, /`기본 증상: \$\{request\.symptom\.slice/);
+  assert.doesNotMatch(telegram, /`신청자: \$\{request\.name\}`/);
+  assert.doesNotMatch(telegram, /request\.address2|request\.description/);
   assert.match(staffRepository, /permanentlyDeleteUnusedStaff/);
   assert.match(staffRepository, /getStaffTelegramRecipient/);
   assert.match(staffPage, /직원 영구 삭제/);
-  assert.match(adminPage, /담당자 미할당/);
-  assert.match(adminPage, /총 미접수/);
+  assert.match(adminPage, /담당자 미배정/);
   assert.match(adminPage, /총 미종결/);
-  assert.match(adminPage, /내 미접수/);
   assert.match(adminPage, /내 미종결/);
+  assert.doesNotMatch(adminPage, /총 미접수|내 미접수/);
+  assert.match(adminPage, /DashboardCard/);
+  assert.match(adminPage, /buildAdminDashboardFilterHref/);
+  assert.match(adminPage, /aria-current/);
 });
 
 test("delivers Telegram notifications off the response path and retries them on a schedule", async () => {
@@ -107,10 +135,13 @@ test("delivers Telegram notifications off the response path and retries them on 
   assert.doesNotMatch(requestApi, /await processPendingNotifications\(/);
   assert.match(workerEntry, /async scheduled\(/);
   assert.match(workerEntry, /processPendingNotifications\(/);
+  assert.match(workerEntry, /deleteExpiredTelegramNotifications\(/);
   // The backup shares the crons array now, so check that the retry schedule is
   // present rather than pinning the array's formatting.
   assert.match(wrangler, /"\*\/5 \* \* \* \*"/);
   assert.match(wrangler, /"TELEGRAM_NOTIFICATION_ENABLED": "true"/);
+  assert.match(wrangler, /"TELEGRAM_CONTENT_PROTECTION_ENABLED": "true"/);
+  assert.match(wrangler, /"TELEGRAM_PII_MODE": "FULL"/);
   assert.match(wrangler, /"PUBLIC_BASE_URL"/);
 });
 
@@ -194,9 +225,10 @@ test("removes public request discovery and postal code collection from customer 
 });
 
 test("provides an admin operations ledger, filters, stable serials and editable details", async () => {
-  const [adminPage, detailPage, recordForm, repository, schema, migration] =
+  const [adminPage, statusFilter, detailPage, recordForm, repository, schema, migration] =
     await Promise.all([
       readFile(new URL("app/admin/page.tsx", root), "utf8"),
+      readFile(new URL("components/admin-status-filter.tsx", root), "utf8"),
       readFile(new URL("app/admin/requests/[publicId]/page.tsx", root), "utf8"),
       readFile(new URL("components/admin-request-record-form.tsx", root), "utf8"),
       readFile(new URL("data/admin-request-repository.ts", root), "utf8"),
@@ -207,21 +239,30 @@ test("provides an admin operations ledger, filters, stable serials and editable 
   assert.match(adminPage, /접수내역 검색/);
   assert.match(adminPage, /번호[\s\S]*접수구분[\s\S]*고객명[\s\S]*휴대폰[\s\S]*기본주소[\s\S]*담당자[\s\S]*고객구분[\s\S]*처리상태[\s\S]*접수일/);
   assert.match(adminPage, /integratedFrom/);
+  assert.doesNotMatch(adminPage, /receivedFrom|receivedTo|completedFrom|completedTo/);
   assert.match(adminPage, /AdminStatusFilter/);
   assert.match(detailPage, /AdminRequestRecordForm/);
   assert.match(recordForm, /계산서 발행일자/);
   assert.match(recordForm, /관리자메모/);
   assert.match(repository, /ORDER BY serial\.serial_no DESC/);
+  assert.match(repository, /COUNT\(\*\) AS total_count/);
+  assert.match(repository, /LIMIT \? OFFSET \?/);
+  assert.match(adminPage, /AdminPagination/);
+  assert.match(adminPage, />이전</);
+  assert.match(adminPage, />다음</);
+  assert.match(statusFilter, /hiddenStatuses/);
+  assert.match(statusFilter, /type="hidden" name="status"/);
   assert.match(schema, /request_serials/);
   assert.match(schema, /request_operations/);
   assert.match(migration, /AUTOINCREMENT/);
 });
 
 test("restores the controlled receipt type and derives settlement amounts on the server", async () => {
-  const [adminPage, recordForm, recordService, repository, settlement] = await Promise.all([
+  const [adminPage, recordForm, recordService, recordRoute, repository, settlement] = await Promise.all([
     readFile(new URL("app/admin/page.tsx", root), "utf8"),
     readFile(new URL("components/admin-request-record-form.tsx", root), "utf8"),
     readFile(new URL("lib/logic/admin-record-service.ts", root), "utf8"),
+    readFile(new URL("app/api/admin/requests/[publicId]/route.ts", root), "utf8"),
     readFile(new URL("data/admin-request-repository.ts", root), "utf8"),
     readFile(new URL("lib/settlement.ts", root), "utf8"),
   ]);
@@ -240,14 +281,19 @@ test("restores the controlled receipt type and derives settlement amounts on the
   assert.match(recordForm, /label="자재비 부가세"/);
   assert.match(recordForm, /label="기사수익"/);
   assert.match(recordForm, /deriveSettlement\(\s*paymentMethod,\s*amounts\.totalAmount,\s*amounts\.materialCost/);
-  assert.match(recordForm, /현금 결제 시 0원/);
+  assert.match(recordForm, /hint="총수금액 ÷ 11"/);
   assert.match(recordForm, /PAYMENT_METHODS\.map/);
+  assert.match(recordForm, /user\.role === "OWNER" \? \([\s\S]{0,200}<AmountField label="자재비"/);
+  assert.match(recordForm, /hint="운영자만 입력·수정"/);
 
   // 서버가 클라이언트 값을 믿지 않고 다시 계산한다.
   assert.match(recordService, /deriveSettlement\(\s*paymentMethod as PaymentMethod \| "",\s*totalAmount,\s*materialCost/);
   assert.doesNotMatch(recordService, /values\.(?:totalVatAmount|materialVatAmount|technicianIncome|officeDeposit)/);
   assert.match(recordService, /자재비와 자재비 부가세의 합계/);
   assert.match(recordService, /PAYMENT_METHODS\.includes/);
+  assert.match(recordService, /actor\.role !== "OWNER"[\s\S]{0,160}hasOwnProperty\.call\(values, "materialCost"\)/);
+  assert.match(recordService, /actor\.role === "OWNER"[\s\S]{0,120}request\.materialCost/);
+  assert.match(recordRoute, /AdminRecordAuthorizationError[\s\S]{0,180}status: 403/);
   assert.match(settlement, /VAT_DIVISOR = 11/);
   assert.match(settlement, /MATERIAL_VAT_DIVISOR = 10/);
 });

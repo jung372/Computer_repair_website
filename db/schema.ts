@@ -25,6 +25,9 @@ export const serviceRequests = sqliteTable(
     notificationError: text("notification_error"),
     privacyConsentVersion: text("privacy_consent_version").notNull(),
     privacyConsentedAt: text("privacy_consented_at").notNull(),
+    privacyLegalBasis: text("privacy_legal_basis").notNull().default("CONSENT"),
+    privacyNoticeVersion: text("privacy_notice_version").notNull().default(""),
+    privacyNoticePresentedAt: text("privacy_notice_presented_at").notNull().default(""),
     createdAt: text("created_at").notNull(),
     updatedAt: text("updated_at").notNull(),
     deletedAt: text("deleted_at"),
@@ -67,11 +70,23 @@ export const notificationOutbox = sqliteTable(
     eventType: text("event_type").notNull().default("NEW_REQUEST"),
     recipientAccountId: text("recipient_account_id"),
     telegramMessageId: text("telegram_message_id"),
+    telegramChatIdHash: text("telegram_chat_id_hash"),
+    telegramDeleteAfter: text("telegram_delete_after"),
+    telegramDeletedAt: text("telegram_deleted_at"),
+    telegramDeleteAttempts: integer("telegram_delete_attempts").notNull().default(0),
+    telegramDeleteError: text("telegram_delete_error"),
     canceledAt: text("canceled_at"),
     createdAt: text("created_at").notNull(),
     updatedAt: text("updated_at").notNull(),
   },
-  (table) => [index("notification_outbox_status_idx").on(table.status)],
+  (table) => [
+    index("notification_outbox_status_idx").on(table.status),
+    index("notification_outbox_telegram_delete_idx").on(
+      table.eventType,
+      table.telegramDeleteAfter,
+      table.telegramDeletedAt,
+    ),
+  ],
 );
 
 export const accessAttempts = sqliteTable("access_attempts", {

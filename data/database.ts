@@ -39,6 +39,9 @@ async function initializeDatabase() {
         notification_error TEXT,
         privacy_consent_version TEXT NOT NULL,
         privacy_consented_at TEXT NOT NULL,
+        privacy_legal_basis TEXT NOT NULL DEFAULT 'CONSENT',
+        privacy_notice_version TEXT NOT NULL DEFAULT '',
+        privacy_notice_presented_at TEXT NOT NULL DEFAULT '',
         created_at TEXT NOT NULL,
         updated_at TEXT NOT NULL,
         deleted_at TEXT
@@ -68,6 +71,11 @@ async function initializeDatabase() {
         event_type TEXT NOT NULL DEFAULT 'NEW_REQUEST',
         recipient_account_id TEXT,
         telegram_message_id TEXT,
+        telegram_chat_id_hash TEXT,
+        telegram_delete_after TEXT,
+        telegram_deleted_at TEXT,
+        telegram_delete_attempts INTEGER NOT NULL DEFAULT 0,
+        telegram_delete_error TEXT,
         canceled_at TEXT,
         created_at TEXT NOT NULL,
         updated_at TEXT NOT NULL,
@@ -264,31 +272,47 @@ async function initializeDatabase() {
       db.prepare(`
         UPDATE request_operations
         SET payment_method = CASE payment_method
-              WHEN '현금결제' THEN '현금 결제'
-              WHEN '카드결제' THEN '카드 결제'
+              WHEN '현금 결제' THEN '현금결제'
+              WHEN '현금영수증 결제' THEN '현금결제'
+              WHEN '카드 결제' THEN '카드결제'
               ELSE payment_method
             END,
             material_vat_amount = CAST(ROUND(material_cost / 10.0) AS INTEGER)
       `),
       db.prepare(`
         UPDATE request_operations
-        SET vat_amount = CASE payment_method
-              WHEN '현금 결제' THEN 0
-              WHEN '현금영수증 결제' THEN CAST(ROUND(total_amount / 11.0) AS INTEGER)
-              WHEN '카드 결제' THEN CAST(ROUND(total_amount / 11.0) AS INTEGER)
-              ELSE vat_amount
-            END
+        SET vat_amount = CAST(ROUND(total_amount / 11.0) AS INTEGER)
+        WHERE payment_method IN ('현금결제', '카드결제', '현금+카드', '현금+계좌', '계좌+카드')
       `),
       db.prepare(`
         UPDATE request_operations
         SET technician_income = MAX(
           0,
           total_amount - vat_amount - material_cost - material_vat_amount
-        )
-        WHERE payment_method IN ('현금 결제', '현금영수증 결제', '카드 결제')
+        ),
+        office_deposit = 0
+        WHERE payment_method IN ('현금결제', '카드결제', '현금+카드', '현금+계좌', '계좌+카드')
       `),
     ]);
   }
+  await db.prepare(`
+    UPDATE request_operations
+    SET payment_method = CASE payment_method
+          WHEN '현금 결제' THEN '현금결제'
+          WHEN '현금영수증 결제' THEN '현금결제'
+          WHEN '카드 결제' THEN '카드결제'
+          ELSE payment_method
+        END,
+        vat_amount = CAST(ROUND(total_amount / 11.0) AS INTEGER),
+        material_vat_amount = CAST(ROUND(material_cost / 10.0) AS INTEGER),
+        technician_income = MAX(
+          0,
+          total_amount - CAST(ROUND(total_amount / 11.0) AS INTEGER)
+            - material_cost - CAST(ROUND(material_cost / 10.0) AS INTEGER)
+        ),
+        office_deposit = 0
+    WHERE payment_method IN ('현금 결제', '현금영수증 결제', '카드 결제')
+  `).run();
   if (!operationColumns.results.some((column) => column.name === "assignee_account_id")) {
     await db.batch([
       db.prepare("ALTER TABLE request_operations ADD COLUMN assignee_account_id TEXT"),
@@ -333,9 +357,26 @@ async function initializeDatabase() {
     ["recipient_account_id", "TEXT"],
     ["telegram_message_id", "TEXT"],
     ["canceled_at", "TEXT"],
+    ["telegram_chat_id_hash", "TEXT"],
+    ["telegram_delete_after", "TEXT"],
+    ["telegram_deleted_at", "TEXT"],
+    ["telegram_delete_attempts", "INTEGER NOT NULL DEFAULT 0"],
+    ["telegram_delete_error", "TEXT"],
   ] as const) {
     if (!outboxColumns.results.some((column) => column.name === name)) {
       await db.prepare(`ALTER TABLE notification_outbox ADD COLUMN ${name} ${definition}`).run();
+    }
+  }
+  const requestColumns = await db
+    .prepare("PRAGMA table_info(service_requests)")
+    .all<{ name: string }>();
+  for (const [name, definition] of [
+    ["privacy_legal_basis", "TEXT NOT NULL DEFAULT 'CONSENT'"],
+    ["privacy_notice_version", "TEXT NOT NULL DEFAULT ''"],
+    ["privacy_notice_presented_at", "TEXT NOT NULL DEFAULT ''"],
+  ] as const) {
+    if (!requestColumns.results.some((column) => column.name === name)) {
+      await db.prepare(`ALTER TABLE service_requests ADD COLUMN ${name} ${definition}`).run();
     }
   }
   await db
@@ -364,6 +405,12 @@ async function initializeDatabase() {
     .prepare(`
       CREATE INDEX IF NOT EXISTS notification_outbox_event_idx
       ON notification_outbox(event_type, recipient_account_id)
+    `)
+    .run();
+  await db
+    .prepare(`
+      CREATE INDEX IF NOT EXISTS notification_outbox_telegram_delete_idx
+      ON notification_outbox(event_type, telegram_delete_after, telegram_deleted_at)
     `)
     .run();
 }

@@ -15,7 +15,6 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { DeviceIcon } from "@/components/device-icon";
-import { isTelegramNotificationReady } from "@/lib/notification-config";
 import { serviceGuideList } from "@/lib/service-content";
 import { getSiteConfig } from "@/lib/site-config";
 
@@ -23,7 +22,6 @@ export const dynamic = "force-dynamic";
 
 export default async function Home() {
   const config = getSiteConfig();
-  const notificationsReady = isTelegramNotificationReady();
   const phoneHref = `tel:${config.phone.replace(/\D/g, "")}`;
 
   return (
@@ -85,8 +83,8 @@ export default async function Home() {
             <div className="hero-floating-card">
               <CalendarCheck2 size={22} aria-hidden="true" />
               <span>
-                <small>{notificationsReady ? "운영자 알림" : "접수 확인"}</small>
-                <strong>{notificationsReady ? "접수 후 자동 전송" : "영업시간 내 연락"}</strong>
+                <small>접수 확인</small>
+                <strong>영업시간 내 연락</strong>
               </span>
             </div>
           </div>

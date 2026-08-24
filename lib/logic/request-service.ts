@@ -9,6 +9,7 @@ import {
 import { assertLookupSecretReady } from "@/data/security-settings-repository";
 import {
   DEVICE_TYPES,
+  UNSPECIFIED_DEVICE_TYPE,
   type DeviceType,
   type ServiceRequestRecord,
 } from "@/lib/domain";
@@ -17,7 +18,8 @@ import { formatPhone, normalizePhone } from "@/lib/phone";
 import { createLookupKey } from "@/lib/security/lookup-key";
 import { hashPassword, verifyPassword } from "@/lib/security/password";
 
-const PRIVACY_VERSION = "2026-07-29.v2";
+const PRIVACY_NOTICE_VERSION = "2026-08-23.v4";
+const PRIVACY_LEGAL_BASIS = "PIPA_15_1_4_CONTRACT_REQUEST";
 // 고객이 쓴 내용을 조용히 잘라내지 않기 위한 방어선. 화면에는 제한을 두지 않는다.
 const DESCRIPTION_LIMIT = 20_000;
 
@@ -73,40 +75,44 @@ export async function createServiceRequest(input: unknown) {
   const manufacturerModel = clean(values.manufacturerModel, 100);
   const symptom = clean(values.symptom, 120);
   const description = clean(values.description, DESCRIPTION_LIMIT);
-  const password = typeof values.password === "string" ? values.password : "";
-  const passwordLength = Array.from(password).length;
+  const submittedPassword = typeof values.password === "string" ? values.password : "";
+  const passwordLength = Array.from(submittedPassword).length;
   const deviceType = DEVICE_TYPES.includes(values.deviceType as DeviceType)
     ? (values.deviceType as DeviceType)
-    : null;
+    : UNSPECIFIED_DEVICE_TYPE;
 
   if (values.website) fields.website = "자동 신청으로 판단되었습니다.";
   if (phone.length < 10 || phone.length > 11) fields.phone = "연락처 10~11자리를 확인해 주세요.";
   if (!address1) fields.address1 = "기본 주소를 입력해 주세요.";
-  if (!deviceType) fields.deviceType = "기기 종류를 선택해 주세요.";
   if (!symptom) fields.symptom = "대표 증상을 입력해 주세요.";
-  if (!description) fields.description = "접수 내용을 입력해 주세요.";
-  else if (
+  if (
     typeof values.description === "string" &&
     values.description.trim().length > DESCRIPTION_LIMIT
   ) {
     fields.description = `접수 내용은 ${DESCRIPTION_LIMIT.toLocaleString("ko-KR")}자 이내로 입력해 주세요.`;
   }
-  if (passwordLength < 4 || passwordLength > 20) {
+  if (submittedPassword && (passwordLength < 4 || passwordLength > 20)) {
     fields.password = "신청 조회 비밀번호는 4~20자로 입력해 주세요.";
   }
-  if (values.privacyConsent !== true) fields.privacyConsent = "개인정보 수집·이용 동의가 필요합니다.";
   if (Object.keys(fields).length) throw new RequestValidationError(fields);
 
-  await assertLookupSecretReady();
-  const [accessPasswordHash, lookupKey] = await Promise.all([
-    hashPassword(password),
-    createLookupKey(phone, password),
-  ]);
+  let accessPasswordHash: string | null = null;
+  let lookupKey: string | null = null;
+  if (submittedPassword) {
+    await assertLookupSecretReady();
+    [accessPasswordHash, lookupKey] = await Promise.all([
+      hashPassword(submittedPassword),
+      createLookupKey(phone, submittedPassword),
+    ]);
+  }
   const now = new Date();
   const timestamp = now.toISOString();
   const request: ServiceRequestRecord & {
     privacyConsentVersion: string;
     privacyConsentedAt: string;
+    privacyLegalBasis: string;
+    privacyNoticeVersion: string;
+    privacyNoticePresentedAt: string;
   } = {
     id: crypto.randomUUID(),
     publicId: createPublicId(now),
@@ -117,7 +123,7 @@ export async function createServiceRequest(input: unknown) {
     address1,
     address2,
     regionPublic: publicRegion(address1),
-    deviceType: deviceType!,
+    deviceType,
     manufacturerModel,
     symptom,
     description,
@@ -132,11 +138,14 @@ export async function createServiceRequest(input: unknown) {
     notificationError: null,
     createdAt: timestamp,
     updatedAt: timestamp,
-    privacyConsentVersion: PRIVACY_VERSION,
-    privacyConsentedAt: timestamp,
+    privacyConsentVersion: "",
+    privacyConsentedAt: "",
+    privacyLegalBasis: PRIVACY_LEGAL_BASIS,
+    privacyNoticeVersion: PRIVACY_NOTICE_VERSION,
+    privacyNoticePresentedAt: timestamp,
   };
   await insertRequest(request);
-  return request;
+  return { request };
 }
 
 export async function getRequestDetail(publicId: string) {

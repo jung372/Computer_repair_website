@@ -23,7 +23,8 @@
     "NEXT_PUBLIC_BUSINESS_EMAIL": "kkyman1947@naver.com",
     "NEXT_PUBLIC_BUSINESS_PHONE": "010-3388-1597",
     "TELEGRAM_NOTIFICATION_ENABLED": "true",
-    "TELEGRAM_CONTENT_PROTECTION_ENABLED": "false",
+    "TELEGRAM_CONTENT_PROTECTION_ENABLED": "true",
+    "TELEGRAM_PII_MODE": "FULL",
     "REQUEST_SUBMISSION_ENABLED": "true",
     // Scheduled runs have no request to derive the admin link from.
     "PUBLIC_BASE_URL": "https://combaksa.pe.kr"

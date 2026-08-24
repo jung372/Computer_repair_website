@@ -92,7 +92,7 @@ export default async function RequestDetailPage({
             </dl>
             <div className="request-description">
               <strong>상세 증상</strong>
-              <p>{request.description}</p>
+              <p>{request.description || "상세내용 미입력"}</p>
             </div>
           </article>
           <aside className="timeline-card">

@@ -5,4 +5,6 @@ REQUEST_LOOKUP_SECRET=replace-with-a-long-random-value
 RATE_LIMIT_SECRET=replace-with-a-long-random-value
 TELEGRAM_BOT_TOKEN=
 TELEGRAM_CHAT_ID=
+TELEGRAM_CONTENT_PROTECTION_ENABLED=true
+TELEGRAM_PII_MODE=FULL
 STAFF_CHAT_ID_ENCRYPTION_KEY=replace-with-a-long-random-value
