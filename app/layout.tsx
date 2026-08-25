@@ -9,7 +9,7 @@ export async function generateMetadata(): Promise<Metadata> {
   const host = requestHeaders.get("x-forwarded-host") ?? requestHeaders.get("host") ?? "localhost:3000";
   const protocol = requestHeaders.get("x-forwarded-proto") ?? (host.startsWith("localhost") ? "http" : "https");
   const origin = `${protocol}://${host}`;
-  const image = `${origin}/og.png?v=combaksa-202608`;
+  const image = `${origin}/og.png?v=combaksa-20260825`;
   return {
     metadataBase: new URL(origin),
     applicationName: "컴박사",
@@ -33,7 +33,7 @@ export async function generateMetadata(): Promise<Metadata> {
       type: "website",
       locale: "ko_KR",
       url: origin,
-      images: [{ url: image, width: 1730, height: 909, alt: "컴박사 수리 서비스" }],
+      images: [{ url: image, width: 1200, height: 630, alt: "컴박사 컴퓨터 수리 서비스" }],
     },
     twitter: {
       card: "summary_large_image",
