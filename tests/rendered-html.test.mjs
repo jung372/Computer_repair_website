@@ -42,6 +42,10 @@ test("uses the supplied brand artwork in the header and social preview", async (
   assert.doesNotMatch(header, /MonitorCog|COMPUTER REPAIR/);
   assert.match(layout, /og\.png\?v=combaksa-20260825-logo/);
   assert.match(css, /\.brand-logo\s*\{[^}]*width: 172px/);
+  assert.match(css, /\.site-header\s*\{[^}]*background: var\(--white\)/);
+  assert.match(css, /\.utility-bar\s*\{[^}]*background: var\(--ink-950\)/);
+  assert.match(css, /\.desktop-nav a\s*\{[^}]*color: var\(--ink-700\)/);
+  assert.match(css, /\.mobile-menu nav\s*\{[^}]*background: var\(--white\)/);
   assert.deepEqual(readPngDimensions(logo), { width: 544, height: 264 });
   assert.deepEqual(readPngDimensions(social), { width: 1200, height: 630 });
 });

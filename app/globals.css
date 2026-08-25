@@ -436,13 +436,15 @@ p {
 .site-header {
   position: relative;
   z-index: 50;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  background: var(--ink-950);
-  color: var(--white);
+  border-bottom: 1px solid var(--ink-200);
+  background: var(--white);
+  color: var(--ink-900);
+  box-shadow: 0 6px 20px rgba(7, 17, 31, 0.06);
 }
 
 .utility-bar {
   border-bottom: 1px solid rgba(255, 255, 255, 0.09);
+  background: var(--ink-950);
   color: var(--ink-300);
   font-size: 0.78rem;
 }
@@ -482,10 +484,10 @@ p {
   display: block;
   width: 172px;
   height: auto;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 12px;
+  border: 0;
+  border-radius: 0;
   background: var(--white);
-  box-shadow: 0 10px 30px rgba(3, 12, 28, 0.28);
+  box-shadow: none;
 }
 
 .desktop-nav {
@@ -498,9 +500,10 @@ p {
 .desktop-nav a {
   position: relative;
   padding: 30px 0;
-  color: #d8e0ea;
+  color: var(--ink-700);
   font-size: 0.94rem;
   font-weight: 700;
+  transition: color 180ms ease;
 }
 
 .desktop-nav a::after {
@@ -519,6 +522,10 @@ p {
   transform: scaleX(1);
 }
 
+.desktop-nav a:hover {
+  color: var(--blue-700);
+}
+
 .header-phone {
   display: flex;
   align-items: center;
@@ -526,7 +533,7 @@ p {
 }
 
 .header-phone svg {
-  color: #73b5ff;
+  color: var(--blue-600);
 }
 
 .header-phone small,
@@ -535,7 +542,7 @@ p {
 }
 
 .header-phone small {
-  color: var(--ink-300);
+  color: var(--ink-500);
   font-size: 0.72rem;
 }
 
@@ -3116,7 +3123,6 @@ p {
 
   .brand-logo {
     width: 148px;
-    border-radius: 10px;
   }
 
   .mobile-menu {
@@ -3129,8 +3135,10 @@ p {
     width: 44px;
     height: 44px;
     place-items: center;
+    border: 1px solid var(--ink-200);
     border-radius: 10px;
-    background: rgba(255, 255, 255, 0.08);
+    background: var(--blue-100);
+    color: var(--ink-900);
     cursor: pointer;
     list-style: none;
   }
@@ -3158,15 +3166,22 @@ p {
     display: grid;
     width: min(84vw, 310px);
     padding: 12px;
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border: 1px solid var(--ink-200);
     border-radius: 12px;
-    background: var(--ink-900);
+    background: var(--white);
+    color: var(--ink-900);
     box-shadow: var(--shadow-md);
   }
 
   .mobile-menu nav a {
     padding: 12px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+    border-bottom: 1px solid var(--ink-100);
+    color: var(--ink-800);
+  }
+
+  .mobile-menu nav a:hover {
+    background: var(--ink-50);
+    color: var(--blue-700);
   }
 
   .mobile-actions {
