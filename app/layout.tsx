@@ -9,7 +9,7 @@ export async function generateMetadata(): Promise<Metadata> {
   const host = requestHeaders.get("x-forwarded-host") ?? requestHeaders.get("host") ?? "localhost:3000";
   const protocol = requestHeaders.get("x-forwarded-proto") ?? (host.startsWith("localhost") ? "http" : "https");
   const origin = `${protocol}://${host}`;
-  const image = `${origin}/og.png?v=combaksa-20260825`;
+  const image = `${origin}/og.png?v=combaksa-20260825-logo`;
   return {
     metadataBase: new URL(origin),
     applicationName: "컴박사",

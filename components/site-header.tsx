@@ -1,4 +1,5 @@
-import { Menu, MonitorCog, Phone, ShieldCheck, X } from "lucide-react";
+import { Menu, Phone, ShieldCheck, X } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 import { getSiteConfig } from "@/lib/site-config";
 
@@ -28,13 +29,15 @@ export function SiteHeader() {
         </div>
         <div className="container header-main">
           <Link href="/" className="brand" aria-label={`${config.name} 홈`}>
-            <span className="brand-mark">
-              <MonitorCog size={26} aria-hidden="true" />
-            </span>
-            <span>
-              <strong>{config.name}</strong>
-              <small>COMPUTER REPAIR</small>
-            </span>
+            <Image
+              className="brand-logo"
+              src="/brand-logo.png"
+              alt=""
+              width={544}
+              height={264}
+              priority
+              unoptimized
+            />
           </Link>
           <nav className="desktop-nav" aria-label="주요 메뉴">
             {nav.map((item) => (
