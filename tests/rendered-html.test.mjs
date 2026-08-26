@@ -4,6 +4,14 @@ import test from "node:test";
 
 const root = new URL("../", import.meta.url);
 
+function readPngDimensions(buffer) {
+  assert.equal(buffer.subarray(1, 4).toString("ascii"), "PNG");
+  return {
+    width: buffer.readUInt32BE(16),
+    height: buffer.readUInt32BE(20),
+  };
+}
+
 test("ships the repair-service product instead of the starter preview", async () => {
   const [page, layout, packageJson] = await Promise.all([
     readFile(new URL("app/page.tsx", root), "utf8"),
@@ -18,6 +26,28 @@ test("ships the repair-service product instead of the starter preview", async ()
   assert.doesNotMatch(page, /SkeletonPreview|codex-preview/);
   assert.doesNotMatch(packageJson, /react-loading-skeleton/);
   await assert.rejects(access(new URL("app/_sites-preview/SkeletonPreview.tsx", root)));
+});
+
+test("uses the supplied brand artwork in the header and social preview", async () => {
+  const [header, layout, css, logo, social] = await Promise.all([
+    readFile(new URL("components/site-header.tsx", root), "utf8"),
+    readFile(new URL("app/layout.tsx", root), "utf8"),
+    readFile(new URL("app/globals.css", root), "utf8"),
+    readFile(new URL("public/brand-logo.png", root)),
+    readFile(new URL("public/og.png", root)),
+  ]);
+
+  assert.match(header, /src="\/brand-logo\.png"/);
+  assert.match(header, /className="brand-logo"/);
+  assert.doesNotMatch(header, /MonitorCog|COMPUTER REPAIR/);
+  assert.match(layout, /og\.png\?v=combaksa-20260825-logo/);
+  assert.match(css, /\.brand-logo\s*\{[^}]*width: 172px/);
+  assert.match(css, /\.site-header\s*\{[^}]*background: var\(--white\)/);
+  assert.match(css, /\.utility-bar\s*\{[^}]*background: var\(--ink-950\)/);
+  assert.match(css, /\.desktop-nav a\s*\{[^}]*color: var\(--ink-700\)/);
+  assert.match(css, /\.mobile-menu nav\s*\{[^}]*background: var\(--white\)/);
+  assert.deepEqual(readPngDimensions(logo), { width: 544, height: 264 });
+  assert.deepEqual(readPngDimensions(social), { width: 1200, height: 630 });
 });
 
 test("includes durable private requests, personal lookup, admin and Telegram surfaces", async () => {
@@ -222,6 +252,24 @@ test("removes public request discovery and postal code collection from customer 
   assert.doesNotMatch(requestService, /fields\.address2/);
   assert.doesNotMatch(privacy, /필수: 이름, 연락처, 우편번호/);
   assert.match(`${header}\n${footer}`, /내 신청 조회/);
+});
+
+test("keeps phone consultation focused on the responsive home quick-contact card", async () => {
+  const [home, header, css] = await Promise.all([
+    readFile(new URL("app/page.tsx", root), "utf8"),
+    readFile(new URL("components/site-header.tsx", root), "utf8"),
+    readFile(new URL("app/globals.css", root), "utf8"),
+  ]);
+
+  assert.match(home, /hero-mobile-lookup[^>]+href="\/requests"/);
+  assert.match(home, /className="hero-mobile-phone"/);
+  assert.match(home, /빠른 전화상담/);
+  assert.doesNotMatch(home, />\s*전화 상담\s*</);
+  assert.doesNotMatch(header, />\s*전화 상담\s*</);
+  assert.match(header, /mobile-actions[\s\S]+href="\/requests\/new"/);
+  assert.match(css, /\.hero-mobile-lookup,\s*\.hero-mobile-phone\s*\{\s*display: none/);
+  assert.match(css, /\.mobile-actions\s*\{[\s\S]*?grid-template-columns: 1fr/);
+  assert.match(css, /\.hero-mobile-phone\s*\{[\s\S]*?display: flex/);
 });
 
 test("provides an admin operations ledger, filters, stable serials and editable details", async () => {
