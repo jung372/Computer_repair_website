@@ -144,7 +144,11 @@ test("keeps the Vox webhook enabled, observable, and pinned to v2", async () => 
   assert.match(schema, /integrationIntakes/);
   assert.match(migration, /UNIQUE INDEX `integration_intakes_provider_event_unique`/);
   assert.match(siteConfig, /야간·공휴일은 접수 상담만 가능합니다/);
-  assert.equal(JSON.parse(agent).agent.data.webhookSettings.webhookVersion, "v2");
+  const agentConfig = JSON.parse(agent).agent.data;
+  assert.equal(agentConfig.webhookSettings.webhookVersion, "v2");
+  assert.match(agentConfig.prompt.prompt, /하이픈 기호.*한글 단어 "다시"/);
+  assert.match(agentConfig.prompt.prompt, /770 다시 23번지/);
+  assert.match(agentConfig.prompt.prompt, /address1과 address2.*하이픈을 그대로 보존/);
   assert.match(adminPage, /전화 접수 연동 상태/);
   assert.match(adminPage, /requireOwner/);
   assert.match(adminNav, /\/admin\/integrations\/vox/);
