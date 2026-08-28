@@ -46,7 +46,7 @@ test("uses the supplied brand artwork in the header and social preview", async (
   assert.match(css, /\.utility-bar\s*\{[^}]*background: var\(--ink-950\)/);
   assert.match(css, /\.desktop-nav a\s*\{[^}]*color: var\(--ink-700\)/);
   assert.match(css, /\.mobile-menu nav\s*\{[^}]*background: var\(--white\)/);
-  assert.deepEqual(readPngDimensions(logo), { width: 544, height: 264 });
+  assert.deepEqual(readPngDimensions(logo), { width: 1536, height: 719 });
   assert.deepEqual(readPngDimensions(social), { width: 1200, height: 630 });
 });
 
@@ -495,15 +495,15 @@ test("shows the registered business identity in the footer", async () => {
   assert.match(siteConfig, /NEXT_PUBLIC_BUSINESS_ADDRESS/);
 });
 
-test("pins the business contact and creates the D1 migration", async () => {
+test("pins the daytime business contact and creates the D1 migration", async () => {
   const [siteConfig, wrangler, migration] = await Promise.all([
     readFile(new URL("lib/site-config.ts", root), "utf8"),
     readFile(new URL("wrangler.jsonc", root), "utf8"),
     readFile(new URL("drizzle/0001_private_lookup_admin.sql", root), "utf8"),
   ]);
 
-  assert.match(siteConfig, /010-3388-1597/);
-  assert.match(wrangler, /010-3388-1597/);
+  assert.match(siteConfig, /1660-0596/);
+  assert.match(wrangler, /1660-0596/);
   assert.match(migration, /ADD COLUMN `lookup_key`/);
   assert.match(migration, /CREATE TABLE `customer_lookup_sessions`/);
   assert.match(migration, /CREATE TABLE `admins`/);

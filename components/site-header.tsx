@@ -33,8 +33,8 @@ export function SiteHeader() {
               className="brand-logo"
               src="/brand-logo.png"
               alt=""
-              width={544}
-              height={264}
+              width={1536}
+              height={719}
               priority
               unoptimized
             />

@@ -83,6 +83,26 @@ async function initializeDatabase() {
       )
     `),
     db.prepare(`
+      CREATE TABLE IF NOT EXISTS integration_intakes (
+        id TEXT PRIMARY KEY,
+        provider TEXT NOT NULL,
+        external_id TEXT NOT NULL,
+        event_type TEXT NOT NULL,
+        request_id TEXT,
+        status TEXT NOT NULL,
+        reason_code TEXT,
+        payload_hash TEXT,
+        agent_id TEXT,
+        agent_version TEXT,
+        received_at TEXT NOT NULL,
+        processed_at TEXT,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL,
+        UNIQUE(provider, external_id, event_type),
+        FOREIGN KEY (request_id) REFERENCES service_requests(id)
+      )
+    `),
+    db.prepare(`
       CREATE TABLE IF NOT EXISTS access_attempts (
         key TEXT PRIMARY KEY,
         failures INTEGER NOT NULL DEFAULT 0,
@@ -211,6 +231,7 @@ async function initializeDatabase() {
     db.prepare("CREATE INDEX IF NOT EXISTS service_requests_status_idx ON service_requests(status)"),
     db.prepare("CREATE INDEX IF NOT EXISTS request_history_request_idx ON request_status_history(request_id)"),
     db.prepare("CREATE INDEX IF NOT EXISTS notification_outbox_status_idx ON notification_outbox(status)"),
+    db.prepare("CREATE INDEX IF NOT EXISTS integration_intakes_status_received_idx ON integration_intakes(status, received_at)"),
     db.prepare("CREATE INDEX IF NOT EXISTS customer_lookup_request_idx ON customer_lookup_session_requests(request_id)"),
     db.prepare("CREATE INDEX IF NOT EXISTS admin_audit_created_idx ON admin_audit_logs(created_at)"),
     db.prepare("CREATE INDEX IF NOT EXISTS request_operations_receipt_idx ON request_operations(receipt_type)"),

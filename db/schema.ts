@@ -1,4 +1,4 @@
-import { index, integer, primaryKey, sqliteTable, text } from "drizzle-orm/sqlite-core";
+import { index, integer, primaryKey, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core";
 
 export const serviceRequests = sqliteTable(
   "service_requests",
@@ -86,6 +86,34 @@ export const notificationOutbox = sqliteTable(
       table.telegramDeleteAfter,
       table.telegramDeletedAt,
     ),
+  ],
+);
+
+export const integrationIntakes = sqliteTable(
+  "integration_intakes",
+  {
+    id: text("id").primaryKey(),
+    provider: text("provider").notNull(),
+    externalId: text("external_id").notNull(),
+    eventType: text("event_type").notNull(),
+    requestId: text("request_id").references(() => serviceRequests.id),
+    status: text("status").notNull(),
+    reasonCode: text("reason_code"),
+    payloadHash: text("payload_hash"),
+    agentId: text("agent_id"),
+    agentVersion: text("agent_version"),
+    receivedAt: text("received_at").notNull(),
+    processedAt: text("processed_at"),
+    createdAt: text("created_at").notNull(),
+    updatedAt: text("updated_at").notNull(),
+  },
+  (table) => [
+    uniqueIndex("integration_intakes_provider_event_unique").on(
+      table.provider,
+      table.externalId,
+      table.eventType,
+    ),
+    index("integration_intakes_status_received_idx").on(table.status, table.receivedAt),
   ],
 );
 

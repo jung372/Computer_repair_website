@@ -5042,6 +5042,190 @@ p {
   justify-self: end;
 }
 
+.admin-integration-content {
+  display: grid;
+  gap: 18px;
+}
+
+.integration-health {
+  display: grid;
+  grid-template-columns: auto minmax(240px, 1fr) auto;
+  align-items: center;
+  gap: 18px;
+  padding: 22px 24px;
+  border: 1px solid var(--ink-200);
+  border-left: 5px solid var(--mint-600);
+  border-radius: 16px;
+  background: var(--white);
+  box-shadow: var(--shadow-md);
+}
+
+.integration-health.warning {
+  border-left-color: var(--rose-600);
+}
+
+.integration-health-icon {
+  display: grid;
+  width: 52px;
+  height: 52px;
+  place-items: center;
+  border-radius: 14px;
+  background: #e8f8f1;
+  color: var(--mint-600);
+}
+
+.integration-health.warning .integration-health-icon {
+  background: #fff1f1;
+  color: var(--rose-600);
+}
+
+.integration-health h2,
+.integration-log-panel h2 {
+  margin: 2px 0 4px;
+  letter-spacing: -.035em;
+}
+
+.integration-health p,
+.integration-log-panel header p {
+  margin: 0;
+  color: var(--ink-500);
+  font-size: .78rem;
+}
+
+.integration-health > div > span {
+  color: var(--ink-500);
+  font-size: .7rem;
+  font-weight: 850;
+  letter-spacing: .08em;
+}
+
+.integration-health ul {
+  display: grid;
+  grid-template-columns: repeat(2, auto);
+  gap: 8px 14px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.integration-health li {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: .72rem;
+  font-weight: 800;
+}
+
+.integration-health li.ready { color: #147653; }
+.integration-health li.missing { color: var(--rose-600); }
+
+.integration-summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.integration-summary article {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: end;
+  gap: 3px 12px;
+  padding: 18px 20px;
+  border: 1px solid var(--ink-200);
+  border-radius: 14px;
+  background: var(--white);
+  box-shadow: var(--shadow-sm);
+}
+
+.integration-summary span {
+  color: var(--ink-600);
+  font-size: .78rem;
+  font-weight: 800;
+}
+
+.integration-summary strong {
+  grid-row: 1 / 3;
+  grid-column: 2;
+  color: var(--blue-700);
+  font-size: 2rem;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.integration-summary small {
+  color: var(--ink-500);
+  font-size: .68rem;
+}
+
+.integration-summary .created strong { color: var(--mint-600); }
+.integration-summary .skipped strong { color: #a86b00; }
+
+.integration-log-panel {
+  padding: 22px;
+  border: 1px solid var(--ink-200);
+  border-radius: 16px;
+  background: var(--white);
+  box-shadow: var(--shadow-sm);
+}
+
+.integration-log-panel > header {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.integration-table-wrap {
+  border-radius: 10px;
+  box-shadow: none;
+}
+
+.integration-table td:nth-child(2) {
+  min-width: 0;
+  white-space: nowrap;
+}
+
+.integration-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 8px;
+  border-radius: 999px;
+  font-size: .7rem;
+  font-weight: 850;
+}
+
+.integration-status.created {
+  background: #e8f8f1;
+  color: #147653;
+}
+
+.integration-status.skipped {
+  background: #fff7df;
+  color: #8a5b00;
+}
+
+.integration-muted {
+  color: var(--ink-400);
+  font-size: .75rem;
+}
+
+.integration-empty {
+  display: grid;
+  min-height: 220px;
+  place-items: center;
+  align-content: center;
+  gap: 7px;
+  border: 1px dashed var(--ink-200);
+  border-radius: 12px;
+  color: var(--ink-500);
+  text-align: center;
+}
+
+.integration-empty svg { color: var(--blue-600); }
+.integration-empty p { margin: 0; font-size: .78rem; }
+
 @media (max-width: 1020px) {
   .admin-search-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -5073,6 +5257,35 @@ p {
 }
 
 @media (max-width: 680px) {
+  .integration-health {
+    grid-template-columns: auto 1fr;
+    padding: 18px;
+  }
+
+  .integration-health ul {
+    grid-column: 1 / -1;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    padding-top: 10px;
+    border-top: 1px solid var(--ink-100);
+  }
+
+  .integration-summary {
+    grid-template-columns: 1fr;
+  }
+
+  .integration-log-panel {
+    padding: 17px 14px;
+  }
+
+  .integration-log-panel > header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .integration-table {
+    min-width: 760px;
+  }
+
   .settlement-search-panel {
     padding: 18px 14px;
   }

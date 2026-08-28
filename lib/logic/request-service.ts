@@ -6,6 +6,7 @@ import {
   listStatusHistory,
   recordAccessFailure,
 } from "@/data/request-repository";
+import { insertVoxRequest } from "@/data/integration-intake-repository";
 import { assertLookupSecretReady } from "@/data/security-settings-repository";
 import {
   DEVICE_TYPES,
@@ -17,9 +18,11 @@ import { getInitialNotificationStatus } from "@/lib/notification-config";
 import { formatPhone, normalizePhone } from "@/lib/phone";
 import { createLookupKey } from "@/lib/security/lookup-key";
 import { hashPassword, verifyPassword } from "@/lib/security/password";
+import { sha256 } from "@/lib/security/keyed-hash";
 
 const PRIVACY_NOTICE_VERSION = "2026-08-23.v4";
 const PRIVACY_LEGAL_BASIS = "PIPA_15_1_4_CONTRACT_REQUEST";
+const VOX_PRIVACY_NOTICE_VERSION = "2026-08-26.vox.v2";
 // 고객이 쓴 내용을 조용히 잘라내지 않기 위한 방어선. 화면에는 제한을 두지 않는다.
 const DESCRIPTION_LIMIT = 20_000;
 
@@ -52,6 +55,18 @@ function randomSuffix() {
 function createPublicId(now: Date) {
   const date = now.toISOString().slice(0, 10).replaceAll("-", "");
   return `R-${date}-${randomSuffix()}`;
+}
+
+function kstDateStamp(timestamp: number) {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: "Asia/Seoul",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(new Date(timestamp));
+  const get = (type: Intl.DateTimeFormatPartTypes) =>
+    parts.find((part) => part.type === type)?.value ?? "";
+  return `${get("year")}${get("month")}${get("day")}`;
 }
 
 export function maskName(name: string) {
@@ -146,6 +161,95 @@ export async function createServiceRequest(input: unknown) {
   };
   await insertRequest(request);
   return { request };
+}
+
+export type VoxServiceRequestInput = {
+  phone: string;
+  address1: string;
+  address2?: string;
+  symptom: string;
+  manufacturerModel?: string;
+};
+
+export type VoxRequestContext = {
+  callId: string;
+  agentId: string;
+  agentVersion: string;
+  startedAt: number;
+  payloadHash: string;
+  receivedAt: string;
+};
+
+export async function createVoxServiceRequest(
+  input: VoxServiceRequestInput,
+  context: VoxRequestContext,
+) {
+  const phone = normalizePhone(clean(input.phone, 30));
+  const address1 = clean(input.address1, 160);
+  const address2 = clean(input.address2, 160);
+  const symptom = clean(input.symptom, 120);
+  const manufacturerModel = clean(input.manufacturerModel, 100);
+  const fields: Record<string, string> = {};
+  if (phone.length < 10 || phone.length > 11) fields.phone = "연락처를 확인해 주세요.";
+  if (!address1) fields.address1 = "기본 주소를 확인해 주세요.";
+  if (!symptom) fields.symptom = "대표 증상을 확인해 주세요.";
+  if (!Number.isFinite(context.startedAt) || context.startedAt <= 0) {
+    fields.startedAt = "통화 시작 시각을 확인해 주세요.";
+  }
+  if (Object.keys(fields).length) throw new RequestValidationError(fields);
+
+  const [requestHash, intakeHash, historyHash, outboxHash, publicHash] = await Promise.all([
+    sha256(`vox-request:${context.callId}`),
+    sha256(`vox-intake:${context.callId}:call_analyzed`),
+    sha256(`vox-status:${context.callId}`),
+    sha256(`vox-outbox:${context.callId}`),
+    sha256(context.callId),
+  ]);
+  const receivedAt = new Date(context.receivedAt);
+  if (Number.isNaN(receivedAt.getTime())) throw new Error("VOX_RECEIVED_AT_INVALID");
+  const timestamp = receivedAt.toISOString();
+  const privacyPresentedAt = new Date(context.startedAt).toISOString();
+  const request = {
+    id: `vox_req_${requestHash.slice(0, 32)}`,
+    publicId: `R-${kstDateStamp(context.startedAt)}-VX-${publicHash.slice(0, 16).toUpperCase()}`,
+    name: "미상",
+    phone: formatPhone(phone),
+    postalCode: "",
+    address1,
+    address2,
+    regionPublic: publicRegion(address1),
+    deviceType: UNSPECIFIED_DEVICE_TYPE,
+    manufacturerModel,
+    symptom,
+    description: "",
+    visibility: "PRIVATE" as const,
+    accessPasswordHash: null,
+    lookupKey: null,
+    status: "RECEIVED" as const,
+    preferredAt: null,
+    internalNote: "",
+    notificationStatus: getInitialNotificationStatus(),
+    notificationError: null,
+    createdAt: timestamp,
+    updatedAt: timestamp,
+    privacyConsentVersion: "",
+    privacyConsentedAt: "",
+    privacyLegalBasis: PRIVACY_LEGAL_BASIS,
+    privacyNoticeVersion: VOX_PRIVACY_NOTICE_VERSION,
+    privacyNoticePresentedAt: privacyPresentedAt,
+  };
+  const persistence = await insertVoxRequest(request, {
+    intakeId: `vox_intake_${intakeHash.slice(0, 32)}`,
+    statusHistoryId: `vox_status_${historyHash.slice(0, 32)}`,
+    outboxId: `vox_outbox_${outboxHash.slice(0, 32)}`,
+    externalId: context.callId,
+    eventType: "call_analyzed",
+    payloadHash: context.payloadHash,
+    agentId: context.agentId,
+    agentVersion: context.agentVersion,
+    receivedAt: timestamp,
+  });
+  return { request, ...persistence };
 }
 
 export async function getRequestDetail(publicId: string) {

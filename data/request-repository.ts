@@ -46,6 +46,14 @@ export type TelegramDeletionRow = {
   telegram_delete_attempts: number;
 };
 
+export type StoredServiceRequest = ServiceRequestRecord & {
+  privacyConsentVersion: string;
+  privacyConsentedAt: string;
+  privacyLegalBasis: string;
+  privacyNoticeVersion: string;
+  privacyNoticePresentedAt: string;
+};
+
 export function mapRequest(row: RequestRow): ServiceRequestRecord {
   return {
     id: row.id,
@@ -74,13 +82,7 @@ export function mapRequest(row: RequestRow): ServiceRequestRecord {
 }
 
 export async function insertRequest(
-  request: ServiceRequestRecord & {
-    privacyConsentVersion: string;
-    privacyConsentedAt: string;
-    privacyLegalBasis: string;
-    privacyNoticeVersion: string;
-    privacyNoticePresentedAt: string;
-  },
+  request: StoredServiceRequest,
 ) {
   await ensureDatabase();
   const db = getD1();

@@ -1,0 +1,11 @@
+{
+  "$schema": "https://docs.tryvox.co/schemas/cli/project.v1.json",
+  "schema": "vox.ai.cli-project.v1",
+  "version": 1,
+  "default_agent": "combaksa-consultation",
+  "agents": {
+    "combaksa-consultation": {
+      "path": "agents/combaksa-consultation/agent.json"
+    }
+  }
+}

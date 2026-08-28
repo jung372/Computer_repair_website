@@ -47,3 +47,10 @@ next-env.d.ts
 .sites-dev.*.log
 # local scratch for screenshots, logs and image sources
 /build/
+
+# presentation build outputs and bundled dependencies
+/pptx_build/
+/*.pptx
+/*.pptx.inspect.ndjson
+/컴박사_웹페이지_구축_및_시행착오/
+.vox/

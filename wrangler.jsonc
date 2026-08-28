@@ -21,7 +21,20 @@
   },
   "vars": {
     "NEXT_PUBLIC_BUSINESS_EMAIL": "kkyman1947@naver.com",
-    "NEXT_PUBLIC_BUSINESS_PHONE": "010-3388-1597",
+    "NEXT_PUBLIC_BUSINESS_PHONE": "1660-0596",
+    "BUSINESS_PHONE_DAYTIME": "1660-0596",
+    "BUSINESS_PHONE_AFTER_HOURS": "070-7917-5281",
+    "BUSINESS_TIMEZONE": "Asia/Seoul",
+    "BUSINESS_HOURS_START": "09:00",
+    "BUSINESS_HOURS_END": "18:00",
+    "BUSINESS_HOLIDAYS_KST": "",
+    "BUSINESS_CONSULTATION_HOURS_LABEL": "평일·토요일 09:00–18:00 / 야간·공휴일은 접수 상담만 가능합니다.",
+    // Keep public after-hours phone routing off until end-to-end testing is complete.
+    "AI_PHONE_ROUTING_ENABLED": "false",
+    // The Vox webhook is live; keeping this true prevents a later deploy from disabling intake processing.
+    "VOX_WEBHOOK_ENABLED": "true",
+    "VOX_AGENT_ID": "56416052-f373-45b8-ae59-81ddfa304d4b",
+    "VOX_INBOUND_NUMBER": "07079175281",
     "TELEGRAM_NOTIFICATION_ENABLED": "true",
     "TELEGRAM_CONTENT_PROTECTION_ENABLED": "true",
     "TELEGRAM_PII_MODE": "FULL",
@@ -35,6 +48,7 @@
       "REQUEST_ACCESS_SECRET",
       "REQUEST_LOOKUP_SECRET",
       "RATE_LIMIT_SECRET",
+      "VOX_WEBHOOK_SECRET",
       "TELEGRAM_BOT_TOKEN",
       "TELEGRAM_CHAT_ID",
       "STAFF_CHAT_ID_ENCRYPTION_KEY"
