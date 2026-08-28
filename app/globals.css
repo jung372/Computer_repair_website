@@ -2657,6 +2657,7 @@ p {
 
 .admin-role-chip {
   display: grid;
+  flex: 0 0 auto;
   grid-template-columns: auto auto;
   align-items: center;
   gap: 1px 7px;
@@ -2666,6 +2667,7 @@ p {
   color: #b9cbda;
   font-size: 0.65rem;
   font-weight: 800;
+  white-space: nowrap;
 }
 
 .admin-role-chip b {
@@ -2699,12 +2701,14 @@ p {
 .admin-account-links a,
 .admin-account button {
   display: inline-flex;
+  flex: 0 0 auto;
   align-items: center;
   gap: 5px;
   color: #d8e3ed;
   font-size: 0.78rem;
   font-weight: 700;
   text-decoration: none;
+  white-space: nowrap;
 }
 
 .admin-account-links a:hover,

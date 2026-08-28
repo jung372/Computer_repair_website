@@ -414,6 +414,7 @@ test("separates owner and staff access, assignment, and login identity", async (
   assert.match(cleanupMigration, /`assignee_account_id` IS NULL/);
   assert.match(css, /\.admin-request-table-wrap\s*\{\s*display: none/);
   assert.match(css, /\.admin-request-card-list\s*\{\s*display: grid/);
+  assert.match(css, /\.admin-account-links a,[\s\S]{0,420}white-space: nowrap/);
   assert.match(css, /\.service-card-top\s*\{[\s\S]{0,160}margin-bottom: 6px/);
   assert.match(css, /\.service-icon\s*\{[\s\S]{0,160}position: absolute/);
   assert.match(layout, /applicationName: "컴박사"/);
