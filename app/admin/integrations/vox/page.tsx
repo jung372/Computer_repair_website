@@ -49,7 +49,7 @@ export default async function VoxIntegrationPage() {
           <div>
             <span className="eyebrow eyebrow-light">Call intake monitor</span>
             <h1>전화 접수 연동 상태</h1>
-            <p>Vox 통화가 서비스 신청으로 처리된 결과만 확인합니다. 통화 원문과 고객 개인정보는 표시하지 않습니다.</p>
+            <p>Vox 통화가 서비스 신청으로 처리된 결과만 확인합니다.</p>
           </div>
           <AdminAccountNav user={owner} />
         </div>
