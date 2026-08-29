@@ -118,6 +118,26 @@ test("starts the mobile request form above the fold and collapses optional field
   assert.match(css, /\.field-mobile-inline\s*\{[\s\S]*?grid-template-columns: 88px minmax\(0, 1fr\)/);
 });
 
+test("offers a compact non-blocking quick request panel on the home page", async () => {
+  const [home, panel, css] = await Promise.all([
+    readFile(new URL("app/page.tsx", root), "utf8"),
+    readFile(new URL("components/quick-request-panel.tsx", root), "utf8"),
+    readFile(new URL("app/globals.css", root), "utf8"),
+  ]);
+
+  assert.match(home, /<QuickRequestPanel \/>/);
+  assert.match(panel, /placeholder="연락처 입력"/);
+  assert.match(panel, /placeholder="주소 입력"/);
+  assert.match(panel, /placeholder="고장내용 입력"/);
+  assert.match(panel, /aria-label="빠른 신청 닫기"/);
+  assert.match(panel, /sessionStorage\.setItem\(DISMISSED_KEY, "1"\)/);
+  assert.match(panel, /fetch\("\/api\/requests"/);
+  assert.doesNotMatch(panel, /처리방침|상세 신청/);
+  assert.doesNotMatch(panel, /name="(?:name|password|deviceType|description)"/);
+  assert.match(css, /\.quick-request-shell\s*\{[\s\S]*?position: fixed[\s\S]*?pointer-events: none/);
+  assert.match(css, /@media \(max-width: 840px\)[\s\S]*?\.quick-request-panel\s*\{[\s\S]*?gap: 7px/);
+});
+
 test("supports fixed staff slots, copyable Telegram text and workload counts", async () => {
   const [schema, migration, telegram, staffRepository, staffPage, adminPage] =
     await Promise.all([

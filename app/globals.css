@@ -2670,6 +2670,137 @@ p {
   white-space: nowrap;
 }
 
+/* Non-blocking quick intake: the page remains scrollable behind this panel. */
+.quick-request-shell {
+  position: fixed;
+  z-index: 65;
+  right: 24px;
+  bottom: 24px;
+  width: min(370px, calc(100vw - 32px));
+  pointer-events: none;
+}
+
+.quick-request-panel {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 44px;
+  gap: 9px;
+  padding: 14px;
+  border: 1px solid rgba(39, 132, 245, 0.28);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.98);
+  box-shadow: 0 22px 58px rgba(7, 17, 31, 0.24);
+  pointer-events: auto;
+}
+
+.quick-request-panel > input,
+.quick-request-submit,
+.quick-request-close {
+  min-width: 0;
+  height: 46px;
+  border-radius: 9px;
+}
+
+.quick-request-panel > input {
+  width: 100%;
+  padding: 0 13px;
+  border: 1px solid var(--ink-200);
+  background: var(--white);
+  color: var(--ink-900);
+}
+
+.quick-request-panel > input::placeholder {
+  color: var(--ink-500);
+  opacity: 1;
+}
+
+.quick-request-panel > input:focus {
+  border-color: var(--blue-500);
+  box-shadow: 0 0 0 3px rgba(39, 132, 245, 0.13);
+}
+
+.quick-request-panel > input[aria-invalid="true"] {
+  border-color: var(--rose-600);
+}
+
+.quick-request-close {
+  display: grid;
+  width: 44px;
+  place-items: center;
+  border: 1px solid var(--ink-200);
+  background: var(--ink-50);
+  color: var(--ink-700);
+}
+
+.quick-request-close:hover {
+  border-color: var(--ink-300);
+  background: var(--ink-100);
+}
+
+.quick-request-panel > input:not(:first-of-type),
+.quick-request-submit,
+.quick-request-error {
+  grid-column: 1 / -1;
+}
+
+.quick-request-error {
+  margin: 0;
+  color: var(--rose-600);
+  font-size: 0.76rem;
+  font-weight: 750;
+  line-height: 1.35;
+}
+
+.quick-request-submit {
+  border: 0;
+  background: linear-gradient(135deg, var(--blue-500), var(--blue-700));
+  color: var(--white);
+  font-weight: 850;
+  box-shadow: 0 10px 24px rgba(22, 113, 232, 0.22);
+}
+
+.quick-request-submit:hover {
+  background: linear-gradient(135deg, var(--blue-600), #0e52ad);
+}
+
+.quick-request-submit:disabled {
+  cursor: wait;
+  opacity: 0.62;
+}
+
+@media (max-width: 840px) {
+  .quick-request-shell {
+    right: 12px;
+    bottom: calc(76px + env(safe-area-inset-bottom));
+    width: calc(100vw - 24px);
+  }
+
+  .quick-request-panel {
+    grid-template-columns: minmax(0, 1fr) 42px;
+    gap: 7px;
+    padding: 10px;
+    border-radius: 13px;
+  }
+
+  .quick-request-panel > input,
+  .quick-request-submit,
+  .quick-request-close {
+    height: 42px;
+    font-size: 16px;
+  }
+
+  .quick-request-close {
+    width: 42px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .quick-request-panel,
+  .quick-request-submit,
+  .quick-request-close {
+    transition: none;
+  }
+}
+
 .admin-role-chip b {
   color: var(--white);
   font-size: 0.78rem;

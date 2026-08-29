@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { DeviceIcon } from "@/components/device-icon";
+import { QuickRequestPanel } from "@/components/quick-request-panel";
 import { serviceGuideList } from "@/lib/service-content";
 import { getSiteConfig } from "@/lib/site-config";
 
@@ -26,6 +27,7 @@ export default async function Home() {
 
   return (
     <main id="main-content">
+      <QuickRequestPanel />
       <section className="hero">
         <div className="hero-grid-overlay" aria-hidden="true" />
         <div className="container hero-inner">
