@@ -196,6 +196,67 @@ export const adminAuditLogs = sqliteTable(
   (table) => [index("admin_audit_created_idx").on(table.createdAt)],
 );
 
+export const marketingJobs = sqliteTable(
+  "marketing_jobs",
+  {
+    id: text("id").primaryKey(),
+    schemaVersion: integer("schema_version").notNull().default(1),
+    status: text("status").notNull().default("UPLOADING"),
+    symptom: text("symptom").notNull(),
+    causeUnknown: integer("cause_unknown").notNull().default(0),
+    diagnosedCause: text("diagnosed_cause").notNull().default(""),
+    actionsTaken: text("actions_taken").notNull(),
+    verificationResult: text("verification_result").notNull(),
+    deviceInfo: text("device_info").notNull().default(""),
+    workDuration: text("work_duration").notNull().default(""),
+    repairNotes: text("repair_notes").notNull().default(""),
+    district: text("district").notNull(),
+    photoConsent: integer("photo_consent").notNull().default(0),
+    privacyReviewed: integer("privacy_reviewed").notNull().default(0),
+    photoEvidenceNote: text("photo_evidence_note").notNull().default(""),
+    requestedBy: text("requested_by").notNull(),
+    idempotencyKey: text("idempotency_key").notNull().unique(),
+    localJobId: text("local_job_id"),
+    failureCode: text("failure_code"),
+    createdAt: text("created_at").notNull(),
+    updatedAt: text("updated_at").notNull(),
+  },
+  (table) => [
+    index("marketing_jobs_status_created_idx").on(table.status, table.createdAt),
+    index("marketing_jobs_requested_by_idx").on(table.requestedBy, table.createdAt),
+  ],
+);
+
+export const marketingJobAssets = sqliteTable(
+  "marketing_job_assets",
+  {
+    id: text("id").primaryKey(),
+    jobId: text("job_id").notNull().references(() => marketingJobs.id, { onDelete: "cascade" }),
+    sequence: integer("sequence").notNull(),
+    r2Key: text("r2_key").notNull().unique(),
+    originalName: text("original_name").notNull(),
+    mimeType: text("mime_type").notNull(),
+    size: integer("size").notNull(),
+    sha256: text("sha256").notNull(),
+    createdAt: text("created_at").notNull(),
+  },
+  (table) => [index("marketing_job_assets_job_idx").on(table.jobId, table.sequence)],
+);
+
+export const marketingJobEvents = sqliteTable(
+  "marketing_job_events",
+  {
+    id: text("id").primaryKey(),
+    jobId: text("job_id").notNull().references(() => marketingJobs.id, { onDelete: "cascade" }),
+    status: text("status").notNull(),
+    actor: text("actor").notNull(),
+    message: text("message").notNull(),
+    metadata: text("metadata"),
+    createdAt: text("created_at").notNull(),
+  },
+  (table) => [index("marketing_job_events_job_idx").on(table.jobId, table.createdAt)],
+);
+
 export const requestSerials = sqliteTable("request_serials", {
   serialNo: integer("serial_no").primaryKey({ autoIncrement: true }),
   requestId: text("request_id")

@@ -1,4 +1,4 @@
-import { KeyRound, LogOut, RadioTower, ReceiptText, UsersRound } from "lucide-react";
+import { KeyRound, LogOut, RadioTower, ReceiptText, UsersRound, Wrench } from "lucide-react";
 import Link from "next/link";
 import type { AdminUser } from "@/lib/admin-auth";
 
@@ -16,6 +16,7 @@ export function AdminAccountNav({ user }: { user: AdminUser }) {
         {user.role === "OWNER" && (
           <>
             <Link href="/admin/staff"><UsersRound size={15} aria-hidden="true" /> 직원 관리</Link>
+            <Link href="/admin/marketing"><Wrench size={15} aria-hidden="true" /> 콘텐츠 작업실</Link>
             <Link href="/admin/integrations/vox"><RadioTower size={15} aria-hidden="true" /> 전화 연동</Link>
           </>
         )}

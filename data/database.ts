@@ -177,6 +177,35 @@ async function initializeDatabase() {
       )
     `),
     db.prepare(`
+      CREATE TABLE IF NOT EXISTS marketing_jobs (
+        id TEXT PRIMARY KEY, schema_version INTEGER NOT NULL DEFAULT 1,
+        status TEXT NOT NULL DEFAULT 'UPLOADING', symptom TEXT NOT NULL,
+        cause_unknown INTEGER NOT NULL DEFAULT 0, diagnosed_cause TEXT NOT NULL DEFAULT '',
+        actions_taken TEXT NOT NULL, verification_result TEXT NOT NULL,
+        device_info TEXT NOT NULL DEFAULT '', work_duration TEXT NOT NULL DEFAULT '',
+        repair_notes TEXT NOT NULL DEFAULT '', district TEXT NOT NULL,
+        photo_consent INTEGER NOT NULL DEFAULT 0, privacy_reviewed INTEGER NOT NULL DEFAULT 0,
+        photo_evidence_note TEXT NOT NULL DEFAULT '', requested_by TEXT NOT NULL,
+        idempotency_key TEXT NOT NULL UNIQUE, local_job_id TEXT, failure_code TEXT,
+        created_at TEXT NOT NULL, updated_at TEXT NOT NULL
+      )
+    `),
+    db.prepare(`
+      CREATE TABLE IF NOT EXISTS marketing_job_assets (
+        id TEXT PRIMARY KEY, job_id TEXT NOT NULL, sequence INTEGER NOT NULL,
+        r2_key TEXT NOT NULL UNIQUE, original_name TEXT NOT NULL, mime_type TEXT NOT NULL,
+        size INTEGER NOT NULL, sha256 TEXT NOT NULL, created_at TEXT NOT NULL,
+        FOREIGN KEY (job_id) REFERENCES marketing_jobs(id) ON DELETE CASCADE
+      )
+    `),
+    db.prepare(`
+      CREATE TABLE IF NOT EXISTS marketing_job_events (
+        id TEXT PRIMARY KEY, job_id TEXT NOT NULL, status TEXT NOT NULL,
+        actor TEXT NOT NULL, message TEXT NOT NULL, metadata TEXT, created_at TEXT NOT NULL,
+        FOREIGN KEY (job_id) REFERENCES marketing_jobs(id) ON DELETE CASCADE
+      )
+    `),
+    db.prepare(`
       CREATE TABLE IF NOT EXISTS request_assignment_history (
         id TEXT PRIMARY KEY,
         request_id TEXT NOT NULL,
@@ -234,6 +263,9 @@ async function initializeDatabase() {
     db.prepare("CREATE INDEX IF NOT EXISTS integration_intakes_status_received_idx ON integration_intakes(status, received_at)"),
     db.prepare("CREATE INDEX IF NOT EXISTS customer_lookup_request_idx ON customer_lookup_session_requests(request_id)"),
     db.prepare("CREATE INDEX IF NOT EXISTS admin_audit_created_idx ON admin_audit_logs(created_at)"),
+    db.prepare("CREATE INDEX IF NOT EXISTS marketing_jobs_status_created_idx ON marketing_jobs(status, created_at)"),
+    db.prepare("CREATE INDEX IF NOT EXISTS marketing_job_assets_job_idx ON marketing_job_assets(job_id, sequence)"),
+    db.prepare("CREATE INDEX IF NOT EXISTS marketing_job_events_job_idx ON marketing_job_events(job_id, created_at)"),
     db.prepare("CREATE INDEX IF NOT EXISTS request_operations_receipt_idx ON request_operations(receipt_type)"),
     db.prepare("CREATE INDEX IF NOT EXISTS request_operations_assignee_idx ON request_operations(assignee)"),
     db.prepare("CREATE INDEX IF NOT EXISTS request_operations_dates_idx ON request_operations(received_date, completed_date)"),
