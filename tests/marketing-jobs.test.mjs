@@ -6,6 +6,24 @@ import {
   normalizeMarketingJobInput,
   sanitizeMarketingImage,
 } from "../lib/marketing/job-contract.ts";
+import {
+  PHOTO_COMPRESSION_PROFILES,
+  selectPhotoCompressionProfile,
+} from "../lib/logic/marketing-photo-compression.ts";
+
+test("mobile repair photos expose bounded compression profiles", () => {
+  assert.deepEqual(selectPhotoCompressionProfile("compact"), {
+    id: "compact",
+    label: "데이터 절약",
+    maxDimension: 1600,
+    targetBytes: 1024 * 1024,
+    quality: 0.76,
+  });
+  assert.equal(selectPhotoCompressionProfile("recommended").targetBytes, 2 * 1024 * 1024);
+  assert.equal(selectPhotoCompressionProfile("detail").maxDimension, 2560);
+  assert.equal(selectPhotoCompressionProfile("unknown").id, "recommended");
+  assert.equal(Object.keys(PHOTO_COMPRESSION_PROFILES).length, 3);
+});
 
 test("repair diary intake requires the minimum fact ledger and explicit photo privacy controls", () => {
   assert.throws(() => normalizeMarketingJobInput({
@@ -61,18 +79,27 @@ test("Cloudflare configuration keeps repair photos separate and queues only job 
   assert.match(nextRoute, /authorizeMarketingBridge/);
 });
 
-test("owner workbench exposes photo removal, full reset, privacy checks and local processing stages", async () => {
+test("owner menu opens the repair upload workbench and exposes mobile photo optimization", async () => {
   const root = new URL("../", import.meta.url);
-  const [form, page, nav] = await Promise.all([
+  const [form, page, nav, compression] = await Promise.all([
     readFile(new URL("components/marketing-job-form.tsx", root), "utf8"),
-    readFile(new URL("app/admin/marketing/new/page.tsx", root), "utf8"),
+    readFile(new URL("app/admin/marketing/page.tsx", root), "utf8"),
     readFile(new URL("components/admin-account-nav.tsx", root), "utf8"),
+    readFile(new URL("lib/logic/marketing-photo-compression.ts", root), "utf8"),
   ]);
   assert.match(form, /removePhoto/);
   assert.match(form, /전체 초기화/);
   assert.match(form, /privacyReviewed/);
   assert.match(form, /블로그 공개 동의/);
+  assert.match(form, /capture="environment"/);
+  assert.match(compression, /데이터 절약/);
+  assert.match(compression, /권장/);
+  assert.match(compression, /고화질/);
+  assert.match(form, /원본.*업로드/s);
+  assert.match(page, /MarketingJobForm/);
+  assert.match(page, /수리일지 등록/);
+  assert.match(page, /작업 현황/);
   assert.match(page, /로컬 AI/);
   assert.match(page, /운영자 검토/);
-  assert.match(nav, /\/admin\/marketing/);
+  assert.match(nav, /수리일지 작업실/);
 });
