@@ -5815,7 +5815,7 @@ body:has(.admin-shell) .mobile-actions { display: none; }
 .marketing-job-main small { display: block; margin-top: 6px; color: var(--ink-400); font-family: ui-monospace, monospace; font-size: .62rem; }
 .marketing-job-main time { color: var(--ink-500); font-size: .68rem; }
 .marketing-status { display: inline-flex; padding: 4px 7px; border-radius: 999px; background: #eef3f6; color: var(--ink-700); font-size: .64rem; font-weight: 900; }
-.status-awaiting_review, .status-published { background: #e5f7ef; color: #147653; }
+.status-awaiting_review, .status-published, .status-operator_resolved { background: #e5f7ef; color: #147653; }
 .status-failed, .status-operator_action_required { background: #fff0f0; color: #ad2f2f; }
 
 @media (max-width: 800px) {

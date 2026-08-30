@@ -103,3 +103,15 @@ test("owner menu opens the repair upload workbench and exposes mobile photo opti
   assert.match(page, /운영자 검토/);
   assert.match(nav, /수리일지 작업실/);
 });
+
+test("manual operator closure is accepted and displayed as a terminal marketing status", async () => {
+  const root = new URL("../", import.meta.url);
+  const [eventRoute, page, styles] = await Promise.all([
+    readFile(new URL("app/api/bridge/marketing/jobs/[jobId]/events/route.ts", root), "utf8"),
+    readFile(new URL("app/admin/marketing/page.tsx", root), "utf8"),
+    readFile(new URL("app/globals.css", root), "utf8"),
+  ]);
+  assert.match(eventRoute, /OPERATOR_RESOLVED/);
+  assert.match(page, /OPERATOR_RESOLVED:\s*"운영자 확인 후 종결"/);
+  assert.match(styles, /status-operator_resolved/);
+});

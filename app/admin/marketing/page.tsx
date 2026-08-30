@@ -12,7 +12,7 @@ export const dynamic = "force-dynamic";
 const STATUS: Record<string, string> = {
   UPLOADING: "사진 처리 중", QUEUED: "클라우드 대기", LOCAL_ACCEPTED: "서버 수신", QUEUED_LOCAL: "AI 대기",
   GENERATING: "AI 작성 중", AWAITING_REVIEW: "검토 대기", APPROVED: "발행 승인", PUBLISHING: "발행 중",
-  PUBLISHED: "발행 완료", OPERATOR_ACTION_REQUIRED: "운영자 확인", FAILED: "실패",
+  PUBLISHED: "발행 완료", OPERATOR_ACTION_REQUIRED: "운영자 확인", OPERATOR_RESOLVED: "운영자 확인 후 종결", FAILED: "실패",
 };
 
 export default async function MarketingPage({ searchParams }: {

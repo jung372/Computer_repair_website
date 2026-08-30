@@ -3,7 +3,7 @@ import { authorizeMarketingBridge } from "@/lib/marketing/bridge-auth";
 
 const ALLOWED = new Set([
   "LOCAL_ACCEPTED", "QUEUED_LOCAL", "GENERATING", "AWAITING_REVIEW", "APPROVED",
-  "PUBLISHING", "PUBLISHED", "OPERATOR_ACTION_REQUIRED", "FAILED",
+  "PUBLISHING", "PUBLISHED", "OPERATOR_ACTION_REQUIRED", "OPERATOR_RESOLVED", "FAILED",
 ]);
 
 export async function POST(request: Request, context: { params: Promise<{ jobId: string }> }) {
