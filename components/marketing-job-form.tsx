@@ -10,6 +10,9 @@ import {
   PHOTO_COMPRESSION_PROFILES,
   PhotoCompressionProfileId,
 } from "@/lib/logic/marketing-photo-compression";
+import {
+  assertMarketingUploadTotalBytes,
+} from "@/lib/marketing/job-contract";
 
 type SelectedPhoto = {
   file: File;
@@ -77,6 +80,7 @@ export function MarketingJobForm() {
           if (result.uploadBytes > 8 * 1024 * 1024) {
             throw new Error("최적화 후에도 8MB를 초과합니다. 데이터 절약 모드로 다시 선택해 주세요.");
           }
+          assertMarketingUploadTotalBytes(working.reduce((sum, photo) => sum + photo.uploadBytes, 0) + result.uploadBytes);
           working.push({
             file: result.uploadFile,
             originalFile: result.originalFile,
@@ -109,8 +113,8 @@ export function MarketingJobForm() {
     setProcessingPhotos(true);
     setError("");
     const previous = [...photosRef.current];
+    const next: SelectedPhoto[] = [];
     try {
-      const next: SelectedPhoto[] = [];
       for (const photo of previous) {
         const result = await compressMarketingPhoto(photo.originalFile, profileId);
         next.push({
@@ -126,9 +130,11 @@ export function MarketingJobForm() {
           optimized: result.optimized,
         });
       }
+      assertMarketingUploadTotalBytes(next.reduce((sum, photo) => sum + photo.uploadBytes, 0));
       previous.forEach((photo) => URL.revokeObjectURL(photo.url));
       replacePhotos(next);
     } catch (photoError) {
+      next.forEach((photo) => URL.revokeObjectURL(photo.url));
       setError(photoError instanceof Error ? photoError.message : "사진 용량 설정을 바꾸지 못했습니다.");
     } finally {
       setProcessingPhotos(false);
@@ -171,12 +177,13 @@ export function MarketingJobForm() {
     setSubmitting(true);
     setError("");
     try {
+      assertMarketingUploadTotalBytes(photosRef.current.reduce((sum, photo) => sum + photo.uploadBytes, 0));
       const data = new FormData(event.currentTarget);
       data.set("causeUnknown", String(causeUnknown));
       data.set("idempotencyKey", crypto.randomUUID());
       for (const photo of photosRef.current) data.append("photos", photo.file, photo.file.name);
       const response = await fetch("/api/admin/marketing/jobs", { method: "POST", body: data });
-      const result = await response.json() as { jobId?: string; error?: string };
+      const result = await readMarketingJobResponse(response);
       if (!response.ok || !result.jobId) throw new Error(result.error || `요청 실패 (${response.status})`);
       router.push(`/admin/marketing?view=history&created=${encodeURIComponent(result.jobId)}`);
       router.refresh();
@@ -247,7 +254,7 @@ export function MarketingJobForm() {
             })}
           </div>
         )}
-        <p className="photo-total">선택 {photos.length}/{MAX_PHOTOS}장 · 원본 {formatPhotoBytes(totalOriginalBytes)} → 업로드 {formatPhotoBytes(totalBytes)}</p>
+        <p className="photo-total">선택 {photos.length}/{MAX_PHOTOS}장 · 원본 {formatPhotoBytes(totalOriginalBytes)} → 업로드 {formatPhotoBytes(totalBytes)} · 합계 최대 30MB</p>
         <div className="marketing-consent-box">
           <ShieldCheck aria-hidden="true" />
           <div>
@@ -265,6 +272,18 @@ export function MarketingJobForm() {
       </footer>
     </form>
   );
+}
+
+async function readMarketingJobResponse(response: Response): Promise<{ jobId?: string; error?: string }> {
+  const contentType = response.headers.get("content-type")?.toLowerCase() || "";
+  if (contentType.includes("application/json")) {
+    return response.json() as Promise<{ jobId?: string; error?: string }>;
+  }
+  const message = (await response.text()).trim();
+  if (response.status === 413) {
+    return { error: "첨부 사진 전체 용량이 너무 큽니다. 데이터 절약 모드로 줄인 뒤 다시 등록해 주세요." };
+  }
+  return { error: message || `요청 실패 (${response.status})` };
 }
 
 function isSupportedPhoto(file: File) {

@@ -7,6 +7,7 @@ import {
 import { getAdminUser } from "@/lib/admin-auth";
 import {
   MAX_MARKETING_PHOTOS,
+  assertMarketingUploadTotalBytes,
   normalizeMarketingJobInput,
   sanitizeMarketingImage,
 } from "@/lib/marketing/job-contract";
@@ -36,6 +37,7 @@ export async function POST(request: Request) {
     const input = normalizeMarketingJobInput(Object.fromEntries(form.entries()));
     const photos = form.getAll("photos").filter((value): value is File => value instanceof File && value.size > 0);
     if (photos.length > MAX_MARKETING_PHOTOS) throw new Error(`사진은 최대 ${MAX_MARKETING_PHOTOS}장까지 첨부할 수 있습니다.`);
+    assertMarketingUploadTotalBytes(photos.reduce((total, photo) => total + photo.size, 0));
     if (photos.length && (!input.photoConsent || !input.privacyReviewed)) {
       throw new Error("사진 공개 동의와 개인정보 비식별 확인을 모두 완료해 주세요.");
     }

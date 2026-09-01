@@ -10,6 +10,10 @@ import {
   PHOTO_COMPRESSION_PROFILES,
   selectPhotoCompressionProfile,
 } from "../lib/logic/marketing-photo-compression.ts";
+import {
+  MAX_MARKETING_UPLOAD_BYTES,
+  assertMarketingUploadTotalBytes,
+} from "../lib/marketing/job-contract.ts";
 
 test("mobile repair photos expose bounded compression profiles", () => {
   assert.deepEqual(selectPhotoCompressionProfile("compact"), {
@@ -23,6 +27,15 @@ test("mobile repair photos expose bounded compression profiles", () => {
   assert.equal(selectPhotoCompressionProfile("detail").maxDimension, 2560);
   assert.equal(selectPhotoCompressionProfile("unknown").id, "recommended");
   assert.equal(Object.keys(PHOTO_COMPRESSION_PROFILES).length, 3);
+});
+
+test("marketing photo request budget supports six high-quality targets but rejects oversized totals", () => {
+  assert.equal(MAX_MARKETING_UPLOAD_BYTES, 30 * 1024 * 1024);
+  assert.doesNotThrow(() => assertMarketingUploadTotalBytes(6 * 4 * 1024 * 1024));
+  assert.throws(
+    () => assertMarketingUploadTotalBytes(31 * 1024 * 1024),
+    /사진 합계 용량.*30MB/,
+  );
 });
 
 test("repair diary intake requires the minimum fact ledger and explicit photo privacy controls", () => {
@@ -81,11 +94,12 @@ test("Cloudflare configuration keeps repair photos separate and queues only job 
 
 test("owner menu opens the repair upload workbench and exposes mobile photo optimization", async () => {
   const root = new URL("../", import.meta.url);
-  const [form, page, nav, compression] = await Promise.all([
+  const [form, page, nav, compression, nextConfig] = await Promise.all([
     readFile(new URL("components/marketing-job-form.tsx", root), "utf8"),
     readFile(new URL("app/admin/marketing/page.tsx", root), "utf8"),
     readFile(new URL("components/admin-account-nav.tsx", root), "utf8"),
     readFile(new URL("lib/logic/marketing-photo-compression.ts", root), "utf8"),
+    readFile(new URL("next.config.ts", root), "utf8"),
   ]);
   assert.match(form, /removePhoto/);
   assert.match(form, /전체 초기화/);
@@ -96,6 +110,11 @@ test("owner menu opens the repair upload workbench and exposes mobile photo opti
   assert.match(compression, /권장/);
   assert.match(compression, /고화질/);
   assert.match(form, /원본.*업로드/s);
+  assert.match(form, /response\.status === 413/);
+  assert.match(form, /response\.text\(\)/);
+  assert.match(form, /assertMarketingUploadTotalBytes/);
+  assert.match(form, /합계 최대 30MB/);
+  assert.match(nextConfig, /bodySizeLimit:\s*["']32mb["']/);
   assert.match(page, /MarketingJobForm/);
   assert.match(page, /수리일지 등록/);
   assert.match(page, /작업 현황/);

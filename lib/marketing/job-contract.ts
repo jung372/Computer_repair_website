@@ -1,6 +1,13 @@
 export const MARKETING_DISTRICTS = ["광진구", "성동구", "동대문구"] as const;
 export const MAX_MARKETING_PHOTO_BYTES = 8 * 1024 * 1024;
 export const MAX_MARKETING_PHOTOS = 6;
+export const MAX_MARKETING_UPLOAD_BYTES = 30 * 1024 * 1024;
+
+export function assertMarketingUploadTotalBytes(value: number) {
+  if (!Number.isFinite(value) || value < 0 || value > MAX_MARKETING_UPLOAD_BYTES) {
+    throw new Error("사진 합계 용량은 30MB 이하여야 합니다. 데이터 절약 모드로 줄인 뒤 다시 등록해 주세요.");
+  }
+}
 
 type FormValue = FormDataEntryValue | string | boolean | null | undefined;
 
