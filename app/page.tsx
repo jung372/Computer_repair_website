@@ -14,8 +14,10 @@ import {
   Wrench,
 } from "lucide-react";
 import Link from "next/link";
+import { BlogNotesSection } from "@/components/blog-notes-section";
 import { DeviceIcon } from "@/components/device-icon";
 import { QuickRequestPanel } from "@/components/quick-request-panel";
+import { listPublishedBlogPosts } from "@/data/blog-post-repository";
 import { serviceGuideList } from "@/lib/service-content";
 import { getSiteConfig } from "@/lib/site-config";
 
@@ -24,6 +26,7 @@ export const dynamic = "force-dynamic";
 export default async function Home() {
   const config = getSiteConfig();
   const phoneHref = `tel:${config.phone.replace(/\D/g, "")}`;
+  const blogPosts = await listPublishedBlogPosts(3);
 
   return (
     <main id="main-content">
@@ -232,6 +235,8 @@ export default async function Home() {
           </div>
         </div>
       </section>
+
+      <BlogNotesSection posts={blogPosts} blogUrl={config.naverBlogUrl} />
 
       <section className="final-cta">
         <div className="container final-cta-inner">

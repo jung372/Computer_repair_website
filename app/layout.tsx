@@ -59,6 +59,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ko">
+      <head>
+        <link rel="alternate" type="application/rss+xml" title="컴박사 네이버 블로그 RSS" href="https://rss.blog.naver.com/combaksa_repair.xml" />
+      </head>
       <body>
         <script dangerouslySetInnerHTML={{ __html: dropFooterAnchor }} />
         <a className="skip-link" href="#main-content">본문 바로가기</a>

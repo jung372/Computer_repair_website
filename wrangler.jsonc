@@ -40,7 +40,8 @@
     "TELEGRAM_PII_MODE": "FULL",
     "REQUEST_SUBMISSION_ENABLED": "true",
     // Scheduled runs have no request to derive the admin link from.
-    "PUBLIC_BASE_URL": "https://combaksa.pe.kr"
+    "PUBLIC_BASE_URL": "https://combaksa.pe.kr",
+    "NEXT_PUBLIC_NAVER_BLOG_ID": "combaksa_repair"
   },
   "secrets": {
     "required": [
@@ -59,6 +60,8 @@
     "crons": [
       // Retries notifications the request path could not deliver.
       "*/5 * * * *",
+      // Reconciles public Naver posts that missed the primary publish event.
+      "17 * * * *",
       // Daily D1 backup at 03:00 KST (18:00 UTC), when 접수 traffic is lowest.
       "0 18 * * *"
     ]

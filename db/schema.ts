@@ -257,6 +257,31 @@ export const marketingJobEvents = sqliteTable(
   (table) => [index("marketing_job_events_job_idx").on(table.jobId, table.createdAt)],
 );
 
+export const blogPosts = sqliteTable(
+  "blog_posts",
+  {
+    id: text("id").primaryKey(),
+    platform: text("platform").notNull().default("naver"),
+    blogId: text("blog_id").notNull(),
+    postId: text("post_id").notNull(),
+    postUrl: text("post_url").notNull().unique(),
+    title: text("title").notNull(),
+    excerpt: text("excerpt").notNull().default(""),
+    contentType: text("content_type").notNull().default("recommended"),
+    district: text("district").notNull().default(""),
+    thumbnailUrl: text("thumbnail_url").notNull().default(""),
+    publishedAt: text("published_at").notNull(),
+    sourceJobId: text("source_job_id").notNull().default(""),
+    source: text("source").notNull(),
+    visibility: text("visibility").notNull().default("PUBLISHED"),
+    syncedAt: text("synced_at").notNull(),
+  },
+  (table) => [
+    uniqueIndex("blog_posts_platform_post_unique").on(table.platform, table.blogId, table.postId),
+    index("blog_posts_visibility_published_idx").on(table.visibility, table.publishedAt),
+  ],
+);
+
 export const requestSerials = sqliteTable("request_serials", {
   serialNo: integer("serial_no").primaryKey({ autoIncrement: true }),
   requestId: text("request_id")

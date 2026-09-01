@@ -12,6 +12,7 @@ export const siteDefaults = {
   businessNumber: "389-80-03376",
   representative: "김규웅",
   address: "서울특별시 광진구 자양로19길 42-17, 101호",
+  naverBlogId: "combaksa_repair",
 };
 
 export function getSiteConfig(now = new Date()) {
@@ -44,5 +45,9 @@ export function getSiteConfig(now = new Date()) {
     representative:
       getRuntimeString("NEXT_PUBLIC_BUSINESS_OWNER") || siteDefaults.representative,
     address: getRuntimeString("NEXT_PUBLIC_BUSINESS_ADDRESS") || siteDefaults.address,
+    naverBlogId: getRuntimeString("NEXT_PUBLIC_NAVER_BLOG_ID") || siteDefaults.naverBlogId,
+    naverBlogUrl: `https://blog.naver.com/${encodeURIComponent(
+      getRuntimeString("NEXT_PUBLIC_NAVER_BLOG_ID") || siteDefaults.naverBlogId,
+    )}`,
   };
 }

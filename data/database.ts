@@ -206,6 +206,18 @@ async function initializeDatabase() {
       )
     `),
     db.prepare(`
+      CREATE TABLE IF NOT EXISTS blog_posts (
+        id TEXT PRIMARY KEY, platform TEXT NOT NULL DEFAULT 'naver',
+        blog_id TEXT NOT NULL, post_id TEXT NOT NULL, post_url TEXT NOT NULL UNIQUE,
+        title TEXT NOT NULL, excerpt TEXT NOT NULL DEFAULT '',
+        content_type TEXT NOT NULL DEFAULT 'recommended', district TEXT NOT NULL DEFAULT '',
+        thumbnail_url TEXT NOT NULL DEFAULT '', published_at TEXT NOT NULL,
+        source_job_id TEXT NOT NULL DEFAULT '', source TEXT NOT NULL,
+        visibility TEXT NOT NULL DEFAULT 'PUBLISHED', synced_at TEXT NOT NULL,
+        UNIQUE(platform, blog_id, post_id)
+      )
+    `),
+    db.prepare(`
       CREATE TABLE IF NOT EXISTS request_assignment_history (
         id TEXT PRIMARY KEY,
         request_id TEXT NOT NULL,
@@ -266,6 +278,7 @@ async function initializeDatabase() {
     db.prepare("CREATE INDEX IF NOT EXISTS marketing_jobs_status_created_idx ON marketing_jobs(status, created_at)"),
     db.prepare("CREATE INDEX IF NOT EXISTS marketing_job_assets_job_idx ON marketing_job_assets(job_id, sequence)"),
     db.prepare("CREATE INDEX IF NOT EXISTS marketing_job_events_job_idx ON marketing_job_events(job_id, created_at)"),
+    db.prepare("CREATE INDEX IF NOT EXISTS blog_posts_visibility_published_idx ON blog_posts(visibility, published_at)"),
     db.prepare("CREATE INDEX IF NOT EXISTS request_operations_receipt_idx ON request_operations(receipt_type)"),
     db.prepare("CREATE INDEX IF NOT EXISTS request_operations_assignee_idx ON request_operations(assignee)"),
     db.prepare("CREATE INDEX IF NOT EXISTS request_operations_dates_idx ON request_operations(received_date, completed_date)"),
