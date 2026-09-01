@@ -38,7 +38,7 @@ export function BlogNotesSection({ posts, blogUrl }: { posts: BlogPostRow[]; blo
           <p>실제 수리 사례와 집에서 먼저 확인할 수 있는 점검 방법을 기록합니다.</p>
         </div>
         {posts.length ? (
-          <div className="blog-notes-grid">
+          <div className={`blog-notes-grid blog-notes-count-${Math.min(posts.length, 3)}`}>
             {posts.map((post, index) => {
               const Icon = ICONS[post.contentType];
               return (
