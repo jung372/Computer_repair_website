@@ -8,7 +8,7 @@ BASE_URL = os.environ.get("BLOG_UI_BASE_URL", "http://127.0.0.1:5173")
 ARTIFACTS = Path(__file__).parent / "artifacts"
 
 
-def verify_page(page, screenshot_name: str) -> None:
+def verify_page(page, screenshot_name: str, expect_single_column: bool) -> None:
     page.goto(BASE_URL, wait_until="networkidle")
     section = page.locator(".blog-notes-section")
     section.scroll_into_view_if_needed()
@@ -22,6 +22,16 @@ def verify_page(page, screenshot_name: str) -> None:
     section_box = section.bounding_box()
     final_box = page.locator(".final-cta").bounding_box()
     assert section_box and final_box and section_box["y"] < final_box["y"]
+    cards = section.locator(".blog-note-card")
+    if cards.count() >= 2:
+        first_card = cards.nth(0).bounding_box()
+        second_card = cards.nth(1).bounding_box()
+        assert first_card and second_card
+        if expect_single_column:
+            assert abs(first_card["x"] - second_card["x"]) < 2
+            assert second_card["y"] > first_card["y"]
+        else:
+            assert second_card["x"] > first_card["x"]
     assert page.evaluate("document.documentElement.scrollWidth <= window.innerWidth")
     ARTIFACTS.mkdir(parents=True, exist_ok=True)
     page.screenshot(path=str(ARTIFACTS / screenshot_name), full_page=False)
@@ -30,7 +40,7 @@ def verify_page(page, screenshot_name: str) -> None:
 with sync_playwright() as playwright:
     browser = playwright.chromium.launch(headless=True)
     desktop = browser.new_page(viewport={"width": 1920, "height": 1080})
-    verify_page(desktop, "blog-home-desktop.png")
+    verify_page(desktop, "blog-home-desktop.png", expect_single_column=False)
     mobile = browser.new_page(viewport={"width": 390, "height": 844})
-    verify_page(mobile, "blog-home-mobile.png")
+    verify_page(mobile, "blog-home-mobile.png", expect_single_column=True)
     browser.close()

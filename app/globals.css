@@ -3347,7 +3347,8 @@ p {
     width: 84px;
   }
 
-  .blog-notes-grid {
+  .blog-notes-grid,
+  .blog-notes-grid.blog-notes-count-2 {
     grid-template-columns: 1fr;
   }
 

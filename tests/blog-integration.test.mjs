@@ -55,12 +55,13 @@ test("RSS recovery parses public Naver entries into the same post contract", () 
 
 test("homepage integration is durable, authenticated, crawlable, and scheduled for RSS recovery", async () => {
   const root = new URL("../", import.meta.url);
-  const [schema, migration, route, home, section, footer, worker, wrangler] = await Promise.all([
+  const [schema, migration, route, home, section, styles, footer, worker, wrangler] = await Promise.all([
     readFile(new URL("db/schema.ts", root), "utf8"),
     readFile(new URL("drizzle/0014_blog_posts.sql", root), "utf8"),
     readFile(new URL("app/api/bridge/blog/posts/route.ts", root), "utf8"),
     readFile(new URL("app/page.tsx", root), "utf8"),
     readFile(new URL("components/blog-notes-section.tsx", root), "utf8"),
+    readFile(new URL("app/globals.css", root), "utf8"),
     readFile(new URL("components/site-footer.tsx", root), "utf8"),
     readFile(new URL("worker/index.ts", root), "utf8"),
     readFile(new URL("wrangler.jsonc", root), "utf8"),
@@ -76,6 +77,7 @@ test("homepage integration is durable, authenticated, crawlable, and scheduled f
   assert.match(section, /컴박사가 직접 정리한 수리 노트/);
   assert.match(section, /target="_blank"/);
   assert.match(section, /rel="noopener noreferrer"/);
+  assert.match(styles, /@media \(max-width: 580px\)[\s\S]*\.blog-notes-grid\.blog-notes-count-2\s*\{\s*grid-template-columns: 1fr;/);
   assert.match(footer, /컴박사 블로그/);
   assert.match(worker, /syncNaverBlogRss/);
   assert.match(wrangler, /"17 \* \* \* \*"/);
