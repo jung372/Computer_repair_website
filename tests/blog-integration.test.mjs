@@ -55,11 +55,12 @@ test("RSS recovery parses public Naver entries into the same post contract", () 
 
 test("homepage integration is durable, authenticated, crawlable, and scheduled for RSS recovery", async () => {
   const root = new URL("../", import.meta.url);
-  const [schema, migration, route, home, section, styles, footer, worker, wrangler] = await Promise.all([
+  const [schema, migration, route, home, repository, section, styles, footer, worker, wrangler] = await Promise.all([
     readFile(new URL("db/schema.ts", root), "utf8"),
     readFile(new URL("drizzle/0014_blog_posts.sql", root), "utf8"),
     readFile(new URL("app/api/bridge/blog/posts/route.ts", root), "utf8"),
     readFile(new URL("app/page.tsx", root), "utf8"),
+    readFile(new URL("data/blog-post-repository.ts", root), "utf8"),
     readFile(new URL("components/blog-notes-section.tsx", root), "utf8"),
     readFile(new URL("app/globals.css", root), "utf8"),
     readFile(new URL("components/site-footer.tsx", root), "utf8"),
@@ -71,13 +72,21 @@ test("homepage integration is durable, authenticated, crawlable, and scheduled f
   assert.match(migration, /post_url.*UNIQUE/is);
   assert.match(route, /authorizeMarketingBridge/);
   assert.match(route, /upsertPublishedBlogPost/);
-  assert.match(home, /listPublishedBlogPosts\(3\)/);
+  assert.match(home, /listPublishedRepairCases\(3\)/);
   assert.match(home, /<BlogNotesSection/);
   assert.ok(home.indexOf("<BlogNotesSection") < home.indexOf('className="final-cta"'));
-  assert.match(section, /컴박사가 직접 정리한 수리 노트/);
+  assert.match(repository, /content_type = 'repair_diary'/);
+  assert.match(section, /id="repair-cases"/);
+  assert.match(section, /실제 수리 과정을 확인하세요/);
+  assert.match(section, /접수 증상/);
+  assert.match(section, /확인한 원인/);
+  assert.match(section, /실제 조치/);
+  assert.match(section, /작동 확인/);
+  assert.match(section, /href="\/requests\/new"/);
   assert.match(section, /target="_blank"/);
   assert.match(section, /rel="noopener noreferrer"/);
   assert.match(styles, /@media \(max-width: 580px\)[\s\S]*\.blog-notes-grid\.blog-notes-count-2\s*\{\s*grid-template-columns: 1fr;/);
+  assert.match(footer, /href="\/#repair-cases"[^>]*>수리사례</);
   assert.match(footer, /컴박사 블로그/);
   assert.match(worker, /syncNaverBlogRss/);
   assert.match(wrangler, /"17 \* \* \* \*"/);

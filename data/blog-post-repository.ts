@@ -58,3 +58,12 @@ export async function listPublishedBlogPosts(limit = 3): Promise<BlogPostRow[]> 
     .bind(Math.max(1, Math.min(12, Math.trunc(limit)))).all<RawBlogPost>();
   return rows.results.map(mapPost);
 }
+
+export async function listPublishedRepairCases(limit = 3): Promise<BlogPostRow[]> {
+  await ensureDatabase();
+  const rows = await getD1().prepare(`SELECT * FROM blog_posts
+    WHERE visibility = 'PUBLISHED' AND content_type = 'repair_diary'
+    ORDER BY published_at DESC LIMIT ?`)
+    .bind(Math.max(1, Math.min(12, Math.trunc(limit)))).all<RawBlogPost>();
+  return rows.results.map(mapPost);
+}

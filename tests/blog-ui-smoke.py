@@ -9,14 +9,17 @@ ARTIFACTS = Path(__file__).parent / "artifacts"
 
 
 def verify_page(page, screenshot_name: str, expect_single_column: bool) -> None:
-    page.goto(BASE_URL, wait_until="networkidle")
-    section = page.locator(".blog-notes-section")
-    section.scroll_into_view_if_needed()
+    page.goto(f"{BASE_URL}/#repair-cases", wait_until="networkidle")
+    section = page.locator("#repair-cases")
     quick_request_close = page.get_by_label("빠른 신청 닫기")
     if quick_request_close.is_visible():
         quick_request_close.click()
     section.wait_for(state="visible")
-    assert page.get_by_role("heading", name="컴박사가 직접 정리한 수리 노트").is_visible()
+    assert page.url.endswith("/#repair-cases")
+    assert page.get_by_role("heading", name="실제 수리 과정을 확인하세요").is_visible()
+    assert section.get_by_role("list", name="수리사례 기록 원칙").locator("li").count() == 4
+    apply_link = section.get_by_role("link", name="비슷한 증상 수리 신청")
+    assert apply_link.get_attribute("href") == "/requests/new"
     blog_link = section.get_by_role("link", name="컴박사 블로그 전체 보기")
     assert blog_link.get_attribute("href") == "https://blog.naver.com/combaksa_repair"
     section_box = section.bounding_box()
