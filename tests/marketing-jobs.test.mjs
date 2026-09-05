@@ -1,6 +1,49 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
+import { DatabaseSync } from "node:sqlite";
+
+test("bridge status writes repair cancellation, deduplicate heartbeats and reject stale reports", async () => {
+  const source = await readFile(new URL("../data/marketing-job-repository.ts", import.meta.url), "utf8");
+  const eventSql = source.match(/BRIDGE_EVENT_SQL = `([\s\S]*?)`;/)[1];
+  const statusSql = source.match(/BRIDGE_STATUS_SQL = `([\s\S]*?)`;/)[1];
+  const db = new DatabaseSync(":memory:");
+  try {
+    db.exec("CREATE TABLE marketing_jobs (id TEXT PRIMARY KEY, status TEXT, local_job_id TEXT, failure_code TEXT, updated_at TEXT); CREATE TABLE marketing_job_events (id TEXT, job_id TEXT, status TEXT, actor TEXT, message TEXT, metadata TEXT, created_at TEXT); INSERT INTO marketing_jobs VALUES ('remote', 'FAILED', 'local', 'FAIL', 'old');");
+    const report = (status, version, received, local = "local") => {
+      db.exec("BEGIN");
+      db.prepare(eventSql).run(crypto.randomUUID(), status, status, JSON.stringify({ sourceUpdatedAt: version }), received, "remote", local, version, status, version);
+      db.prepare(statusSql).run(status, local, null, received, "remote", local, version);
+      db.exec("COMMIT");
+    };
+    report("CANCELLED", "2026-08-31T07:17:13.375Z", "first");
+    assert.equal(db.prepare("SELECT status FROM marketing_jobs").get().status, "CANCELLED");
+    report("CANCELLED", "2026-08-31T07:17:13.375Z", "heartbeat");
+    assert.equal(db.prepare("SELECT count(*) AS n FROM marketing_job_events").get().n, 1);
+    assert.equal(db.prepare("SELECT updated_at FROM marketing_jobs").get().updated_at, "heartbeat");
+    report("FAILED", "2026-08-31T04:17:35.001Z", "late");
+    report("QUEUED_LOCAL", "", "legacy");
+    report("PUBLISHED", "2026-09-05T00:00:00.000Z", "wrong", "other");
+    assert.equal(db.prepare("SELECT status FROM marketing_jobs").get().status, "CANCELLED");
+    assert.equal(db.prepare("SELECT updated_at FROM marketing_jobs").get().updated_at, "heartbeat");
+    report("PUBLISHED", "2026-09-05T00:00:00.000Z", "manual");
+    assert.equal(db.prepare("SELECT status FROM marketing_jobs").get().status, "PUBLISHED");
+  } finally { db.close(); }
+});
+
+test("work tracker supports cancellation and shows automatic refresh and sync time", async () => {
+  const root = new URL("../", import.meta.url);
+  const [page, route, refresh] = await Promise.all([
+    readFile(new URL("app/admin/marketing/page.tsx", root), "utf8"),
+    readFile(new URL("app/api/bridge/marketing/jobs/[jobId]/events/route.ts", root), "utf8"),
+    readFile(new URL("components/marketing-status-refresh.tsx", root), "utf8"),
+  ]);
+  assert.match(page, /CANCELLED: "취소"/);
+  assert.match(route, /"CANCELLED"/);
+  assert.match(page, /마지막 서버 동기화/);
+  assert.match(refresh, /router.refresh/);
+  assert.match(refresh, /clearInterval/);
+});
 import {
   MARKETING_DISTRICTS,
   normalizeMarketingJobInput,
