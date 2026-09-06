@@ -3,7 +3,11 @@ import { readFile } from "node:fs/promises";
 import test from "node:test";
 
 import { normalizePublishedPostInput } from "../lib/blog/post-contract.ts";
-import { parseNaverRss } from "../lib/blog/naver-rss.ts";
+import {
+  enrichNaverPostThumbnail,
+  extractNaverThumbnail,
+  parseNaverRss,
+} from "../lib/blog/naver-rss.ts";
 
 test("published post contract accepts only the configured Naver blog and removes region from non-repair posts", () => {
   const repair = normalizePublishedPostInput({
@@ -53,9 +57,32 @@ test("RSS recovery parses public Naver entries into the same post contract", () 
   assert.equal(post.postId, "224000000003");
 });
 
+test("extracts a safe Naver representative photo from PostView metadata", async () => {
+  const thumbnail = "https://blogthumb.pstatic.net/example/repair.png?type=w2&size=900";
+  const html = `<html><head><meta content="${thumbnail.replace("&", "&amp;")}" property="og:image"></head></html>`;
+  assert.equal(extractNaverThumbnail(html), thumbnail);
+  assert.equal(
+    extractNaverThumbnail('<meta property="og:image" content="https://evil.example/repair.png">'),
+    "",
+  );
+
+  const post = normalizePublishedPostInput({
+    postUrl: "https://blog.naver.com/combaksa_repair/224000000004",
+    title: "대표사진이 있는 수리일지",
+    publishedAt: "2026-09-03T00:00:00.000Z",
+  }, "combaksa_repair");
+  let requestedUrl = "";
+  const enriched = await enrichNaverPostThumbnail(post, async (url) => {
+    requestedUrl = String(url);
+    return new Response(html, { status: 200 });
+  });
+  assert.match(requestedUrl, /PostView\.naver\?blogId=combaksa_repair&logNo=224000000004/);
+  assert.equal(enriched.thumbnailUrl, thumbnail);
+});
+
 test("homepage integration is durable, authenticated, crawlable, and scheduled for RSS recovery", async () => {
   const root = new URL("../", import.meta.url);
-  const [schema, migration, route, home, section, styles, footer, worker, wrangler, nextConfig] = await Promise.all([
+  const [schema, migration, route, home, section, styles, footer, worker, wrangler, nextConfig, rssSync] = await Promise.all([
     readFile(new URL("db/schema.ts", root), "utf8"),
     readFile(new URL("drizzle/0014_blog_posts.sql", root), "utf8"),
     readFile(new URL("app/api/bridge/blog/posts/route.ts", root), "utf8"),
@@ -66,12 +93,14 @@ test("homepage integration is durable, authenticated, crawlable, and scheduled f
     readFile(new URL("worker/index.ts", root), "utf8"),
     readFile(new URL("wrangler.jsonc", root), "utf8"),
     readFile(new URL("next.config.ts", root), "utf8"),
+    readFile(new URL("lib/blog/rss-sync.ts", root), "utf8"),
   ]);
   assert.match(schema, /blogPosts/);
   assert.match(migration, /CREATE TABLE `blog_posts`/);
   assert.match(migration, /post_url.*UNIQUE/is);
   assert.match(route, /authorizeMarketingBridge/);
   assert.match(route, /upsertPublishedBlogPost/);
+  assert.match(route, /enrichNaverPostThumbnail/);
   assert.match(home, /listPublishedBlogPosts\(3\)/);
   assert.match(home, /<BlogNotesSection/);
   assert.ok(home.indexOf("<BlogNotesSection") < home.indexOf('className="final-cta"'));
@@ -91,5 +120,7 @@ test("homepage integration is durable, authenticated, crawlable, and scheduled f
   assert.match(worker, /syncNaverBlogRss/);
   assert.match(worker, /img-src 'self' data: https:\/\/\*\.pstatic\.net/);
   assert.match(nextConfig, /hostname: "\*\*\.pstatic\.net"/);
+  assert.match(rssSync, /listPublishedBlogPosts\(6\)/);
+  assert.match(rssSync, /enrichNaverPostThumbnail/);
   assert.match(wrangler, /"17 \* \* \* \*"/);
 });
