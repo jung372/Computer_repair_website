@@ -3183,8 +3183,7 @@ p {
 .blog-note-card {
   position: relative;
   display: flex;
-  min-height: 330px;
-  padding: 30px 28px 26px;
+  min-height: 500px;
   overflow: hidden;
   flex-direction: column;
   border: 1px solid #cad8e5;
@@ -3194,30 +3193,58 @@ p {
   transition: border-color 180ms ease, box-shadow 180ms ease, transform 180ms ease;
 }
 
-.blog-note-card::after {
-  position: absolute;
-  top: 0;
-  right: 0;
-  width: 52px;
-  height: 52px;
-  border-bottom: 1px solid #d8e4ee;
-  border-left: 1px solid #d8e4ee;
-  background: #e9f1f8;
-  content: "";
-  clip-path: polygon(100% 0, 100% 100%, 0 0);
-}
-
 .blog-note-card:hover {
   border-color: #8cb5e8;
   box-shadow: 0 20px 45px rgba(19, 94, 197, 0.12);
   transform: translateY(-4px);
 }
 
+.blog-note-photo {
+  position: relative;
+  display: block;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  background: #dce8f2;
+}
+
+.blog-note-photo::after {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, transparent 54%, rgba(3, 13, 24, 0.48));
+  content: "";
+  pointer-events: none;
+}
+
+.blog-note-photo img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 260ms ease;
+}
+
+.blog-note-card:hover .blog-note-photo img {
+  transform: scale(1.025);
+}
+
 .blog-note-index {
-  margin-bottom: 30px;
-  color: var(--blue-700);
+  position: absolute;
+  z-index: 1;
+  bottom: 14px;
+  left: 16px;
+  padding: 7px 9px 6px;
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  background: rgba(3, 18, 32, 0.72);
+  color: var(--white);
   font: 800 0.69rem/1.2 Consolas, "Courier New", monospace;
   letter-spacing: 0.16em;
+}
+
+.blog-note-content {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  padding: 24px 26px 25px;
 }
 
 .blog-note-meta,
@@ -3243,7 +3270,7 @@ p {
   font-weight: 800;
 }
 
-.blog-note-card h3 {
+.blog-note-content h3 {
   margin: 19px 0 12px;
   color: var(--ink-950);
   font-size: clamp(1.2rem, 2vw, 1.46rem);
@@ -3251,7 +3278,7 @@ p {
   line-height: 1.35;
 }
 
-.blog-note-card > p {
+.blog-note-content > p {
   display: -webkit-box;
   margin: 0 0 26px;
   overflow: hidden;
@@ -3355,12 +3382,11 @@ p {
   .blog-note-card,
   .blog-note-card:last-child:nth-child(odd) {
     grid-column: auto;
-    min-height: 290px;
-    padding: 25px 22px 22px;
+    min-height: 460px;
   }
 
-  .blog-note-index {
-    margin-bottom: 22px;
+  .blog-note-content {
+    padding: 22px 21px 21px;
   }
 
   .blog-note-meta {
@@ -3408,7 +3434,12 @@ p {
   font-size: 0.82rem;
 }
 
-.footer-contact span {
+.consultation-hours {
+  white-space: pre-wrap;
+  line-height: 1.5;
+}
+
+.footer-contact > span {
   display: flex;
   align-items: center;
   gap: 8px;

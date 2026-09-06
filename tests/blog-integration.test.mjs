@@ -55,7 +55,7 @@ test("RSS recovery parses public Naver entries into the same post contract", () 
 
 test("homepage integration is durable, authenticated, crawlable, and scheduled for RSS recovery", async () => {
   const root = new URL("../", import.meta.url);
-  const [schema, migration, route, home, section, styles, footer, worker, wrangler] = await Promise.all([
+  const [schema, migration, route, home, section, styles, footer, worker, wrangler, nextConfig] = await Promise.all([
     readFile(new URL("db/schema.ts", root), "utf8"),
     readFile(new URL("drizzle/0014_blog_posts.sql", root), "utf8"),
     readFile(new URL("app/api/bridge/blog/posts/route.ts", root), "utf8"),
@@ -65,6 +65,7 @@ test("homepage integration is durable, authenticated, crawlable, and scheduled f
     readFile(new URL("components/site-footer.tsx", root), "utf8"),
     readFile(new URL("worker/index.ts", root), "utf8"),
     readFile(new URL("wrangler.jsonc", root), "utf8"),
+    readFile(new URL("next.config.ts", root), "utf8"),
   ]);
   assert.match(schema, /blogPosts/);
   assert.match(migration, /CREATE TABLE `blog_posts`/);
@@ -75,10 +76,20 @@ test("homepage integration is durable, authenticated, crawlable, and scheduled f
   assert.match(home, /<BlogNotesSection/);
   assert.ok(home.indexOf("<BlogNotesSection") < home.indexOf('className="final-cta"'));
   assert.match(section, /컴박사가 직접 정리한 수리 노트/);
+  assert.match(section, /const FALLBACK_PHOTO = "\/repair-note-fallback\.webp"/);
+  assert.match(section, /resolveThumbnailUrl\(post\.thumbnailUrl\)/);
+  assert.match(section, /url\.hostname\.endsWith\("\.pstatic\.net"\)/);
+  assert.match(section, /className="blog-note-photo"/);
+  assert.match(section, /fill/);
+  assert.match(section, /loading="lazy"/);
   assert.match(section, /target="_blank"/);
   assert.match(section, /rel="noopener noreferrer"/);
+  assert.match(styles, /\.blog-note-photo\s*\{[^}]*aspect-ratio: 16 \/ 9;/s);
+  assert.match(styles, /\.blog-note-photo img\s*\{[^}]*object-fit: cover;/s);
   assert.match(styles, /@media \(max-width: 580px\)[\s\S]*\.blog-notes-grid\.blog-notes-count-2\s*\{\s*grid-template-columns: 1fr;/);
   assert.match(footer, /컴박사 블로그/);
   assert.match(worker, /syncNaverBlogRss/);
+  assert.match(worker, /img-src 'self' data: https:\/\/\*\.pstatic\.net/);
+  assert.match(nextConfig, /hostname: "\*\*\.pstatic\.net"/);
   assert.match(wrangler, /"17 \* \* \* \*"/);
 });

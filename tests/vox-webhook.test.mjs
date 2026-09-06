@@ -143,7 +143,7 @@ test("keeps the Vox webhook enabled, observable, and pinned to v2", async () => 
   assert.match(route, /signature_rejected/);
   assert.match(schema, /integrationIntakes/);
   assert.match(migration, /UNIQUE INDEX `integration_intakes_provider_event_unique`/);
-  assert.match(siteConfig, /야간·공휴일은 접수 상담만 가능합니다/);
+  assert.match(siteConfig, /야간·공휴일: 접수 상담만 가능합니다/);
   const agentConfig = JSON.parse(agent).agent.data;
   assert.equal(agentConfig.webhookSettings.webhookVersion, "v2");
   assert.match(agentConfig.prompt.prompt, /하이픈 기호.*한글 단어 "다시"/);

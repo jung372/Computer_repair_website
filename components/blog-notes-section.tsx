@@ -1,4 +1,5 @@
 import { ArrowUpRight, CircuitBoard, HardDrive, ShieldCheck, Wrench } from "lucide-react";
+import Image from "next/image";
 import type { BlogPostRow } from "@/data/blog-post-repository";
 
 const LABELS = {
@@ -14,6 +15,22 @@ const ICONS = {
   hardware_news: CircuitBoard,
   recommended: HardDrive,
 } as const;
+
+const FALLBACK_PHOTO = "/repair-note-fallback.webp";
+
+function resolveThumbnailUrl(value: string) {
+  if (!value) return FALLBACK_PHOTO;
+  if (value.startsWith("/") && !value.startsWith("//")) return value;
+  try {
+    const url = new URL(value);
+    if (url.protocol === "https:" && url.hostname.endsWith(".pstatic.net")) {
+      return url.toString();
+    }
+  } catch {
+    // Invalid or unsupported thumbnail URLs use the local repair-workbench photo.
+  }
+  return FALLBACK_PHOTO;
+}
 
 function formatDate(value: string) {
   return new Intl.DateTimeFormat("ko-KR", { year: "numeric", month: "long", day: "numeric" })
@@ -43,13 +60,31 @@ export function BlogNotesSection({ posts, blogUrl }: { posts: BlogPostRow[]; blo
               const Icon = ICONS[post.contentType];
               return (
                 <article className={`blog-note-card note-${post.contentType}`} key={post.id}>
-                  <div className="blog-note-index" aria-hidden="true">LOG {String(index + 1).padStart(2, "0")}</div>
-                  <div className="blog-note-meta"><span><Icon size={16} aria-hidden="true" /> {LABELS[post.contentType]}</span><time dateTime={post.publishedAt}>{formatDate(post.publishedAt)}</time></div>
-                  <h3>{post.title}</h3>
-                  <p>{post.excerpt || "컴박사 블로그에서 작업 과정과 점검 방법을 확인하세요."}</p>
-                  <div className="blog-note-footer">
-                    {post.contentType === "repair_diary" && post.district ? <span>{post.district}</span> : <span>컴퓨터 수리 정보</span>}
-                    <a href={post.postUrl} target="_blank" rel="noopener noreferrer">글 읽어보기 <ArrowUpRight size={17} aria-hidden="true" /></a>
+                  <a
+                    className="blog-note-photo"
+                    href={post.postUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label={`${post.title} 글 읽기`}
+                  >
+                    <Image
+                      src={resolveThumbnailUrl(post.thumbnailUrl)}
+                      alt=""
+                      fill
+                      sizes="(max-width: 580px) calc(100vw - 40px), (max-width: 1080px) calc(50vw - 36px), 380px"
+                      loading="lazy"
+                      referrerPolicy="no-referrer"
+                    />
+                    <span className="blog-note-index" aria-hidden="true">LOG {String(index + 1).padStart(2, "0")}</span>
+                  </a>
+                  <div className="blog-note-content">
+                    <div className="blog-note-meta"><span><Icon size={16} aria-hidden="true" /> {LABELS[post.contentType]}</span><time dateTime={post.publishedAt}>{formatDate(post.publishedAt)}</time></div>
+                    <h3>{post.title}</h3>
+                    <p>{post.excerpt || "컴박사 블로그에서 작업 과정과 점검 방법을 확인하세요."}</p>
+                    <div className="blog-note-footer">
+                      {post.contentType === "repair_diary" && post.district ? <span>{post.district}</span> : <span>컴퓨터 수리 정보</span>}
+                      <a href={post.postUrl} target="_blank" rel="noopener noreferrer">글 읽어보기 <ArrowUpRight size={17} aria-hidden="true" /></a>
+                    </div>
                   </div>
                 </article>
               );

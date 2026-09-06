@@ -16,7 +16,7 @@ export function SiteFooter() {
         </div>
         <div className="footer-contact">
           <span><Phone size={16} aria-hidden="true" /> {config.phone}</span>
-          <span><Clock3 size={16} aria-hidden="true" /> {config.hours}</span>
+          <span><Clock3 size={16} aria-hidden="true" /> <span className="consultation-hours">{config.hours}</span></span>
           <span><MapPin size={16} aria-hidden="true" /> {config.region}</span>
           <span><Mail size={16} aria-hidden="true" /> {config.email}</span>
         </div>

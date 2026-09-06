@@ -104,7 +104,7 @@ export default async function Home() {
           </div>
         </div>
         <div className="container hero-facts">
-          <div><Headphones size={20} /><span><small>상담 시간</small><strong>{config.hours}</strong></span></div>
+          <div><Headphones size={20} /><span><small>상담 시간</small><strong className="consultation-hours">{config.hours}</strong></span></div>
           <div><SearchCheck size={20} /><span><small>서비스 지역</small><strong>{config.region}</strong></span></div>
           <div><ClipboardCheck size={20} /><span><small>견적 원칙</small><strong>점검·설명 후 진행</strong></span></div>
         </div>

@@ -6,7 +6,7 @@ export const siteDefaults = {
   tagline: "멈춘 컴퓨터, 다시 일상으로.",
   phone: "1660-0596",
   afterHoursPhone: "070-7917-5281",
-  hours: "평일·토요일 09:00–18:00 / 야간·공휴일은 접수 상담만 가능합니다.",
+  hours: "평일·토요일:  09:00–18:00\n야간·공휴일: 접수 상담만 가능합니다.",
   region: "서울·경기 일부 지역 출장",
   email: "contact@example.com",
   businessNumber: "389-80-03376",
@@ -37,7 +37,10 @@ export function getSiteConfig(now = new Date()) {
     tagline: siteDefaults.tagline,
     phone: consultation.phone,
     consultationMode: consultation.mode,
-    hours: getRuntimeString("BUSINESS_CONSULTATION_HOURS_LABEL") || siteDefaults.hours,
+    hours: (getRuntimeString("BUSINESS_CONSULTATION_HOURS_LABEL") || siteDefaults.hours)
+      .replace(/평일·토요일\s+(?=\d)/, "평일·토요일:  ")
+      .replace(/\s*\/\s*(?=야간·공휴일)/, "\n")
+      .replace("야간·공휴일은 ", "야간·공휴일: "),
     region: getRuntimeString("NEXT_PUBLIC_SERVICE_REGION") || siteDefaults.region,
     email: getRuntimeString("NEXT_PUBLIC_BUSINESS_EMAIL") || siteDefaults.email,
     businessNumber:
