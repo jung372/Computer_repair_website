@@ -39,19 +39,22 @@ function htmlAttribute(tag: string, name: string) {
     .replace(/&gt;/gi, ">");
 }
 
+export function isSafeNaverThumbnailUrl(value: string) {
+  try {
+    const url = new URL(value);
+    return url.protocol === "https:" && url.hostname.endsWith(".pstatic.net");
+  } catch {
+    return false;
+  }
+}
+
 export function extractNaverThumbnail(html: string) {
   const metaTags = String(html || "").match(/<meta\b[^>]*>/gi) || [];
   for (const meta of metaTags) {
     const property = htmlAttribute(meta, "property") || htmlAttribute(meta, "name");
     if (property.toLowerCase() !== "og:image") continue;
-    try {
-      const url = new URL(htmlAttribute(meta, "content"));
-      if (url.protocol === "https:" && url.hostname.endsWith(".pstatic.net")) {
-        return url.toString();
-      }
-    } catch {
-      return "";
-    }
+    const content = htmlAttribute(meta, "content");
+    if (isSafeNaverThumbnailUrl(content)) return new URL(content).toString();
   }
   return "";
 }

@@ -16,22 +16,6 @@ const ICONS = {
   recommended: HardDrive,
 } as const;
 
-const FALLBACK_PHOTO = "/repair-note-fallback.webp";
-
-function resolveThumbnailUrl(value: string) {
-  if (!value) return FALLBACK_PHOTO;
-  if (value.startsWith("/") && !value.startsWith("//")) return value;
-  try {
-    const url = new URL(value);
-    if (url.protocol === "https:" && url.hostname.endsWith(".pstatic.net")) {
-      return url.toString();
-    }
-  } catch {
-    // Invalid or unsupported thumbnail URLs use the local repair-workbench photo.
-  }
-  return FALLBACK_PHOTO;
-}
-
 function formatDate(value: string) {
   return new Intl.DateTimeFormat("ko-KR", { year: "numeric", month: "long", day: "numeric" })
     .format(new Date(value));
@@ -68,12 +52,12 @@ export function BlogNotesSection({ posts, blogUrl }: { posts: BlogPostRow[]; blo
                     aria-label={`${post.title} 글 읽기`}
                   >
                     <Image
-                      src={resolveThumbnailUrl(post.thumbnailUrl)}
+                      src={`/blog-thumbnail/${post.postId}`}
                       alt=""
                       fill
+                      unoptimized
                       sizes="(max-width: 580px) calc(100vw - 40px), (max-width: 1080px) calc(50vw - 36px), 380px"
                       loading="lazy"
-                      referrerPolicy="no-referrer"
                     />
                     <span className="blog-note-index" aria-hidden="true">LOG {String(index + 1).padStart(2, "0")}</span>
                   </a>

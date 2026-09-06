@@ -6,6 +6,7 @@ import { normalizePublishedPostInput } from "../lib/blog/post-contract.ts";
 import {
   enrichNaverPostThumbnail,
   extractNaverThumbnail,
+  isSafeNaverThumbnailUrl,
   parseNaverRss,
 } from "../lib/blog/naver-rss.ts";
 
@@ -61,6 +62,8 @@ test("extracts a safe Naver representative photo from PostView metadata", async 
   const thumbnail = "https://blogthumb.pstatic.net/example/repair.png?type=w2&size=900";
   const html = `<html><head><meta content="${thumbnail.replace("&", "&amp;")}" property="og:image"></head></html>`;
   assert.equal(extractNaverThumbnail(html), thumbnail);
+  assert.equal(isSafeNaverThumbnailUrl(thumbnail), true);
+  assert.equal(isSafeNaverThumbnailUrl("https://pstatic.net.evil.example/repair.png"), false);
   assert.equal(
     extractNaverThumbnail('<meta property="og:image" content="https://evil.example/repair.png">'),
     "",
@@ -105,11 +108,10 @@ test("homepage integration is durable, authenticated, crawlable, and scheduled f
   assert.match(home, /<BlogNotesSection/);
   assert.ok(home.indexOf("<BlogNotesSection") < home.indexOf('className="final-cta"'));
   assert.match(section, /컴박사가 직접 정리한 수리 노트/);
-  assert.match(section, /const FALLBACK_PHOTO = "\/repair-note-fallback\.webp"/);
-  assert.match(section, /resolveThumbnailUrl\(post\.thumbnailUrl\)/);
-  assert.match(section, /url\.hostname\.endsWith\("\.pstatic\.net"\)/);
+  assert.match(section, /src={`\/blog-thumbnail\/\${post\.postId}`}/);
   assert.match(section, /className="blog-note-photo"/);
   assert.match(section, /fill/);
+  assert.match(section, /unoptimized/);
   assert.match(section, /loading="lazy"/);
   assert.match(section, /target="_blank"/);
   assert.match(section, /rel="noopener noreferrer"/);
@@ -118,8 +120,13 @@ test("homepage integration is durable, authenticated, crawlable, and scheduled f
   assert.match(styles, /@media \(max-width: 580px\)[\s\S]*\.blog-notes-grid\.blog-notes-count-2\s*\{\s*grid-template-columns: 1fr;/);
   assert.match(footer, /컴박사 블로그/);
   assert.match(worker, /syncNaverBlogRss/);
-  assert.match(worker, /img-src 'self' data: https:\/\/\*\.pstatic\.net/);
-  assert.match(nextConfig, /hostname: "\*\*\.pstatic\.net"/);
+  assert.match(worker, /BLOG_THUMBNAIL_PATH = \/\^\\\/blog-thumbnail/);
+  assert.match(worker, /SELECT thumbnail_url FROM blog_posts/);
+  assert.match(worker, /\.bind\(postId\)/);
+  assert.match(worker, /BLOG_THUMBNAIL_CONTENT_TYPES\.has\(contentType\)/);
+  assert.match(worker, /env\.ASSETS\.fetch/);
+  assert.match(worker, /img-src 'self' data:/);
+  assert.doesNotMatch(nextConfig, /pstatic\.net/);
   assert.match(rssSync, /listPublishedBlogPosts\(6\)/);
   assert.match(rssSync, /enrichNaverPostThumbnail/);
   assert.match(wrangler, /"17 \* \* \* \*"/);
