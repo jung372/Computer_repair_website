@@ -143,6 +143,13 @@ export async function getMarketingJob(jobId: string) {
   };
 }
 
+export async function getMarketingJobByIdempotencyKey(idempotencyKey: string) {
+  await ensureDatabase();
+  const row = await getD1().prepare("SELECT * FROM marketing_jobs WHERE idempotency_key = ?")
+    .bind(idempotencyKey).first<RawJob>();
+  return row ? mapJob(row) : null;
+}
+
 export async function listMarketingJobs(limit = 50) {
   await ensureDatabase();
   const rows = await getD1().prepare("SELECT * FROM marketing_jobs ORDER BY created_at DESC LIMIT ?")

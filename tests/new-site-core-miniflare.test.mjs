@@ -39,6 +39,8 @@ async function createFixture() {
         compatibilityFlags: ["nodejs_compat"],
         modules: bundleModules(),
         d1Databases: ["DB"],
+        r2Buckets: ["MARKETING_PHOTOS"],
+        queueProducers: { MARKETING_JOBS: "fixture-marketing-jobs" },
         bindings: {
           NEW_CORE_ENABLED: "true",
           NEW_SITE_VOX_PROCESSING_ENABLED: "true",
@@ -112,6 +114,72 @@ async function post(edge, path, body, key) {
     headers,
     body: JSON.stringify(body),
   });
+}
+
+async function encodedPassword(password) {
+  const salt = new Uint8Array(16);
+  salt.fill(7);
+  const key = await webcrypto.subtle.importKey(
+    "raw",
+    new TextEncoder().encode(password),
+    "PBKDF2",
+    false,
+    ["deriveBits"],
+  );
+  const bits = new Uint8Array(await webcrypto.subtle.deriveBits(
+    { name: "PBKDF2", salt, iterations: 100_000, hash: "SHA-256" },
+    key,
+    256,
+  ));
+  return `pbkdf2-sha256$v=1$i=100000$${Buffer.from(salt).toString("base64")}$${Buffer.from(bits).toString("base64")}`;
+}
+
+async function insertAdmin(db, {
+  id,
+  loginName,
+  displayName,
+  role,
+  password,
+}) {
+  const now = "2026-09-09T00:00:00.000Z";
+  await db.prepare(`INSERT INTO admins (
+    id, login_name, password_hash, display_name, phone, role, created_by,
+    slot_serial_no, is_active, session_version, password_changed_at,
+    last_login_at, created_at, updated_at
+  ) VALUES (?, ?, ?, ?, '', ?, NULL, NULL, 1, 1, ?, NULL, ?, ?)`)
+    .bind(id, loginName, await encodedPassword(password), displayName, role, now, now, now)
+    .run();
+}
+
+async function adminCookie(edge, loginName, password) {
+  const response = await post(edge, "/v1/admin/session", { loginName, password });
+  assert.equal(response.status, 200);
+  const setCookie = response.headers.get("set-cookie");
+  assert.ok(setCookie);
+  return setCookie.split(";", 1)[0];
+}
+
+function multipartBody(fields, file) {
+  const boundary = "----combaksa-fixture-boundary";
+  const parts = [];
+  for (const [name, value] of Object.entries(fields)) {
+    parts.push(Buffer.from(
+      `--${boundary}\r\nContent-Disposition: form-data; name="${name}"\r\n\r\n${value}\r\n`,
+    ));
+  }
+  if (file) {
+    parts.push(Buffer.from(
+      `--${boundary}\r\nContent-Disposition: form-data; name="photos"; filename="${file.name}"\r\nContent-Type: ${file.type}\r\n\r\n`,
+    ));
+    parts.push(Buffer.from(file.bytes));
+    parts.push(Buffer.from("\r\n"));
+  }
+  parts.push(Buffer.from(`--${boundary}--\r\n`));
+  const body = Buffer.concat(parts);
+  return {
+    body,
+    contentType: `multipart/form-data; boundary=${boundary}`,
+  };
 }
 
 function voxPayload(callId) {
@@ -227,6 +295,161 @@ test("new customer endpoint rejects a token stored with legacy scope", async () 
     });
     assert.equal(response.status, 401);
     assert.equal((await response.json()).error.code, "AUTH_REQUIRED");
+  } finally {
+    await mf.dispose();
+  }
+});
+
+test("customer detail requires a new-site link and direct unlock creates only a new-site session", async () => {
+  const { mf, edge } = await createFixture();
+  try {
+    const created = await post(edge, "/v1/requests", requestBody({
+      name: "가상고객",
+      password: "2468",
+    }), "fixture-submission-detail");
+    assert.equal(created.status, 201);
+    const { publicId } = (await created.json()).data;
+
+    const locked = await edge.fetch(`https://fixture.test/v1/customer/requests/${publicId}`);
+    assert.equal(locked.status, 401);
+
+    const unlock = await post(
+      edge,
+      `/v1/customer/requests/${publicId}/unlock`,
+      { password: "2468" },
+    );
+    assert.equal(unlock.status, 200);
+    const setCookie = unlock.headers.get("set-cookie");
+    assert.ok(setCookie?.startsWith("combaksa_new_lookup_session="));
+    const sessionCookie = setCookie.split(";", 1)[0];
+
+    const detail = await edge.fetch(`https://fixture.test/v1/customer/requests/${publicId}`, {
+      headers: { cookie: sessionCookie },
+    });
+    assert.equal(detail.status, 200);
+    const payload = await detail.json();
+    assert.equal(payload.data.request.publicId, publicId);
+    assert.equal(payload.data.request.maskedName, "가**");
+    assert.equal(payload.data.request.maskedPhone, "010-****-5678");
+    assert.ok(Array.isArray(payload.data.history));
+    assert.doesNotMatch(JSON.stringify(payload), /서울특별시 중구 세종대로 1/);
+    assert.doesNotMatch(JSON.stringify(payload), /01012345678/);
+
+    const logout = await edge.fetch("https://fixture.test/v1/customer/session", {
+      method: "DELETE",
+      headers: { cookie: sessionCookie },
+    });
+    assert.equal(logout.status, 200);
+    assert.match(logout.headers.get("set-cookie") ?? "", /Max-Age=0/);
+    const afterLogout = await edge.fetch(`https://fixture.test/v1/customer/requests/${publicId}`, {
+      headers: { cookie: sessionCookie },
+    });
+    assert.equal(afterLogout.status, 401);
+  } finally {
+    await mf.dispose();
+  }
+});
+
+test("setup remains non-bootstrapping while owner-only marketing and Vox APIs reuse core bindings", async () => {
+  const { mf, db, edge } = await createFixture();
+  try {
+    const emptySetup = await edge.fetch("https://fixture.test/v1/admin/setup");
+    assert.equal(emptySetup.status, 200);
+    assert.deepEqual((await emptySetup.json()).data, { ownerExists: false, setupAllowed: false });
+
+    await insertAdmin(db, {
+      id: "primary",
+      loginName: "admin",
+      displayName: "운영자",
+      role: "OWNER",
+      password: "fixture-owner-password-123",
+    });
+    await insertAdmin(db, {
+      id: "fixture-staff",
+      loginName: "staff01",
+      displayName: "가상직원",
+      role: "STAFF",
+      password: "2468",
+    });
+    const ownerCookie = await adminCookie(edge, "admin", "fixture-owner-password-123");
+    const staffCookie = await adminCookie(edge, "staff01", "2468");
+
+    const configuredSetup = await edge.fetch("https://fixture.test/v1/admin/setup");
+    assert.deepEqual((await configuredSetup.json()).data, { ownerExists: true, setupAllowed: false });
+
+    for (const path of ["/v1/admin/marketing/jobs", "/v1/admin/integrations/vox"]) {
+      const anonymous = await edge.fetch(`https://fixture.test${path}`);
+      assert.equal(anonymous.status, 401);
+      const staff = await edge.fetch(`https://fixture.test${path}`, {
+        headers: { cookie: staffCookie },
+      });
+      assert.equal(staff.status, 403);
+    }
+
+    const png = new Uint8Array([
+      0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a,
+      0, 0, 0, 0, 0x49, 0x45, 0x4e, 0x44, 0, 0, 0, 0,
+    ]);
+    const upload = multipartBody({
+      symptom: "가상 수리 증상",
+      causeUnknown: "on",
+      actionsTaken: "가상 부품 교체",
+      verificationResult: "가상 정상 동작 확인",
+      district: "광진구",
+      photoConsent: "on",
+      privacyReviewed: "on",
+      photoEvidenceNote: "가상 이미지에 개인정보 없음",
+    }, { name: "fixture.png", type: "image/png", bytes: png });
+    const submitHeaders = {
+      cookie: ownerCookie,
+      "idempotency-key": "fixture-marketing-0001",
+      "content-type": upload.contentType,
+      "content-length": String(upload.body.byteLength),
+    };
+    const submitted = await edge.fetch("https://fixture.test/v1/admin/marketing/jobs", {
+      method: "POST",
+      headers: submitHeaders,
+      body: upload.body,
+    });
+    const submittedPayload = await submitted.json();
+    assert.equal(submitted.status, 201, JSON.stringify(submittedPayload));
+    const submittedData = submittedPayload.data;
+    assert.equal(submittedData.status, "QUEUED");
+    assert.equal(submittedData.replayed, false);
+
+    const retryUpload = multipartBody({ symptom: "ignored retry body" });
+    const replay = await edge.fetch("https://fixture.test/v1/admin/marketing/jobs", {
+      method: "POST",
+      headers: {
+        ...submitHeaders,
+        "content-type": retryUpload.contentType,
+        "content-length": String(retryUpload.body.byteLength),
+      },
+      body: retryUpload.body,
+    });
+    assert.equal(replay.status, 200);
+    assert.deepEqual((await replay.json()).data, { ...submittedData, replayed: true });
+    assert.equal((await db.prepare("SELECT COUNT(*) AS count FROM marketing_jobs").first()).count, 1);
+    assert.equal((await db.prepare("SELECT COUNT(*) AS count FROM marketing_job_assets").first()).count, 1);
+
+    const jobs = await edge.fetch("https://fixture.test/v1/admin/marketing/jobs?limit=10", {
+      headers: { cookie: ownerCookie },
+    });
+    assert.equal(jobs.status, 200);
+    const jobsPayload = await jobs.json();
+    assert.equal(jobsPayload.data.jobs.length, 1);
+    assert.equal(jobsPayload.data.jobs[0].id, submittedData.jobId);
+    assert.equal(jobsPayload.data.jobs[0].idempotencyKey, undefined);
+    assert.equal(jobsPayload.data.jobs[0].requestedBy, undefined);
+
+    const vox = await edge.fetch("https://fixture.test/v1/admin/integrations/vox?limit=10", {
+      headers: { cookie: ownerCookie },
+    });
+    assert.equal(vox.status, 200);
+    const voxPayload = await vox.json();
+    assert.equal(voxPayload.data.health.configured, true);
+    assert.equal(voxPayload.data.summary.total, 0);
+    assert.doesNotMatch(JSON.stringify(voxPayload), new RegExp(VOX_SECRET));
   } finally {
     await mf.dispose();
   }

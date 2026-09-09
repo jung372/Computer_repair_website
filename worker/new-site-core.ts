@@ -2,6 +2,7 @@ import { WorkerEntrypoint } from "cloudflare:workers";
 import {
   NEW_SITE_CUSTOMER_LOOKUP_COOKIE,
   createCustomerLookupSession,
+  customerLookupSessionCanAccess,
   deleteCustomerLookupSession,
 } from "../data/customer-lookup-repository";
 import {
@@ -37,7 +38,11 @@ import {
 } from "../lib/logic/customer-lookup";
 import {
   createServiceRequest,
+  getRequestDetail,
+  maskName,
+  maskPhone,
   RequestValidationError,
+  verifyPrivateRequestAccess,
 } from "../lib/logic/request-service";
 import { hashClientAddress, hashLookupPhone } from "../lib/security/request-guard";
 import {
@@ -67,8 +72,22 @@ import {
   offboardStaffFromSlot,
   updateStaffSlotSettings,
 } from "../lib/logic/staff-slot-service";
-import { changeAccountPassword, getAdminAccountById, recordAdminAudit } from "../data/admin-repository";
+import {
+  changeAccountPassword,
+  getAdminAccountById,
+  getPrimaryAdmin,
+  recordAdminAudit,
+} from "../data/admin-repository";
 import { hashPassword, verifyPassword } from "../lib/security/password";
+import {
+  getVoxIntegrationSummary,
+  listVoxIntegrationIntakes,
+} from "../data/integration-intake-repository";
+import {
+  listPublicMarketingJobs,
+  MarketingJobSubmissionError,
+  submitNewSiteMarketingJob,
+} from "../lib/logic/marketing-job-service";
 
 const MAX_JSON_BYTES = 256 * 1024;
 const MAX_RSS_BYTES = 1024 * 1024;
@@ -180,6 +199,65 @@ async function customerRequests(request: Request) {
     })),
   })));
   return success({ requests: data });
+}
+
+async function customerRequestDetail(request: Request, publicId: string) {
+  const token = cookie(request, NEW_SITE_CUSTOMER_LOOKUP_COOKIE);
+  if (!token) throw new CoreHttpError("AUTH_REQUIRED", 401, "조회 인증이 필요합니다.");
+  const detail = await getRequestDetail(publicId);
+  if (
+    !detail ||
+    !(await customerLookupSessionCanAccess(token, detail.request.id, "new"))
+  ) {
+    throw new CoreHttpError("AUTH_REQUIRED", 401, "조회 인증이 필요합니다.");
+  }
+  const { request: stored, history } = detail;
+  return success({
+    request: {
+      publicId: stored.publicId,
+      deviceType: stored.deviceType,
+      manufacturerModel: stored.manufacturerModel,
+      symptom: stored.symptom,
+      description: stored.description,
+      regionPublic: stored.regionPublic,
+      status: stored.status,
+      createdAt: stored.createdAt,
+      maskedName: maskName(stored.name),
+      maskedPhone: maskPhone(stored.phone),
+    },
+    history: history.map((item) => ({
+      status: item.status,
+      publicNote: item.publicNote,
+      createdAt: item.createdAt,
+    })),
+  });
+}
+
+async function unlockCustomerRequest(request: Request, publicId: string) {
+  const body = await readJsonObject(request);
+  const password = typeof body.password === "string" ? body.password : "";
+  const length = Array.from(password).length;
+  if (length < 4 || length > 64) {
+    throw new CoreHttpError("INVALID_REQUEST", 400, "입력 정보를 확인해 주세요.");
+  }
+  const result = await verifyPrivateRequestAccess(
+    publicId,
+    password,
+    await hashClientAddress(request),
+  );
+  if (!result.ok) {
+    throw result.reason === "BLOCKED"
+      ? new CoreHttpError("RATE_LIMITED", 429, "입력 횟수를 초과했습니다. 잠시 후 다시 시도해 주세요.")
+      : new CoreHttpError("AUTH_REQUIRED", 401, "입력 정보를 확인해 주세요.");
+  }
+  const detail = await getRequestDetail(publicId);
+  if (!detail) throw new CoreHttpError("AUTH_REQUIRED", 401, "입력 정보를 확인해 주세요.");
+  const session = await createCustomerLookupSession([detail.request.id], "new");
+  return success(
+    { unlocked: true, publicId: detail.request.publicId },
+    200,
+    { "Set-Cookie": setCookie(NEW_SITE_CUSTOMER_LOOKUP_COOKIE, session.token, 600, "Lax") },
+  );
 }
 
 async function createCustomerSession(request: Request) {
@@ -388,6 +466,61 @@ async function changeAdminPassword(request: Request) {
   });
 }
 
+async function adminSetupStatus() {
+  return success({
+    ownerExists: Boolean(await getPrimaryAdmin()),
+    setupAllowed: false,
+  });
+}
+
+async function adminMarketingJobs(request: Request, bindings: Env) {
+  const admin = await requireAdmin(request);
+  if (admin.role !== "OWNER") {
+    throw new CoreHttpError("FORBIDDEN", 403, "운영자 권한이 필요합니다.");
+  }
+  if (request.method.toUpperCase() === "GET") {
+    const limit = parsePositiveInteger(new URL(request.url).searchParams.get("limit"), 50, 100);
+    return success({ jobs: await listPublicMarketingJobs(limit) });
+  }
+  const idempotencyKey = request.headers.get("idempotency-key")?.trim() ?? "";
+  if (!/^[a-zA-Z0-9._:-]{12,128}$/.test(idempotencyKey)) {
+    throw new CoreHttpError("IDEMPOTENCY_REQUIRED", 400, "유효한 멱등 키가 필요합니다.");
+  }
+  const result = await submitNewSiteMarketingJob(request, admin.id, bindings, idempotencyKey);
+  return success(result, result.replayed ? 200 : 201);
+}
+
+async function adminVoxStatus(request: Request) {
+  const admin = await requireAdmin(request);
+  if (admin.role !== "OWNER") {
+    throw new CoreHttpError("FORBIDDEN", 403, "운영자 권한이 필요합니다.");
+  }
+  const limit = parsePositiveInteger(new URL(request.url).searchParams.get("limit"), 50, 100);
+  const [summary, rows] = await Promise.all([
+    getVoxIntegrationSummary(),
+    listVoxIntegrationIntakes(limit),
+  ]);
+  const checks = {
+    processingEnabled: getRuntimeString("NEW_SITE_VOX_PROCESSING_ENABLED").toLowerCase() === "true",
+    webhookEnabled: getRuntimeString("VOX_WEBHOOK_ENABLED").toLowerCase() === "true",
+    signatureConfigured: Boolean(getRuntimeString("VOX_WEBHOOK_SECRET")),
+    agentConfigured: Boolean(getRuntimeString("VOX_AGENT_ID")),
+    inboundNumberConfigured: Boolean(getRuntimeString("VOX_INBOUND_NUMBER")),
+  };
+  return success({
+    health: { configured: Object.values(checks).every(Boolean), checks },
+    summary,
+    intakes: rows.map((row) => ({
+      status: row.status,
+      reasonCode: row.reasonCode,
+      agentVersion: row.agentVersion,
+      receivedAt: row.receivedAt,
+      processedAt: row.processedAt,
+      publicId: row.publicId,
+    })),
+  });
+}
+
 async function ingestBlogPost(request: Request) {
   const body = await readJsonObject(request);
   const blogId = getRuntimeString("NEXT_PUBLIC_NAVER_BLOG_ID") || "combaksa_repair";
@@ -435,7 +568,7 @@ async function reportBlogRssFailure(request: Request) {
   return success({ recorded: true });
 }
 
-async function route(request: Request): Promise<Response> {
+async function route(request: Request, bindings: Env): Promise<Response> {
   if (getRuntimeString("NEW_CORE_ENABLED").toLowerCase() !== "true") {
     return failure("SERVICE_UNAVAILABLE", "신규 사이트 공용 서비스가 비활성 상태입니다.", 503);
   }
@@ -448,6 +581,14 @@ async function route(request: Request): Promise<Response> {
   if (method === "POST" && path === "/v1/requests") return createRequest(request);
   if (method === "POST" && path === "/v1/customer/session") return createCustomerSession(request);
   if (method === "GET" && path === "/v1/customer/requests") return customerRequests(request);
+  const customerRequestMatch = /^\/v1\/customer\/requests\/([^/]+)$/.exec(path);
+  if (customerRequestMatch && method === "GET") {
+    return customerRequestDetail(request, decodeURIComponent(customerRequestMatch[1]));
+  }
+  const customerUnlockMatch = /^\/v1\/customer\/requests\/([^/]+)\/unlock$/.exec(path);
+  if (customerUnlockMatch && method === "POST") {
+    return unlockCustomerRequest(request, decodeURIComponent(customerUnlockMatch[1]));
+  }
   if (method === "DELETE" && path === "/v1/customer/session") {
     await deleteCustomerLookupSession(cookie(request, NEW_SITE_CUSTOMER_LOOKUP_COOKIE), "new");
     return success({ authenticated: false }, 200, {
@@ -455,6 +596,7 @@ async function route(request: Request): Promise<Response> {
     });
   }
   if (method === "POST" && path === "/v1/admin/session") return createAdminSession(request);
+  if (method === "GET" && path === "/v1/admin/setup") return adminSetupStatus();
   if (method === "GET" && path === "/v1/admin/session") {
     const user = await requireAdmin(request);
     return success({ user });
@@ -475,6 +617,10 @@ async function route(request: Request): Promise<Response> {
   }
   if (method === "POST" && path === "/v1/admin/staff") return mutateStaff(request);
   if (method === "POST" && path === "/v1/admin/password") return changeAdminPassword(request);
+  if ((method === "GET" || method === "POST") && path === "/v1/admin/marketing/jobs") {
+    return adminMarketingJobs(request, bindings);
+  }
+  if (method === "GET" && path === "/v1/admin/integrations/vox") return adminVoxStatus(request);
   if (method === "GET" && path === "/v1/admin/settlements") return settlements(request);
   if (method === "GET" && path === "/v1/admin/blog/posts") {
     const admin = await requireAdmin(request);
@@ -509,7 +655,7 @@ async function route(request: Request): Promise<Response> {
 export class NewSiteCore extends WorkerEntrypoint<Env> {
   async fetch(request: Request): Promise<Response> {
     try {
-      return await route(request);
+      return await route(request, this.env);
     } catch (error) {
       if (error instanceof CoreHttpError) return failure(error.code, error.message, error.status);
       if (error instanceof RequestValidationError) return failure("INVALID_REQUEST", error.message, 400, error.fields);
@@ -520,6 +666,14 @@ export class NewSiteCore extends WorkerEntrypoint<Env> {
       }
       if (error instanceof AdminRecordAuthorizationError) return failure("FORBIDDEN", error.message, 403);
       if (error instanceof AdminRecordValidationError) return failure("INVALID_REQUEST", error.message, 400, error.fields);
+      if (error instanceof MarketingJobSubmissionError) {
+        return failure(
+          error.code,
+          error.message,
+          error.status,
+          error.jobId ? { jobId: error.jobId } : undefined,
+        );
+      }
       const code = error instanceof Error ? error.message : "UNKNOWN";
       if (code === "IDEMPOTENCY_CONFLICT") return failure(code, "멱등 키가 다른 요청에 사용되었습니다.", 409);
       if (code === "ASSIGNMENT_CONFLICT") return failure(code, "담당자가 이미 변경되었습니다.", 409);
