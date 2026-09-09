@@ -52,6 +52,7 @@ async function createFixture() {
           RATE_LIMIT_SECRET: "fixture-rate-limit-secret-with-sufficient-entropy",
           REQUEST_LOOKUP_SECRET: "fixture-request-lookup-secret-with-sufficient-entropy",
           ADMIN_SESSION_SECRET: "fixture-admin-session-secret-with-sufficient-entropy",
+          ADMIN_SETUP_TOKEN: "fixture-admin-setup-token-with-sufficient-entropy",
           NEXT_PUBLIC_NAVER_BLOG_ID: "combaksa_repair",
           TELEGRAM_NOTIFICATION_ENABLED: "false",
           PUBLIC_BASE_URL: "https://legacy.example.test",
@@ -350,20 +351,37 @@ test("customer detail requires a new-site link and direct unlock creates only a 
   }
 });
 
-test("setup remains non-bootstrapping while owner-only marketing and Vox APIs reuse core bindings", async () => {
+test("setup bootstraps an isolated database once while owner-only marketing and Vox APIs reuse core bindings", async () => {
   const { mf, db, edge } = await createFixture();
   try {
     const emptySetup = await edge.fetch("https://fixture.test/v1/admin/setup");
     assert.equal(emptySetup.status, 200);
-    assert.deepEqual((await emptySetup.json()).data, { ownerExists: false, setupAllowed: false });
+    assert.deepEqual((await emptySetup.json()).data, { ownerExists: false, setupAllowed: true });
 
-    await insertAdmin(db, {
-      id: "primary",
-      loginName: "admin",
-      displayName: "운영자",
-      role: "OWNER",
-      password: "fixture-owner-password-123",
+    const rejectedSetup = await post(edge, "/v1/admin/setup", {
+      setupToken: "wrong-token",
+      newPassword: "fixture-owner-password-123",
+      confirmPassword: "fixture-owner-password-123",
     });
+    assert.equal(rejectedSetup.status, 400);
+    assert.equal((await rejectedSetup.json()).error.code, "INVALID_REQUEST");
+
+    const createdSetup = await post(edge, "/v1/admin/setup", {
+      setupToken: "fixture-admin-setup-token-with-sufficient-entropy",
+      newPassword: "fixture-owner-password-123",
+      confirmPassword: "fixture-owner-password-123",
+    });
+    assert.equal(createdSetup.status, 201);
+    assert.deepEqual((await createdSetup.json()).data, { configured: true });
+
+    const duplicateSetup = await post(edge, "/v1/admin/setup", {
+      setupToken: "fixture-admin-setup-token-with-sufficient-entropy",
+      newPassword: "different-owner-password-456",
+      confirmPassword: "different-owner-password-456",
+    });
+    assert.equal(duplicateSetup.status, 409);
+    assert.equal((await duplicateSetup.json()).error.code, "CONFLICT");
+
     await insertAdmin(db, {
       id: "fixture-staff",
       loginName: "staff01",

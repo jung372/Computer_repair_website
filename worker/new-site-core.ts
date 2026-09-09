@@ -73,12 +73,14 @@ import {
   updateStaffSlotSettings,
 } from "../lib/logic/staff-slot-service";
 import {
+  createPrimaryAdmin,
   changeAccountPassword,
   getAdminAccountById,
   getPrimaryAdmin,
   recordAdminAudit,
 } from "../data/admin-repository";
 import { hashPassword, verifyPassword } from "../lib/security/password";
+import { constantTimeEqualStrings } from "../lib/security/constant-time";
 import {
   getVoxIntegrationSummary,
   listVoxIntegrationIntakes,
@@ -467,10 +469,53 @@ async function changeAdminPassword(request: Request) {
 }
 
 async function adminSetupStatus() {
+  const ownerExists = Boolean(await getPrimaryAdmin());
   return success({
-    ownerExists: Boolean(await getPrimaryAdmin()),
-    setupAllowed: false,
+    ownerExists,
+    setupAllowed: !ownerExists && Boolean(getRuntimeString("ADMIN_SETUP_TOKEN")),
   });
+}
+
+async function createInitialAdmin(request: Request) {
+  if (await getPrimaryAdmin()) {
+    throw new CoreHttpError("CONFLICT", 409, "최초 운영자 설정이 이미 완료되었습니다.");
+  }
+  const clientHash = await hashClientAddress(request);
+  const key = `admin-setup:${clientHash}`;
+  const attempt = await getAccessAttempt(key);
+  if (attempt?.blocked_until && new Date(attempt.blocked_until).getTime() > Date.now()) {
+    throw new CoreHttpError("RATE_LIMITED", 429, "입력 횟수를 초과했습니다.");
+  }
+  const expectedToken = getRuntimeString("ADMIN_SETUP_TOKEN");
+  if (!expectedToken) {
+    throw new CoreHttpError("SERVICE_UNAVAILABLE", 503, "최초 운영자 설정이 비활성 상태입니다.");
+  }
+  const body = await readJsonObject(request);
+  const setupToken = typeof body.setupToken === "string" ? body.setupToken : "";
+  const newPassword = typeof body.newPassword === "string" ? body.newPassword : "";
+  const confirmPassword = typeof body.confirmPassword === "string" ? body.confirmPassword : "";
+  const passwordLength = Array.from(newPassword).length;
+  if (
+    !setupToken ||
+    !(await constantTimeEqualStrings(setupToken, expectedToken)) ||
+    passwordLength < 12 ||
+    passwordLength > 64 ||
+    newPassword !== confirmPassword
+  ) {
+    await recordAccessFailure(key);
+    await recordAdminAudit("SETUP_FAILED", clientHash);
+    throw new CoreHttpError("INVALID_REQUEST", 400, "초기 설정 정보를 확인해 주세요.");
+  }
+  try {
+    await createPrimaryAdmin(await hashPassword(newPassword), clientHash);
+  } catch (error) {
+    if (await getPrimaryAdmin().catch(() => null)) {
+      throw new CoreHttpError("CONFLICT", 409, "최초 운영자 설정이 이미 완료되었습니다.");
+    }
+    throw error;
+  }
+  await clearAccessFailures(key);
+  return success({ configured: true }, 201);
 }
 
 async function adminMarketingJobs(request: Request, bindings: Env) {
@@ -597,6 +642,7 @@ async function route(request: Request, bindings: Env): Promise<Response> {
   }
   if (method === "POST" && path === "/v1/admin/session") return createAdminSession(request);
   if (method === "GET" && path === "/v1/admin/setup") return adminSetupStatus();
+  if (method === "POST" && path === "/v1/admin/setup") return createInitialAdmin(request);
   if (method === "GET" && path === "/v1/admin/session") {
     const user = await requireAdmin(request);
     return success({ user });

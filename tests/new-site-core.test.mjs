@@ -126,3 +126,19 @@ test("vinext bundle preserves NewSiteCore only as a named export", () => {
   assert.match(bundle, /export \{ NewSiteCore, .* as default \}/);
   assert.doesNotMatch(bundle, /pathname\.startsWith\(["']\/v1\//);
 });
+
+test("isolated staging config cannot bind the legacy Worker data plane or public routes", () => {
+  const config = readFileSync(new URL("../wrangler.new-site-staging.jsonc", import.meta.url), "utf8");
+  assert.match(config, /"name": "combaksa-repair-core-staging"/);
+  assert.match(config, /"main": "\.\/dist\/server\/index\.js"/);
+  assert.match(config, /"workers_dev": false/);
+  assert.match(config, /"preview_urls": false/);
+  assert.match(config, /"database_name": "combaksa-repair-new-staging-db"/);
+  assert.match(config, /"database_id": "5574a741-8151-40fa-8c01-584a59a06862"/);
+  assert.match(config, /"bucket_name": "combaksa-repair-new-staging-backups"/);
+  assert.match(config, /"bucket_name": "combaksa-repair-new-staging-photos"/);
+  assert.match(config, /"queue": "combaksa-repair-new-staging-jobs"/);
+  assert.doesNotMatch(config, /"routes?"\s*:/);
+  assert.doesNotMatch(config, /"triggers"\s*:/);
+  assert.doesNotMatch(config, /combaksa\.pe\.kr|baroon-computer-repair-db|combaksa-computer-repair-backups|combaksa-marketing-repair-photos|combaksa-marketing-jobs/);
+});

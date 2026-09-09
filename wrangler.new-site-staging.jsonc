@@ -1,0 +1,81 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  // Dedicated service-only Worker for the new website. This configuration must
+  // never be used for the legacy production Worker.
+  "name": "combaksa-repair-core-staging",
+  "account_id": "bf8c14ae62dc3368c9a511433d861d89",
+  // `npm run build` materializes the vinext virtual modules in this bundle.
+  "main": "./dist/server/index.js",
+  "compatibility_date": "2026-05-22",
+  "compatibility_flags": ["nodejs_compat"],
+  "workers_dev": false,
+  "preview_urls": false,
+  "assets": {
+    "directory": "./dist/client",
+    "not_found_handling": "none",
+    "binding": "ASSETS"
+  },
+  "vars": {
+    "NEW_CORE_ENABLED": "true",
+    "NEW_SITE_VOX_PROCESSING_ENABLED": "false",
+    "VOX_WEBHOOK_ENABLED": "false",
+    "LEGACY_VOX_PUBLIC_ENABLED": "false",
+    "LEGACY_BLOG_PUBLIC_ENABLED": "false",
+    "LEGACY_BLOG_PUBLISH_ENABLED": "false",
+    "AI_PHONE_ROUTING_ENABLED": "false",
+    "TELEGRAM_NOTIFICATION_ENABLED": "false",
+    "TELEGRAM_CONTENT_PROTECTION_ENABLED": "true",
+    "TELEGRAM_PII_MODE": "MASKED",
+    "REQUEST_SUBMISSION_ENABLED": "true",
+    "PUBLIC_BASE_URL": "https://combaksa-repair-web-staging.jung372.workers.dev",
+    "NEW_SITE_PUBLIC_BASE_URL": "https://combaksa-repair-web-staging.jung372.workers.dev",
+    "NEXT_PUBLIC_NAVER_BLOG_ID": ""
+  },
+  "secrets": {
+    "required": [
+      "ADMIN_SESSION_SECRET",
+      "ADMIN_SETUP_TOKEN",
+      "REQUEST_LOOKUP_SECRET",
+      "RATE_LIMIT_SECRET",
+      "STAFF_CHAT_ID_ENCRYPTION_KEY"
+    ]
+  },
+  "r2_buckets": [
+    {
+      "binding": "BACKUPS",
+      "bucket_name": "combaksa-repair-new-staging-backups"
+    },
+    {
+      "binding": "MARKETING_PHOTOS",
+      "bucket_name": "combaksa-repair-new-staging-photos"
+    }
+  ],
+  "queues": {
+    "producers": [
+      {
+        "binding": "MARKETING_JOBS",
+        "queue": "combaksa-repair-new-staging-jobs"
+      }
+    ]
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "combaksa-repair-new-staging-db",
+      "database_id": "5574a741-8151-40fa-8c01-584a59a06862",
+      "migrations_dir": "drizzle"
+    }
+  ],
+  "observability": {
+    "enabled": true,
+    "logs": {
+      "enabled": true,
+      "head_sampling_rate": 1,
+      "invocation_logs": true
+    },
+    "traces": {
+      "enabled": true,
+      "head_sampling_rate": 0.05
+    }
+  }
+}
