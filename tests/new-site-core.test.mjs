@@ -142,3 +142,19 @@ test("isolated staging config cannot bind the legacy Worker data plane or public
   assert.doesNotMatch(config, /"triggers"\s*:/);
   assert.doesNotMatch(config, /combaksa\.pe\.kr|baroon-computer-repair-db|combaksa-computer-repair-backups|combaksa-marketing-repair-photos|combaksa-marketing-jobs/);
 });
+
+test("isolated production config uses only the new domain data plane and stays service-only", () => {
+  const config = readFileSync(new URL("../wrangler.new-site-production.jsonc", import.meta.url), "utf8");
+  assert.match(config, /"name": "combaksa-repair-core"/);
+  assert.match(config, /"workers_dev": false/);
+  assert.match(config, /"preview_urls": false/);
+  assert.match(config, /"PUBLIC_BASE_URL": "https:\/\/www\.combaksa-repair\.com"/);
+  assert.match(config, /"database_name": "combaksa-repair-new-production-db"/);
+  assert.match(config, /"database_id": "fb80815e-73aa-407f-9595-202b5530a2df"/);
+  assert.match(config, /"bucket_name": "combaksa-repair-new-production-backups"/);
+  assert.match(config, /"bucket_name": "combaksa-repair-new-production-photos"/);
+  assert.match(config, /"queue": "combaksa-repair-new-production-jobs"/);
+  assert.doesNotMatch(config, /"routes?"\s*:/);
+  assert.doesNotMatch(config, /"triggers"\s*:/);
+  assert.doesNotMatch(config, /combaksa\.pe\.kr|baroon-computer-repair-db|combaksa-computer-repair-backups|combaksa-marketing-repair-photos|combaksa-marketing-jobs/);
+});

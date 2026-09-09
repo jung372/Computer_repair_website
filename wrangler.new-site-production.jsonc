@@ -1,0 +1,79 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  // Dedicated service-only Worker for the new production website. This
+  // configuration must never be used for the legacy production Worker.
+  "name": "combaksa-repair-core",
+  "account_id": "bf8c14ae62dc3368c9a511433d861d89",
+  "main": "./dist/server/index.js",
+  "compatibility_date": "2026-05-22",
+  "compatibility_flags": ["nodejs_compat"],
+  "workers_dev": false,
+  "preview_urls": false,
+  "assets": {
+    "directory": "./dist/client",
+    "not_found_handling": "none",
+    "binding": "ASSETS"
+  },
+  "vars": {
+    "NEW_CORE_ENABLED": "true",
+    "NEW_SITE_VOX_PROCESSING_ENABLED": "false",
+    "VOX_WEBHOOK_ENABLED": "false",
+    "LEGACY_VOX_PUBLIC_ENABLED": "false",
+    "LEGACY_BLOG_PUBLIC_ENABLED": "false",
+    "LEGACY_BLOG_PUBLISH_ENABLED": "false",
+    "AI_PHONE_ROUTING_ENABLED": "false",
+    "TELEGRAM_NOTIFICATION_ENABLED": "false",
+    "TELEGRAM_CONTENT_PROTECTION_ENABLED": "true",
+    "TELEGRAM_PII_MODE": "MASKED",
+    "REQUEST_SUBMISSION_ENABLED": "true",
+    "PUBLIC_BASE_URL": "https://www.combaksa-repair.com",
+    "NEW_SITE_PUBLIC_BASE_URL": "https://www.combaksa-repair.com",
+    "NEXT_PUBLIC_NAVER_BLOG_ID": ""
+  },
+  "secrets": {
+    "required": [
+      "ADMIN_SESSION_SECRET",
+      "REQUEST_LOOKUP_SECRET",
+      "RATE_LIMIT_SECRET",
+      "STAFF_CHAT_ID_ENCRYPTION_KEY"
+    ]
+  },
+  "r2_buckets": [
+    {
+      "binding": "BACKUPS",
+      "bucket_name": "combaksa-repair-new-production-backups"
+    },
+    {
+      "binding": "MARKETING_PHOTOS",
+      "bucket_name": "combaksa-repair-new-production-photos"
+    }
+  ],
+  "queues": {
+    "producers": [
+      {
+        "binding": "MARKETING_JOBS",
+        "queue": "combaksa-repair-new-production-jobs"
+      }
+    ]
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "combaksa-repair-new-production-db",
+      "database_id": "fb80815e-73aa-407f-9595-202b5530a2df",
+      "migrations_dir": "drizzle"
+    }
+  ],
+  "observability": {
+    "enabled": true,
+    "logs": {
+      "enabled": true,
+      "head_sampling_rate": 1,
+      "invocation_logs": true
+    },
+    "traces": {
+      "enabled": true,
+      "head_sampling_rate": 0.05
+    }
+  }
+}
