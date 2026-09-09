@@ -358,6 +358,20 @@ test("setup bootstraps an isolated database once while owner-only marketing and 
     assert.equal(emptySetup.status, 200);
     assert.deepEqual((await emptySetup.json()).data, { ownerExists: false, setupAllowed: true });
 
+    // A user may try the login screen before creating the owner account.
+    for (let index = 0; index < 5; index += 1) {
+      const attempt = await post(edge, "/v1/admin/session", {
+        loginName: "admin", password: "fixture-owner-password-123",
+      });
+      assert.equal(attempt.status, 401);
+    }
+    const blockedLogin = await post(edge, "/v1/admin/session", {
+      loginName: "admin", password: "fixture-owner-password-123",
+    });
+    assert.equal(blockedLogin.status, 429);
+    await db.prepare("INSERT INTO access_attempts (key, failures, blocked_until, updated_at) VALUES (?, 5, ?, ?)")
+      .bind("admin-ip:unrelated-fixture-client", new Date(Date.now() + 900000).toISOString(), new Date().toISOString()).run();
+
     const rejectedSetup = await post(edge, "/v1/admin/setup", {
       setupToken: "wrong-token",
       newPassword: "fixture-owner-password-123",
@@ -365,6 +379,10 @@ test("setup bootstraps an isolated database once while owner-only marketing and 
     });
     assert.equal(rejectedSetup.status, 400);
     assert.equal((await rejectedSetup.json()).error.code, "INVALID_REQUEST");
+    const stillBlocked = await post(edge, "/v1/admin/session", {
+      loginName: "admin", password: "fixture-owner-password-123",
+    });
+    assert.equal(stillBlocked.status, 429, "invalid bootstrap must not clear login protection");
 
     const createdSetup = await post(edge, "/v1/admin/setup", {
       setupToken: "fixture-admin-setup-token-with-sufficient-entropy",
@@ -373,6 +391,8 @@ test("setup bootstraps an isolated database once while owner-only marketing and 
     });
     assert.equal(createdSetup.status, 201);
     assert.deepEqual((await createdSetup.json()).data, { configured: true });
+    const remaining = await db.prepare("SELECT key FROM access_attempts WHERE key LIKE 'admin-%'").all();
+    assert.deepEqual(remaining.results.map((row) => row.key), ["admin-ip:unrelated-fixture-client"]);
 
     const duplicateSetup = await post(edge, "/v1/admin/setup", {
       setupToken: "fixture-admin-setup-token-with-sufficient-entropy",

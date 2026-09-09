@@ -29,7 +29,7 @@ import {
   createNewSiteAdminSessionToken,
   getNewSiteAdminUser,
 } from "../lib/admin-auth";
-import { normalizeLoginName } from "../lib/account-policy";
+import { ADMIN_LOGIN_NAME, normalizeLoginName } from "../lib/account-policy";
 import { isValidStaffPassword } from "../lib/account-policy";
 import {
   authenticateCustomerLookup,
@@ -514,7 +514,13 @@ async function createInitialAdmin(request: Request) {
     }
     throw error;
   }
-  await clearAccessFailures(key);
+  // Successful bootstrap proves ownership. Discard pre-account login failures
+  // for this owner and setup client so the first login is not still blocked.
+  await Promise.all([
+    clearAccessFailures(key),
+    clearAccessFailures(`admin-account:${ADMIN_LOGIN_NAME}`),
+    clearAccessFailures(`admin-ip:${clientHash}`),
+  ]);
   return success({ configured: true }, 201);
 }
 
