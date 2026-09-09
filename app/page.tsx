@@ -20,13 +20,15 @@ import { QuickRequestPanel } from "@/components/quick-request-panel";
 import { listPublishedBlogPosts } from "@/data/blog-post-repository";
 import { serviceGuideList } from "@/lib/service-content";
 import { getSiteConfig } from "@/lib/site-config";
+import { getRuntimeString } from "@/lib/runtime-config";
 
 export const dynamic = "force-dynamic";
 
 export default async function Home() {
   const config = getSiteConfig();
   const phoneHref = `tel:${config.phone.replace(/\D/g, "")}`;
-  const blogPosts = await listPublishedBlogPosts(3);
+  const blogEnabled = getRuntimeString("LEGACY_BLOG_PUBLIC_ENABLED").toLowerCase() !== "false";
+  const blogPosts = blogEnabled ? await listPublishedBlogPosts(3) : [];
 
   return (
     <main id="main-content">
@@ -236,7 +238,7 @@ export default async function Home() {
         </div>
       </section>
 
-      <BlogNotesSection posts={blogPosts} blogUrl={config.naverBlogUrl} />
+      {blogEnabled ? <BlogNotesSection posts={blogPosts} blogUrl={config.naverBlogUrl} /> : null}
 
       <section className="final-cta">
         <div className="container final-cta-inner">

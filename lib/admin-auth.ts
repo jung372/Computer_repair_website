@@ -26,6 +26,7 @@ export type AdminUser = {
 };
 
 export const ADMIN_SESSION_COOKIE = "combaksa_admin_session";
+export const NEW_SITE_ADMIN_SESSION_COOKIE = "combaksa_new_admin_session";
 export const LEGACY_ADMIN_SESSION_COOKIE = "baroon_admin_session";
 export const LAST_LOGIN_COOKIE = "combaksa_last_login_id";
 const SESSION_LIFETIME_SECONDS = 8 * 60 * 60;
@@ -85,6 +86,19 @@ export async function authenticateAdminCredentials(
   return account;
 }
 
+/** New-site login never falls back to the legacy one-time bootstrap secret. */
+export async function authenticateExistingAdminCredentials(
+  loginNameValue: string,
+  password: string,
+  clientHash: string,
+) {
+  const loginName = normalizeLoginName(loginNameValue);
+  const account = await getAdminAccountByLoginName(loginName);
+  if (!account?.isActive || !(await verifyPassword(password, account.passwordHash))) return null;
+  await markAdminLogin(account.id, clientHash);
+  return account;
+}
+
 export async function createAdminSessionToken(admin: AdminRecord) {
   const expires = Math.floor(Date.now() / 1000) + SESSION_LIFETIME_SECONDS;
   const payload = `${admin.id}.${expires}.${admin.sessionVersion}`;
@@ -93,7 +107,9 @@ export async function createAdminSessionToken(admin: AdminRecord) {
 
 export async function verifyAdminSessionToken(token?: string) {
   if (!token) return null;
-  const [adminId, expiresValue, sessionVersionValue, provided] = token.split(".");
+  const segments = token.split(".");
+  if (segments.length !== 4) return null;
+  const [adminId, expiresValue, sessionVersionValue, provided] = segments;
   const expires = Number(expiresValue);
   const sessionVersion = Number(sessionVersionValue);
   if (
@@ -108,6 +124,30 @@ export async function verifyAdminSessionToken(token?: string) {
   const expected = await sign(`${adminId}.${expires}.${sessionVersion}`);
   if (!(await constantTimeEqualStrings(expected, provided))) return null;
   return { adminId, expires, sessionVersion };
+}
+
+export async function createNewSiteAdminSessionToken(admin: AdminRecord) {
+  const expires = Math.floor(Date.now() / 1000) + SESSION_LIFETIME_SECONDS;
+  const payload = `${admin.id}.${expires}.${admin.sessionVersion}.new`;
+  return `${payload}.${await sign(payload)}`;
+}
+
+export async function getNewSiteAdminUser(token?: string): Promise<AdminUser | null> {
+  if (!token) return null;
+  const segments = token.split(".");
+  if (segments.length !== 5) return null;
+  const [adminId, expiresValue, sessionVersionValue, scope, provided] = segments;
+  const expires = Number(expiresValue);
+  const sessionVersion = Number(sessionVersionValue);
+  if (
+    !adminId || scope !== "new" || !expires || !sessionVersion || !provided ||
+    expires < Math.floor(Date.now() / 1000)
+  ) return null;
+  const payload = `${adminId}.${expires}.${sessionVersion}.new`;
+  if (!(await constantTimeEqualStrings(await sign(payload), provided))) return null;
+  const account = await getAdminAccountById(adminId);
+  if (!account?.isActive || account.sessionVersion !== sessionVersion) return null;
+  return toAdminUser(account);
 }
 
 export function safeAdminReturnPath(value: string) {

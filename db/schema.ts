@@ -23,6 +23,9 @@ export const serviceRequests = sqliteTable(
     internalNote: text("internal_note").notNull().default(""),
     notificationStatus: text("notification_status").notNull().default("PENDING"),
     notificationError: text("notification_error"),
+    sourceSite: text("source_site").notNull().default("legacy"),
+    sourceChannel: text("source_channel").notNull().default("UNKNOWN"),
+    originHost: text("origin_host"),
     privacyConsentVersion: text("privacy_consent_version").notNull(),
     privacyConsentedAt: text("privacy_consented_at").notNull(),
     privacyLegalBasis: text("privacy_legal_basis").notNull().default("CONSENT"),
@@ -76,6 +79,8 @@ export const notificationOutbox = sqliteTable(
     telegramDeleteAttempts: integer("telegram_delete_attempts").notNull().default(0),
     telegramDeleteError: text("telegram_delete_error"),
     canceledAt: text("canceled_at"),
+    leaseId: text("lease_id"),
+    leaseExpiresAt: text("lease_expires_at"),
     createdAt: text("created_at").notNull(),
     updatedAt: text("updated_at").notNull(),
   },
@@ -129,7 +134,23 @@ export const customerLookupSessions = sqliteTable("customer_lookup_sessions", {
   tokenHash: text("token_hash").notNull().unique(),
   expiresAt: text("expires_at").notNull(),
   createdAt: text("created_at").notNull(),
+  siteScope: text("site_scope").notNull().default("legacy"),
 });
+
+export const webSubmissionIdempotency = sqliteTable(
+  "web_submission_idempotency",
+  {
+    siteScope: text("site_scope").notNull(),
+    idempotencyKey: text("idempotency_key").notNull(),
+    payloadHash: text("payload_hash").notNull(),
+    requestId: text("request_id").notNull(),
+    createdAt: text("created_at").notNull(),
+  },
+  (table) => [
+    primaryKey({ columns: [table.siteScope, table.idempotencyKey] }),
+    uniqueIndex("web_submission_request_unique").on(table.requestId),
+  ],
+);
 
 export const customerLookupSessionRequests = sqliteTable(
   "customer_lookup_session_requests",
@@ -281,6 +302,14 @@ export const blogPosts = sqliteTable(
     index("blog_posts_visibility_published_idx").on(table.visibility, table.publishedAt),
   ],
 );
+
+export const blogSyncState = sqliteTable("blog_sync_state", {
+  source: text("source").primaryKey(),
+  lastSuccessAt: text("last_success_at"),
+  lastFailureAt: text("last_failure_at"),
+  lastError: text("last_error"),
+  updatedAt: text("updated_at").notNull(),
+});
 
 export const requestSerials = sqliteTable("request_serials", {
   serialNo: integer("serial_no").primaryKey({ autoIncrement: true }),

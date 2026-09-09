@@ -2,6 +2,8 @@ import { ensureDatabase, getD1 } from "@/data/database";
 import { sha256 } from "@/lib/security/keyed-hash";
 
 export const CUSTOMER_LOOKUP_COOKIE = "combaksa_request_lookup";
+export const NEW_SITE_CUSTOMER_LOOKUP_COOKIE = "combaksa_new_lookup_session";
+export type CustomerSessionScope = "legacy" | "new";
 const SESSION_LIFETIME_MS = 10 * 60 * 1000;
 
 export type LookupCandidate = {
@@ -45,7 +47,10 @@ export async function findLegacyLookupCandidates(phone: string, limit = 21) {
   return result.results;
 }
 
-export async function createCustomerLookupSession(requestIds: string[]) {
+export async function createCustomerLookupSession(
+  requestIds: string[],
+  siteScope: CustomerSessionScope = "legacy",
+) {
   await ensureDatabase();
   const token = randomToken();
   const tokenHash = await sha256(token);
@@ -57,10 +62,10 @@ export async function createCustomerLookupSession(requestIds: string[]) {
   await db.batch([
     db
       .prepare(`
-        INSERT INTO customer_lookup_sessions (id, token_hash, expires_at, created_at)
-        VALUES (?, ?, ?, ?)
+        INSERT INTO customer_lookup_sessions (id, token_hash, expires_at, created_at, site_scope)
+        VALUES (?, ?, ?, ?, ?)
       `)
-      .bind(id, tokenHash, expiresAt, createdAt),
+      .bind(id, tokenHash, expiresAt, createdAt, siteScope),
     ...requestIds.map((requestId) =>
       db
         .prepare(`
@@ -73,17 +78,20 @@ export async function createCustomerLookupSession(requestIds: string[]) {
   return { token, expiresAt };
 }
 
-export async function getCustomerLookupRequestIds(token?: string) {
+export async function getCustomerLookupRequestIds(
+  token?: string,
+  siteScope: CustomerSessionScope = "legacy",
+) {
   if (!token) return [];
   await ensureDatabase();
   const tokenHash = await sha256(token);
   const session = await getD1()
-    .prepare("SELECT id, expires_at FROM customer_lookup_sessions WHERE token_hash = ?")
-    .bind(tokenHash)
+    .prepare("SELECT id, expires_at FROM customer_lookup_sessions WHERE token_hash = ? AND site_scope = ?")
+    .bind(tokenHash, siteScope)
     .first<{ id: string; expires_at: string }>();
   if (!session) return [];
   if (new Date(session.expires_at).getTime() <= Date.now()) {
-    await deleteCustomerLookupSession(token);
+    await deleteCustomerLookupSession(token, siteScope);
     return [];
   }
   const result = await getD1()
@@ -98,7 +106,11 @@ export async function getCustomerLookupRequestIds(token?: string) {
   return result.results.map((row) => row.request_id);
 }
 
-export async function customerLookupSessionCanAccess(token: string | undefined, requestId: string) {
+export async function customerLookupSessionCanAccess(
+  token: string | undefined,
+  requestId: string,
+  siteScope: CustomerSessionScope = "legacy",
+) {
   if (!token) return false;
   await ensureDatabase();
   const tokenHash = await sha256(token);
@@ -108,21 +120,25 @@ export async function customerLookupSessionCanAccess(token: string | undefined, 
       FROM customer_lookup_sessions AS sessions
       INNER JOIN customer_lookup_session_requests AS links
         ON links.session_id = sessions.id
-      WHERE sessions.token_hash = ? AND sessions.expires_at > ? AND links.request_id = ?
+      WHERE sessions.token_hash = ? AND sessions.site_scope = ?
+        AND sessions.expires_at > ? AND links.request_id = ?
       LIMIT 1
     `)
-    .bind(tokenHash, new Date().toISOString(), requestId)
+    .bind(tokenHash, siteScope, new Date().toISOString(), requestId)
     .first<{ allowed: number }>();
   return Boolean(row);
 }
 
-export async function deleteCustomerLookupSession(token?: string) {
+export async function deleteCustomerLookupSession(
+  token?: string,
+  siteScope: CustomerSessionScope = "legacy",
+) {
   if (!token) return;
   await ensureDatabase();
   const tokenHash = await sha256(token);
   const session = await getD1()
-    .prepare("SELECT id FROM customer_lookup_sessions WHERE token_hash = ?")
-    .bind(tokenHash)
+    .prepare("SELECT id FROM customer_lookup_sessions WHERE token_hash = ? AND site_scope = ?")
+    .bind(tokenHash, siteScope)
     .first<{ id: string }>();
   if (!session) return;
   const db = getD1();

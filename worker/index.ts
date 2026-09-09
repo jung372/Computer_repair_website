@@ -8,6 +8,7 @@ import {
 } from "../infrastructure/telegram";
 import { getCanonicalRedirectUrl } from "../lib/canonical-url";
 import { getRuntimeString } from "../lib/runtime-config";
+export { NewSiteCore } from "./new-site-core";
 
 /** How many queued notifications one scheduled run may drain. */
 const SCHEDULED_NOTIFICATION_BATCH = 10;
@@ -92,6 +93,7 @@ const worker = {
     }
 
     if (controller.cron === BLOG_RSS_CRON) {
+      if (getRuntimeString("LEGACY_BLOG_PUBLIC_ENABLED").toLowerCase() === "false") return;
       ctx.waitUntil(
         syncNaverBlogRss()
           .then((result) => console.log(JSON.stringify({

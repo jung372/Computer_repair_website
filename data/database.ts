@@ -37,6 +37,9 @@ async function initializeDatabase() {
         internal_note TEXT NOT NULL DEFAULT '',
         notification_status TEXT NOT NULL DEFAULT 'PENDING',
         notification_error TEXT,
+        source_site TEXT NOT NULL DEFAULT 'legacy',
+        source_channel TEXT NOT NULL DEFAULT 'UNKNOWN',
+        origin_host TEXT,
         privacy_consent_version TEXT NOT NULL,
         privacy_consented_at TEXT NOT NULL,
         privacy_legal_basis TEXT NOT NULL DEFAULT 'CONSENT',
@@ -77,6 +80,8 @@ async function initializeDatabase() {
         telegram_delete_attempts INTEGER NOT NULL DEFAULT 0,
         telegram_delete_error TEXT,
         canceled_at TEXT,
+        lease_id TEXT,
+        lease_expires_at TEXT,
         created_at TEXT NOT NULL,
         updated_at TEXT NOT NULL,
         FOREIGN KEY (request_id) REFERENCES service_requests(id)
@@ -115,7 +120,18 @@ async function initializeDatabase() {
         id TEXT PRIMARY KEY,
         token_hash TEXT NOT NULL UNIQUE,
         expires_at TEXT NOT NULL,
-        created_at TEXT NOT NULL
+        created_at TEXT NOT NULL,
+        site_scope TEXT NOT NULL DEFAULT 'legacy'
+      )
+    `),
+    db.prepare(`
+      CREATE TABLE IF NOT EXISTS web_submission_idempotency (
+        site_scope TEXT NOT NULL,
+        idempotency_key TEXT NOT NULL,
+        payload_hash TEXT NOT NULL,
+        request_id TEXT NOT NULL UNIQUE,
+        created_at TEXT NOT NULL,
+        PRIMARY KEY (site_scope, idempotency_key)
       )
     `),
     db.prepare(`
@@ -215,6 +231,15 @@ async function initializeDatabase() {
         source_job_id TEXT NOT NULL DEFAULT '', source TEXT NOT NULL,
         visibility TEXT NOT NULL DEFAULT 'PUBLISHED', synced_at TEXT NOT NULL,
         UNIQUE(platform, blog_id, post_id)
+      )
+    `),
+    db.prepare(`
+      CREATE TABLE IF NOT EXISTS blog_sync_state (
+        source TEXT PRIMARY KEY,
+        last_success_at TEXT,
+        last_failure_at TEXT,
+        last_error TEXT,
+        updated_at TEXT NOT NULL
       )
     `),
     db.prepare(`
@@ -428,6 +453,8 @@ async function initializeDatabase() {
     ["telegram_deleted_at", "TEXT"],
     ["telegram_delete_attempts", "INTEGER NOT NULL DEFAULT 0"],
     ["telegram_delete_error", "TEXT"],
+    ["lease_id", "TEXT"],
+    ["lease_expires_at", "TEXT"],
   ] as const) {
     if (!outboxColumns.results.some((column) => column.name === name)) {
       await db.prepare(`ALTER TABLE notification_outbox ADD COLUMN ${name} ${definition}`).run();
@@ -440,11 +467,38 @@ async function initializeDatabase() {
     ["privacy_legal_basis", "TEXT NOT NULL DEFAULT 'CONSENT'"],
     ["privacy_notice_version", "TEXT NOT NULL DEFAULT ''"],
     ["privacy_notice_presented_at", "TEXT NOT NULL DEFAULT ''"],
+    ["source_site", "TEXT NOT NULL DEFAULT 'legacy'"],
+    ["source_channel", "TEXT NOT NULL DEFAULT 'UNKNOWN'"],
+    ["origin_host", "TEXT"],
   ] as const) {
     if (!requestColumns.results.some((column) => column.name === name)) {
       await db.prepare(`ALTER TABLE service_requests ADD COLUMN ${name} ${definition}`).run();
     }
   }
+  await db.prepare(
+    "CREATE INDEX IF NOT EXISTS notification_outbox_lease_idx ON notification_outbox(status, lease_expires_at, next_attempt_at)",
+  ).run();
+  const customerSessionColumns = await db
+    .prepare("PRAGMA table_info(customer_lookup_sessions)")
+    .all<{ name: string }>();
+  if (!customerSessionColumns.results.some((column) => column.name === "site_scope")) {
+    await db.prepare(
+      "ALTER TABLE customer_lookup_sessions ADD COLUMN site_scope TEXT NOT NULL DEFAULT 'legacy'",
+    ).run();
+  }
+  await db.prepare(`
+    CREATE TABLE IF NOT EXISTS web_submission_idempotency (
+      site_scope TEXT NOT NULL,
+      idempotency_key TEXT NOT NULL,
+      payload_hash TEXT NOT NULL,
+      request_id TEXT NOT NULL UNIQUE,
+      created_at TEXT NOT NULL,
+      PRIMARY KEY (site_scope, idempotency_key)
+    )
+  `).run();
+  await db.prepare(
+    "CREATE INDEX IF NOT EXISTS service_requests_source_idx ON service_requests(source_site, source_channel, created_at)",
+  ).run();
   await db
     .prepare(
       "CREATE INDEX IF NOT EXISTS request_operations_assignee_account_idx ON request_operations(assignee_account_id)",

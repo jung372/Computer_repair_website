@@ -15,6 +15,8 @@ export type AdminRequestFilters = {
   integratedFrom?: string;
   integratedTo?: string;
   statuses?: string[];
+  sourceSite?: string;
+  sourceChannel?: string;
 };
 
 export type RequestOperationsRecord = {
@@ -222,6 +224,14 @@ function buildAdminRequestConditions(
   if (filters.customerType) {
     clauses.push("operations.customer_type = ?");
     values.push(filters.customerType);
+  }
+  if (["legacy", "new", "unknown"].includes(filters.sourceSite ?? "")) {
+    clauses.push("sr.source_site = ?");
+    values.push(filters.sourceSite);
+  }
+  if (["WEB", "VOX", "UNKNOWN"].includes(filters.sourceChannel ?? "")) {
+    clauses.push("sr.source_channel = ?");
+    values.push(filters.sourceChannel);
   }
   addIntegratedDateRange(
     clauses,

@@ -4,6 +4,9 @@ import { authorizeMarketingBridge } from "@/lib/marketing/bridge-auth";
 import { getRuntimeString } from "@/lib/runtime-config";
 
 export async function POST(request: Request) {
+  if (getRuntimeString("LEGACY_BLOG_PUBLISH_ENABLED").toLowerCase() === "false") {
+    return Response.json({ error: "Gone" }, { status: 410 });
+  }
   if (!(await authorizeMarketingBridge(request))) {
     return Response.json({ error: "Unauthorized" }, { status: 401 });
   }
