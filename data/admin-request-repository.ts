@@ -289,25 +289,37 @@ export async function listAdminRequestRecords(
   return result.results.map(mapAdminRequest);
 }
 
-export async function getAdminRequestRecord(publicId: string, assignedAccountId?: string) {
+export async function getAdminRequestRecord(
+  publicId: string,
+  assignedAccountId?: string,
+  sourceSite?: "legacy" | "new",
+) {
   await ensureDatabase();
   const assignmentClause = assignedAccountId ? " AND operations.assignee_account_id = ?" : "";
+  const sourceClause = sourceSite ? " AND sr.source_site = ?" : "";
   const row = await getD1()
     .prepare(`
       ${ADMIN_REQUEST_SELECT}
-      WHERE sr.public_id = ? AND sr.deleted_at IS NULL${assignmentClause}
+      WHERE sr.public_id = ? AND sr.deleted_at IS NULL${assignmentClause}${sourceClause}
     `)
-    .bind(...(assignedAccountId ? [publicId, assignedAccountId] : [publicId]))
+    .bind(publicId, ...(assignedAccountId ? [assignedAccountId] : []), ...(sourceSite ? [sourceSite] : []))
     .first<AdminRequestRow>();
   return row ? mapAdminRequest(row) : null;
 }
 
-export async function getAdminRequestFilterOptions() {
+export async function getAdminRequestFilterOptions(sourceSite?: "legacy" | "new") {
   await ensureDatabase();
   const customerTypes = await getD1()
     .prepare(
-      "SELECT DISTINCT customer_type AS value FROM request_operations WHERE customer_type <> '' ORDER BY customer_type",
+      `SELECT DISTINCT operations.customer_type AS value
+       FROM request_operations operations
+       INNER JOIN service_requests requests ON requests.id = operations.request_id
+       WHERE operations.customer_type <> ''
+         AND requests.deleted_at IS NULL
+         ${sourceSite ? "AND requests.source_site = ?" : ""}
+       ORDER BY operations.customer_type`,
     )
+    .bind(...(sourceSite ? [sourceSite] : []))
     .all<{ value: string }>();
   return {
     customerTypes: customerTypes.results.map((row) => row.value),
@@ -532,7 +544,7 @@ export async function assignAdminRequest(
   };
 }
 
-export async function getDashboardCounts(accountId: string) {
+export async function getDashboardCounts(accountId: string, sourceSite?: "legacy" | "new") {
   await ensureDatabase();
   const unresolved = UNRESOLVED_REQUEST_STATUSES.map(() => "?").join(", ");
   const row = await getD1().prepare(`
@@ -544,7 +556,13 @@ export async function getDashboardCounts(accountId: string) {
     FROM service_requests requests
     INNER JOIN request_operations operations ON operations.request_id = requests.id
     WHERE requests.deleted_at IS NULL
-  `).bind(...UNRESOLVED_REQUEST_STATUSES, accountId, ...UNRESOLVED_REQUEST_STATUSES).first<{
+      ${sourceSite ? "AND requests.source_site = ?" : ""}
+  `).bind(
+    ...UNRESOLVED_REQUEST_STATUSES,
+    accountId,
+    ...UNRESOLVED_REQUEST_STATUSES,
+    ...(sourceSite ? [sourceSite] : []),
+  ).first<{
     unassigned_count: number;
     total_unresolved_count: number;
     unresolved_count: number;

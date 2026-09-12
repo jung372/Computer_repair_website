@@ -50,10 +50,10 @@ export async function authenticateCustomerLookup(
   }
 
   const lookupKey = await createLookupKey(phone, password);
-  const keyed = await findKeyedLookupCandidates(phone, lookupKey, MAX_CANDIDATES);
+  const keyed = await findKeyedLookupCandidates(phone, lookupKey, siteScope, MAX_CANDIDATES);
   const remaining = Math.max(0, MAX_CANDIDATES - keyed.length);
   const legacy = remaining
-    ? await findLegacyLookupCandidates(phone, remaining + 1)
+    ? await findLegacyLookupCandidates(phone, siteScope, remaining + 1)
     : [];
   if (legacy.length > remaining) {
     throw new CustomerLookupError("LEGACY_LIMIT");

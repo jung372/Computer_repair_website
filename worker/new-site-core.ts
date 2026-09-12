@@ -7,12 +7,14 @@ import {
 } from "../data/customer-lookup-repository";
 import {
   countAdminRequestRecords,
+  getAdminRequestFilterOptions,
   getAdminRequestRecord,
+  getDashboardCounts,
   listAdminRequestRecords,
   assignAdminRequest,
 } from "../data/admin-request-repository";
 import { listAssignmentOptions, listStaffSlots } from "../data/staff-slot-repository";
-import { getSettlementReport } from "../data/settlement-repository";
+import { getSettlementFilterOptions, getSettlementReport } from "../data/settlement-repository";
 import {
   listAllBlogPosts,
   listPublishedBlogPosts,
@@ -52,6 +54,7 @@ import {
   hasNewSiteSubmissionIdempotencyKey,
 } from "../data/request-repository";
 import { getRuntimeString } from "../lib/runtime-config";
+import { testStaffTelegramSlot } from "../infrastructure/telegram";
 import { handleVoxWebhook } from "../app/api/integrations/vox/webhook/route";
 import { normalizePublishedPostInput } from "../lib/blog/post-contract";
 import {
@@ -90,6 +93,7 @@ import {
   MarketingJobSubmissionError,
   submitNewSiteMarketingJob,
 } from "../lib/logic/marketing-job-service";
+import { UNRESOLVED_REQUEST_STATUSES } from "../lib/domain";
 
 const MAX_JSON_BYTES = 256 * 1024;
 const MAX_RSS_BYTES = 1024 * 1024;
@@ -343,24 +347,39 @@ async function listAdminRequests(request: Request) {
   const url = new URL(request.url);
   const page = parsePositiveInteger(url.searchParams.get("page"), 1, 100000);
   const pageSize = parsePositiveInteger(url.searchParams.get("pageSize"), 50, 100);
+  const dashboard = url.searchParams.get("dashboard");
+  const dashboardStatuses = dashboard === "total-unresolved" || dashboard === "my-unresolved"
+    ? [...UNRESOLVED_REQUEST_STATUSES]
+    : [];
   const filters = {
     q: url.searchParams.get("q")?.slice(0, 100),
-    assignee: url.searchParams.get("assignee")?.slice(0, 100),
+    assignee: dashboard === "unassigned"
+      ? "__UNASSIGNED__"
+      : url.searchParams.get("assignee")?.slice(0, 100),
     customerType: url.searchParams.get("customerType")?.slice(0, 80),
     integratedFrom: url.searchParams.get("from")?.slice(0, 10),
     integratedTo: url.searchParams.get("to")?.slice(0, 10),
-    statuses: url.searchParams.getAll("status").slice(0, 20),
+    statuses: dashboardStatuses.length
+      ? dashboardStatuses
+      : url.searchParams.getAll("status").slice(0, 20),
     sourceSite: url.searchParams.get("sourceSite") ?? undefined,
     sourceChannel: url.searchParams.get("sourceChannel") ?? undefined,
   };
-  const assigned = admin.role === "STAFF" ? admin.id : undefined;
-  const [requests, total] = await Promise.all([
+  const assigned = admin.role === "STAFF" || dashboard === "my-unresolved" ? admin.id : undefined;
+  const [requests, total, counts, filterOptions, assignmentOptions] = await Promise.all([
     listAdminRequestRecords(filters, pageSize, assigned, (page - 1) * pageSize),
     countAdminRequestRecords(filters, assigned),
+    getDashboardCounts(admin.id),
+    getAdminRequestFilterOptions(),
+    admin.role === "OWNER" ? listAssignmentOptions() : Promise.resolve([]),
   ]);
   return success({
     requests,
     pagination: { page, pageSize, total, totalPages: Math.max(1, Math.ceil(total / pageSize)) },
+    counts,
+    filterOptions,
+    assignmentOptions,
+    user: admin,
   });
 }
 
@@ -405,15 +424,25 @@ async function settlements(request: Request) {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(from) || !/^\d{4}-\d{2}-\d{2}$/.test(to)) {
     throw new CoreHttpError("INVALID_REQUEST", 400, "조회 기간을 확인해 주세요.");
   }
-  return success(await getSettlementReport({
+  const sourceSiteValue = url.searchParams.get("sourceSite");
+  const sourceSite: "legacy" | "new" | undefined = sourceSiteValue === "legacy" || sourceSiteValue === "new"
+    ? sourceSiteValue
+    : undefined;
+  const filters = {
     from,
     to,
     assignee: url.searchParams.get("assignee") ?? undefined,
     paymentMethods: url.searchParams.getAll("paymentMethod").slice(0, 20),
     statuses: url.searchParams.getAll("status").slice(0, 20),
+    sourceSite,
     page: parsePositiveInteger(url.searchParams.get("page"), 1, 100000),
     pageSize: parsePositiveInteger(url.searchParams.get("pageSize"), 50, 100),
-  }, admin.role === "STAFF" ? admin.id : undefined));
+  };
+  const [report, filterOptions] = await Promise.all([
+    getSettlementReport(filters, admin.role === "STAFF" ? admin.id : undefined),
+    getSettlementFilterOptions(),
+  ]);
+  return success({ ...report, filterOptions, user: admin });
 }
 
 async function mutateStaff(request: Request) {
@@ -422,6 +451,7 @@ async function mutateStaff(request: Request) {
   const body = await readJsonObject(request);
   switch (body.action) {
     case "save-slot": await updateStaffSlotSettings(admin.id, body); break;
+    case "test-telegram": await testStaffTelegramSlot(Number(body.slotSerialNo), admin.id); break;
     case "create": await addStaffToSlot(admin.id, body); break;
     case "edit": await editStaffInSlot(admin.id, body); break;
     case "reset-password": await changeSlotStaffPassword(admin.id, body); break;

@@ -471,6 +471,24 @@ test("provides role-scoped monthly settlement reports and totals", async () => {
   assert.match(domain, /SETTLEMENT_DEFAULT_STATUSES/);
 });
 
+test("keeps the legacy administrator and customer surfaces scoped to legacy intake", async () => {
+  const [adminPage, adminDetail, adminRoute, settlements, staff, lookup] = await Promise.all([
+    readFile(new URL("app/admin/page.tsx", root), "utf8"),
+    readFile(new URL("app/admin/requests/[publicId]/page.tsx", root), "utf8"),
+    readFile(new URL("app/api/admin/requests/[publicId]/route.ts", root), "utf8"),
+    readFile(new URL("app/admin/settlements/page.tsx", root), "utf8"),
+    readFile(new URL("app/admin/staff/page.tsx", root), "utf8"),
+    readFile(new URL("lib/logic/customer-lookup.ts", root), "utf8"),
+  ]);
+  assert.match(adminPage, /sourceSite: "legacy"/);
+  assert.match(adminPage, /getDashboardCounts\(admin\.id, "legacy"\)/);
+  assert.match(adminDetail, /user\.role === "STAFF" \? user\.id : undefined,\s*"legacy"/);
+  assert.match(adminRoute, /admin\.role === "STAFF" \? admin\.id : undefined,\s*"legacy"/);
+  assert.match(settlements, /sourceSite: "legacy"/);
+  assert.match(staff, /listStaffSlots\("legacy"\)/);
+  assert.match(lookup, /findKeyedLookupCandidates\(phone, lookupKey, siteScope/);
+});
+
 test("lifts the description length cap and stops collecting a preferred visit time", async () => {
   const [requestForm, requestService, recordForm, recordService, detailPage, privacy] =
     await Promise.all([

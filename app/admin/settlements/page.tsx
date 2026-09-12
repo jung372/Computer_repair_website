@@ -84,7 +84,7 @@ export default async function SettlementsPage({
   const query = await searchParams;
   const period = normalizedPeriod(query);
   const searched = first(query.searched) === "1";
-  const options = await getSettlementFilterOptions();
+  const options = await getSettlementFilterOptions("legacy");
   const paymentOptions = unique([...PAYMENT_METHODS, ...options.paymentMethods]);
   const requestedPayments = all(query.payment);
   const requestedStatuses = all(query.status);
@@ -101,6 +101,7 @@ export default async function SettlementsPage({
     assignee,
     paymentMethods: selectedPayments.length === paymentOptions.length ? [] : selectedPayments,
     statuses: selectedStatuses,
+    sourceSite: "legacy",
     page,
     pageSize: 50,
   }, admin.role === "STAFF" ? admin.id : undefined);

@@ -15,6 +15,7 @@ export type LookupCandidate = {
 export async function findKeyedLookupCandidates(
   phone: string,
   lookupKey: string,
+  siteScope: CustomerSessionScope = "legacy",
   limit = 20,
 ) {
   await ensureDatabase();
@@ -22,27 +23,31 @@ export async function findKeyedLookupCandidates(
     .prepare(`
       SELECT id, public_id, access_password_hash
       FROM service_requests
-      WHERE lookup_key = ? AND REPLACE(phone, '-', '') = ? AND deleted_at IS NULL
+      WHERE lookup_key = ? AND REPLACE(phone, '-', '') = ? AND source_site = ? AND deleted_at IS NULL
       ORDER BY created_at DESC
       LIMIT ?
     `)
-    .bind(lookupKey, phone, limit)
+    .bind(lookupKey, phone, siteScope, limit)
     .all<LookupCandidate>();
   return result.results;
 }
 
-export async function findLegacyLookupCandidates(phone: string, limit = 21) {
+export async function findLegacyLookupCandidates(
+  phone: string,
+  siteScope: CustomerSessionScope = "legacy",
+  limit = 21,
+) {
   await ensureDatabase();
   const result = await getD1()
     .prepare(`
       SELECT id, public_id, access_password_hash
       FROM service_requests
       WHERE lookup_key IS NULL AND REPLACE(phone, '-', '') = ? AND access_password_hash IS NOT NULL
-        AND deleted_at IS NULL
+        AND source_site = ? AND deleted_at IS NULL
       ORDER BY created_at DESC
       LIMIT ?
     `)
-    .bind(phone, limit)
+    .bind(phone, siteScope, limit)
     .all<LookupCandidate>();
   return result.results;
 }

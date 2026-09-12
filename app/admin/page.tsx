@@ -61,13 +61,14 @@ export default async function AdminPage({
     integratedFrom: first(query.integratedFrom),
     integratedTo: first(query.integratedTo),
     statuses: selectedStatuses,
+    sourceSite: "legacy",
   };
   const assignedAccountId = admin.role === "STAFF" ? admin.id : undefined;
   const [totalRequests, filterOptions, staffAccounts, counts] = await Promise.all([
     countAdminRequestRecords(filters, assignedAccountId),
-    getAdminRequestFilterOptions(),
+    getAdminRequestFilterOptions("legacy"),
     admin.role === "OWNER" ? listAssignmentOptions() : Promise.resolve([]),
-    getDashboardCounts(admin.id),
+    getDashboardCounts(admin.id, "legacy"),
   ]);
   const pagination = getPagination(first(query.page), totalRequests, ADMIN_PAGE_SIZE);
   const requests = await listAdminRequestRecords(

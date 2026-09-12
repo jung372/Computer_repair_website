@@ -37,10 +37,11 @@
     "LEGACY_VOX_PUBLIC_ENABLED": "true",
     "LEGACY_BLOG_PUBLIC_ENABLED": "true",
     "LEGACY_BLOG_PUBLISH_ENABLED": "true",
-    // Enable only after the migration and named-entrypoint checks pass.
-    "NEW_CORE_ENABLED": "false",
+    // The new site's private Service Binding uses this named entrypoint and the
+    // same operational D1/accounts as the legacy site.
+    "NEW_CORE_ENABLED": "true",
     "NEW_SITE_VOX_PROCESSING_ENABLED": "false",
-    "NEW_SITE_PUBLIC_BASE_URL": "",
+    "NEW_SITE_PUBLIC_BASE_URL": "https://www.combaksa-repair.com",
     "VOX_AGENT_ID": "56416052-f373-45b8-ae59-81ddfa304d4b",
     "VOX_INBOUND_NUMBER": "07079175281",
     "TELEGRAM_NOTIFICATION_ENABLED": "true",

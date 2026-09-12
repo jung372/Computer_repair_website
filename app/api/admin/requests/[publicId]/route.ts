@@ -35,6 +35,7 @@ export async function POST(
     const visibleRequest = await getAdminRequestRecord(
       publicId,
       admin.role === "STAFF" ? admin.id : undefined,
+      "legacy",
     );
     if (!visibleRequest) {
       return Response.json({ error: "이 신청 내역에 접근할 권한이 없습니다." }, { status: 403 });

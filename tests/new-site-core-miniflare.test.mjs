@@ -412,6 +412,22 @@ test("setup bootstraps an isolated database once while owner-only marketing and 
     const ownerCookie = await adminCookie(edge, "admin", "fixture-owner-password-123");
     const staffCookie = await adminCookie(edge, "staff01", "2468");
 
+    const firstRequest = await post(edge, "/v1/requests", requestBody({ name: "신규가상고객" }), "fixture-admin-list-new");
+    const secondRequest = await post(edge, "/v1/requests", requestBody({ name: "기존가상고객" }), "fixture-admin-list-legacy");
+    const secondPublicId = (await secondRequest.json()).data.publicId;
+    await db.prepare("UPDATE service_requests SET source_site = 'legacy' WHERE public_id = ?").bind(secondPublicId).run();
+    assert.equal(firstRequest.status, 201);
+    const combinedList = await edge.fetch("https://fixture.test/v1/admin/requests?page=1", {
+      headers: { cookie: ownerCookie },
+    });
+    assert.equal(combinedList.status, 200);
+    const combinedData = (await combinedList.json()).data;
+    assert.equal(combinedData.pagination.total, 2);
+    assert.deepEqual(new Set(combinedData.requests.map((item) => item.sourceSite)), new Set(["legacy", "new"]));
+    assert.equal(typeof combinedData.counts.totalUnresolved, "number");
+    assert.ok(Array.isArray(combinedData.filterOptions.customerTypes));
+    assert.ok(Array.isArray(combinedData.assignmentOptions));
+
     const configuredSetup = await edge.fetch("https://fixture.test/v1/admin/setup");
     assert.deepEqual((await configuredSetup.json()).data, { ownerExists: true, setupAllowed: false });
 

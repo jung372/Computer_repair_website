@@ -32,7 +32,7 @@ function maskChatId(value: string) {
   return value.length <= 4 ? "••••" : `••••${value.slice(-4)}`;
 }
 
-export async function listStaffSlots(): Promise<StaffSlotView[]> {
+export async function listStaffSlots(sourceSite?: "legacy" | "new"): Promise<StaffSlotView[]> {
   await ensureDatabase();
   const result = await getD1()
     .prepare(`
@@ -45,8 +45,9 @@ export async function listStaffSlots(): Promise<StaffSlotView[]> {
                 FROM request_operations operations
                 INNER JOIN service_requests requests ON requests.id = operations.request_id
                 WHERE operations.assignee_account_id = account.id
-                  AND requests.deleted_at IS NULL
-                  AND requests.status IN (${unresolvedPlaceholders})
+                   AND requests.deleted_at IS NULL
+                   AND requests.status IN (${unresolvedPlaceholders})
+                   ${sourceSite ? "AND requests.source_site = ?" : ""}
              ) AS unresolved_count,
              (SELECT COUNT(*) FROM request_operations
                 WHERE assignee_account_id = account.id) AS assigned_count,
@@ -61,7 +62,7 @@ export async function listStaffSlots(): Promise<StaffSlotView[]> {
        AND account.role = 'STAFF' AND account.is_active = 1
       ORDER BY slots.serial_no
     `)
-    .bind(...UNRESOLVED_REQUEST_STATUSES)
+    .bind(...UNRESOLVED_REQUEST_STATUSES, ...(sourceSite ? [sourceSite] : []))
     .all<{
       serial_no: number;
       label: string;

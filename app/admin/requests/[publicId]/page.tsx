@@ -28,6 +28,7 @@ export default async function AdminRequestPage({
   const request = await getAdminRequestRecord(
     publicId,
     user.role === "STAFF" ? user.id : undefined,
+    "legacy",
   );
   if (!request) {
     if (user.role === "STAFF") redirect("/admin/denied");

@@ -4,14 +4,6 @@ ALTER TABLE `service_requests` ADD `source_channel` text NOT NULL DEFAULT 'UNKNO
 --> statement-breakpoint
 ALTER TABLE `service_requests` ADD `origin_host` text;
 --> statement-breakpoint
-UPDATE `service_requests`
-SET `source_channel` = 'VOX'
-WHERE EXISTS (
-  SELECT 1 FROM `integration_intakes`
-  WHERE `integration_intakes`.`request_id` = `service_requests`.`id`
-    AND `integration_intakes`.`provider` = 'VOX'
-);
---> statement-breakpoint
 ALTER TABLE `customer_lookup_sessions` ADD `site_scope` text NOT NULL DEFAULT 'legacy';
 --> statement-breakpoint
 CREATE TABLE `web_submission_idempotency` (

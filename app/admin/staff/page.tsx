@@ -18,7 +18,7 @@ export default async function AdminStaffPage({
   searchParams: Promise<{ status?: string; error?: string }>;
 }) {
   const owner = await requireOwner("/admin/staff");
-  const [slots, query] = await Promise.all([listStaffSlots(), searchParams]);
+  const [slots, query] = await Promise.all([listStaffSlots("legacy"), searchParams]);
   const message = staffMessage(query.status, query.error);
 
   return (

@@ -33,14 +33,14 @@ function legacyFixture() {
   return db;
 }
 
-test("migration preserves unknown provenance unless a Vox intake proves the channel", () => {
+test("migration preserves unknown provenance without inferring historical Vox intake", () => {
   const db = legacyFixture();
   const rows = db.prepare(`
     SELECT id, source_site, source_channel FROM service_requests ORDER BY id
   `).all().map((row) => ({ ...row }));
   assert.deepEqual(rows, [
     { id: "plain", source_site: "legacy", source_channel: "UNKNOWN" },
-    { id: "vox", source_site: "legacy", source_channel: "VOX" },
+    { id: "vox", source_site: "legacy", source_channel: "UNKNOWN" },
   ]);
   db.close();
 });

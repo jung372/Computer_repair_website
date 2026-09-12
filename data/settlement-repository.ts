@@ -7,6 +7,7 @@ export type SettlementFilters = {
   assignee?: string;
   paymentMethods?: string[];
   statuses?: string[];
+  sourceSite?: "legacy" | "new";
   page?: number;
   pageSize?: number;
 };
@@ -24,6 +25,7 @@ export type SettlementRecord = {
   vatAmount: number;
   income: number;
   status: RequestStatus;
+  sourceSite: "legacy" | "new" | "unknown";
 };
 
 export type SettlementTotals = {
@@ -48,6 +50,7 @@ type SettlementRow = {
   vat_amount: number;
   income: number;
   status: RequestStatus;
+  source_site: "legacy" | "new" | "unknown";
 };
 
 function settlementConditions(
@@ -70,6 +73,11 @@ function settlementConditions(
   } else if (filters.assignee) {
     clauses.push("operations.assignee_account_id = ?");
     values.push(filters.assignee);
+  }
+
+  if (filters.sourceSite) {
+    clauses.push("requests.source_site = ?");
+    values.push(filters.sourceSite);
   }
 
   const paymentMethods = [...new Set(
@@ -112,7 +120,7 @@ export async function getSettlementReport(
              operations.material_cost,
              operations.vat_amount + operations.material_vat_amount AS vat_amount,
              operations.technician_income AS income,
-             requests.status
+             requests.status, requests.source_site
       FROM service_requests requests
       INNER JOIN request_operations operations ON operations.request_id = requests.id
       INNER JOIN request_serials serial ON serial.request_id = requests.id
@@ -155,6 +163,7 @@ export async function getSettlementReport(
     vatAmount: Number(row.vat_amount),
     income: Number(row.income),
     status: row.status,
+    sourceSite: row.source_site,
   }));
   const totals: SettlementTotals = {
     count: Number(aggregate?.total_count ?? 0),
@@ -167,16 +176,19 @@ export async function getSettlementReport(
   return { records, totals, page, pageSize };
 }
 
-export async function getSettlementFilterOptions() {
+export async function getSettlementFilterOptions(sourceSite?: "legacy" | "new") {
   await ensureDatabase();
   const db = getD1();
   const [payments, assignees] = await Promise.all([
     db.prepare(`
-      SELECT DISTINCT payment_method AS value
-      FROM request_operations
-      WHERE payment_method <> ''
-      ORDER BY payment_method
-    `).all<{ value: string }>(),
+      SELECT DISTINCT operations.payment_method AS value
+      FROM request_operations operations
+      INNER JOIN service_requests requests ON requests.id = operations.request_id
+      WHERE operations.payment_method <> ''
+        AND requests.deleted_at IS NULL
+        ${sourceSite ? "AND requests.source_site = ?" : ""}
+      ORDER BY operations.payment_method
+    `).bind(...(sourceSite ? [sourceSite] : [])).all<{ value: string }>(),
     db.prepare(`
       SELECT account.id, account.role, account.display_name, account.login_name,
              account.slot_serial_no, account.is_active
