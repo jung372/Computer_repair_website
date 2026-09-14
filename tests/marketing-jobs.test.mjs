@@ -43,6 +43,9 @@ test("work tracker supports cancellation and shows automatic refresh and sync ti
   assert.match(page, /마지막 서버 동기화/);
   assert.match(refresh, /router.refresh/);
   assert.match(refresh, /clearInterval/);
+  assert.match(refresh, /hasActiveJobs/);
+  assert.match(refresh, /30_000/);
+  assert.match(refresh, /300_000/);
 });
 import {
   MARKETING_DISTRICTS,
@@ -120,11 +123,13 @@ test("JPEG sanitization removes EXIF APP1 metadata before R2 storage", () => {
 
 test("Cloudflare configuration keeps repair photos separate and queues only job references", async () => {
   const root = new URL("../", import.meta.url);
-  const [wrangler, schema, route, nextRoute] = await Promise.all([
+  const [wrangler, schema, route, nextRoute, repository, healthRoute] = await Promise.all([
     readFile(new URL("wrangler.jsonc", root), "utf8"),
     readFile(new URL("db/schema.ts", root), "utf8"),
     readFile(new URL("app/api/admin/marketing/jobs/route.ts", root), "utf8"),
     readFile(new URL("app/api/bridge/marketing/jobs/next/route.ts", root), "utf8"),
+    readFile(new URL("data/marketing-job-repository.ts", root), "utf8"),
+    readFile(new URL("app/api/bridge/marketing/health/route.ts", root), "utf8"),
   ]);
   assert.match(wrangler, /"binding": "MARKETING_PHOTOS"/);
   assert.match(wrangler, /"binding": "MARKETING_JOBS"/);
@@ -133,6 +138,10 @@ test("Cloudflare configuration keeps repair photos separate and queues only job 
   assert.match(route, /event:\s*"JOB_SUBMITTED"/);
   assert.doesNotMatch(route, /MARKETING_JOBS\.send\([^)]*(symptom|photo|asset)/s);
   assert.match(nextRoute, /authorizeMarketingBridge/);
+  assert.match(nextRoute, /"Retry-After": "60"/);
+  assert.match(repository, /SELECT id FROM marketing_jobs/);
+  assert.match(healthRoute, /authorizeMarketingBridge/);
+  assert.doesNotMatch(healthRoute, /getD1|getNextQueuedMarketingJob|marketing-job-repository/);
 });
 
 test("owner menu opens the repair upload workbench and exposes mobile photo optimization", async () => {

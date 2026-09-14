@@ -61,7 +61,7 @@
       // Retries notifications the request path could not deliver.
       "*/5 * * * *",
       // Reconciles public Naver posts that missed the primary publish event.
-      "17 * * * *",
+      "17 */6 * * *",
       // Daily D1 backup at 03:00 KST (18:00 UTC), when 접수 traffic is lowest.
       "0 18 * * *"
     ]

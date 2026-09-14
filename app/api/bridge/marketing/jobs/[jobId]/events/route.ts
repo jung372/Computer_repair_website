@@ -1,4 +1,4 @@
-import { getMarketingJob, recordBridgeMarketingJobStatus } from "@/data/marketing-job-repository";
+import { getMarketingJobBridgeIdentity, recordBridgeMarketingJobStatus } from "@/data/marketing-job-repository";
 import { authorizeMarketingBridge } from "@/lib/marketing/bridge-auth";
 
 const ALLOWED = new Set([
@@ -12,7 +12,7 @@ export async function POST(request: Request, context: { params: Promise<{ jobId:
     return Response.json({ error: "Unauthorized" }, { status: 401 });
   }
   const { jobId } = await context.params;
-  const job = await getMarketingJob(jobId);
+  const job = await getMarketingJobBridgeIdentity(jobId);
   if (!job) return Response.json({ error: "Not found" }, { status: 404 });
   const payload = await request.json() as Record<string, unknown>;
   const status = String(payload.status || "").trim().toUpperCase();
@@ -21,7 +21,7 @@ export async function POST(request: Request, context: { params: Promise<{ jobId:
   const localJobId = /^job_[a-zA-Z0-9-]+$/.test(String(payload.localJobId || ""))
     ? String(payload.localJobId)
     : undefined;
-  if (!localJobId || (job.localJobId && job.localJobId !== localJobId)) {
+  if (!localJobId || (job.local_job_id && job.local_job_id !== localJobId)) {
     return Response.json({ error: "Local job mismatch" }, { status: 409 });
   }
   const rawVersion = String(payload.sourceUpdatedAt || "");

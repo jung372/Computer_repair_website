@@ -14,7 +14,7 @@ const SCHEDULED_NOTIFICATION_BATCH = 10;
 
 /** Must match the daily backup entry in wrangler.jsonc — 03:00 KST. */
 const BACKUP_CRON = "0 18 * * *";
-const BLOG_RSS_CRON = "17 * * * *";
+const BLOG_RSS_CRON = "17 */6 * * *";
 
 const worker = {
   async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {

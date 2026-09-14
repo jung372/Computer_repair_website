@@ -28,6 +28,19 @@ test("published post contract accepts only the configured Naver blog and removes
   }, "combaksa_repair");
   assert.equal(guide.district, "");
 
+  const evidence = normalizePublishedPostInput({
+    ...repair,
+    schemaVersion: 2,
+    postUrl: "https://blog.naver.com/combaksa_repair/224000000004",
+    article: "완전한 본문",
+    sources: [{ sourceId: "official-1", title: "공식 자료", url: "https://example.com/source" }],
+    evidenceCards: [{ sourceId: "official-1", claim: "검증된 주장", supportingText: "근거 문장" }],
+  }, "combaksa_repair");
+  assert.equal(evidence.article, "완전한 본문");
+  assert.equal(evidence.sources.length, 1);
+  assert.equal(evidence.evidenceCards.length, 1);
+  assert.equal(evidence.canonicalUrl, "https://combaksa-repair.com/insights/224000000004");
+
   assert.throws(() => normalizePublishedPostInput({
     ...repair,
     postUrl: "https://evil.example/combaksa_repair/224000000001",
@@ -91,7 +104,8 @@ test("homepage integration is durable, authenticated, crawlable, and scheduled f
   assert.match(footer, /href="\/#repair-cases"[^>]*>수리사례</);
   assert.match(footer, /컴박사 블로그/);
   assert.match(worker, /syncNaverBlogRss/);
-  assert.match(wrangler, /"17 \* \* \* \*"/);
+  assert.match(wrangler, /"17 \*\/6 \* \* \*"/);
+  assert.match(worker, /BLOG_RSS_CRON = "17 \*\/6 \* \* \*"/);
   assert.doesNotMatch(wrangler, /combaksa-repair\.com/);
   assert.match(deployWorkflow, /fetch-depth: 0/);
   assert.match(deployWorkflow, /id: migration_changes/);

@@ -143,6 +143,12 @@ export async function getMarketingJob(jobId: string) {
   };
 }
 
+export async function getMarketingJobBridgeIdentity(jobId: string) {
+  await ensureDatabase();
+  return getD1().prepare("SELECT id, local_job_id FROM marketing_jobs WHERE id = ?")
+    .bind(jobId).first<{ id: string; local_job_id: string | null }>();
+}
+
 // D1 batch is transactional. A source timestamp orders retries and prevents stale delivery.
 export const BRIDGE_EVENT_SQL = `INSERT INTO marketing_job_events
   (id, job_id, status, actor, message, metadata, created_at)
@@ -182,8 +188,8 @@ export async function listMarketingJobs(limit = 50) {
 
 export async function getNextQueuedMarketingJob() {
   await ensureDatabase();
-  const row = await getD1().prepare(`SELECT * FROM marketing_jobs
+  const row = await getD1().prepare(`SELECT id FROM marketing_jobs
     WHERE status IN ('QUEUED', 'QUEUE_NOTIFIED') ORDER BY created_at ASC LIMIT 1`)
-    .first<RawJob>();
-  return row ? mapJob(row) : null;
+    .first<{ id: string }>();
+  return row?.id || null;
 }

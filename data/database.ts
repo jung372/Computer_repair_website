@@ -213,6 +213,8 @@ async function initializeDatabase() {
         content_type TEXT NOT NULL DEFAULT 'recommended', district TEXT NOT NULL DEFAULT '',
         thumbnail_url TEXT NOT NULL DEFAULT '', published_at TEXT NOT NULL,
         source_job_id TEXT NOT NULL DEFAULT '', source TEXT NOT NULL,
+        article TEXT NOT NULL DEFAULT '', sources TEXT NOT NULL DEFAULT '[]',
+        evidence_cards TEXT NOT NULL DEFAULT '[]', canonical_url TEXT NOT NULL DEFAULT '',
         visibility TEXT NOT NULL DEFAULT 'PUBLISHED', synced_at TEXT NOT NULL,
         UNIQUE(platform, blog_id, post_id)
       )
