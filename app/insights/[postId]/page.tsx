@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getPublishedBlogPost } from "@/data/blog-post-repository";
 import { CONTENT_ORIGIN } from "@/lib/blog/post-contract";
+import { withPublicReadFallback } from "@/lib/blog/public-read-fallback";
 
 type PageProps = { params: Promise<{ postId: string }> };
 
@@ -36,7 +37,9 @@ function articleBlocks(article: string, fallback: string) {
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { postId } = await params;
-  const post = /^\d{6,}$/.test(postId) ? await getPublishedBlogPost(postId) : null;
+  const post = /^\d{6,}$/.test(postId)
+    ? await withPublicReadFallback(() => getPublishedBlogPost(postId), null)
+    : null;
   if (!post) return { title: "콘텐츠를 찾을 수 없습니다" };
   const canonical = `${CONTENT_ORIGIN}/insights/${post.postId}`;
   return {
@@ -50,7 +53,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 export default async function InsightPage({ params }: PageProps) {
   const { postId } = await params;
   if (!/^\d{6,}$/.test(postId)) notFound();
-  const post = await getPublishedBlogPost(postId);
+  const post = await withPublicReadFallback(() => getPublishedBlogPost(postId), null);
   if (!post) notFound();
   const canonicalUrl = `${CONTENT_ORIGIN}/insights/${post.postId}`;
   const sourceById = new Map(post.sources.map((source) => [source.sourceId, source]));
