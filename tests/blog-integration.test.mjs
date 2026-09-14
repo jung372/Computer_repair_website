@@ -73,6 +73,7 @@ test("homepage integration is durable, authenticated, crawlable, and scheduled f
   assert.match(migration, /post_url.*UNIQUE/is);
   assert.match(route, /authorizeMarketingBridge/);
   assert.match(route, /upsertPublishedBlogPost/);
+  assert.match(home, /withPublicReadFallback\(\(\) => listPublishedRepairCases\(3\), \[\]\)/);
   assert.match(home, /listPublishedRepairCases\(3\)/);
   assert.match(home, /<BlogNotesSection/);
   assert.ok(home.indexOf("<BlogNotesSection") < home.indexOf('className="final-cta"'));
