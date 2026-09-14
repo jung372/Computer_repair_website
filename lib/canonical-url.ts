@@ -1,26 +1,27 @@
-const CANONICAL_HOST = "combaksa-repair.com";
+const SERVICE_HOST = "combaksa.pe.kr";
+const CONTENT_HOST = "combaksa-repair.com";
 
-const ALIAS_HOSTS = new Set([
-  "www.combaksa-repair.com",
-  "combaksa.pe.kr",
-  "www.combaksa.pe.kr",
-  "combaksa-computer-repair.jung372.workers.dev",
+const CANONICAL_HOSTS = new Set([SERVICE_HOST, CONTENT_HOST]);
+const ALIAS_TARGETS = new Map([
+  ["www.combaksa.pe.kr", SERVICE_HOST],
+  ["www.combaksa-repair.com", CONTENT_HOST],
+  ["combaksa-computer-repair.jung372.workers.dev", SERVICE_HOST],
 ]);
 
 /**
- * Returns the public canonical URL when a request arrived over HTTP or through
- * a public alias. Preview and local development hosts intentionally stay put.
+ * Keeps the service site and content archive on their own public domains.
+ * Only HTTP and explicit aliases are redirected to the matching HTTPS host.
  */
 export function getCanonicalRedirectUrl(url: URL): URL | null {
   const hostname = url.hostname.toLowerCase();
-  const isCanonicalHost = hostname === CANONICAL_HOST;
+  const targetHost = CANONICAL_HOSTS.has(hostname) ? hostname : ALIAS_TARGETS.get(hostname);
 
-  if (!isCanonicalHost && !ALIAS_HOSTS.has(hostname)) return null;
-  if (isCanonicalHost && url.protocol === "https:") return null;
+  if (!targetHost) return null;
+  if (hostname === targetHost && url.protocol === "https:") return null;
 
   const canonicalUrl = new URL(url);
   canonicalUrl.protocol = "https:";
-  canonicalUrl.hostname = CANONICAL_HOST;
+  canonicalUrl.hostname = targetHost;
   canonicalUrl.port = "";
   return canonicalUrl;
 }

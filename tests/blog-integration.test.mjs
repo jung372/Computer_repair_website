@@ -112,7 +112,7 @@ test("homepage integration is durable, authenticated, crawlable, and scheduled f
   assert.match(worker, /syncNaverBlogRss/);
   assert.match(wrangler, /"17 \* \* \* \*"/);
   assert.match(wrangler, /combaksa-repair\.com/);
-  assert.match(wrangler, /"PUBLIC_BASE_URL": "https:\/\/combaksa-repair\.com"/);
+  assert.match(wrangler, /"PUBLIC_BASE_URL": "https:\/\/combaksa\.pe\.kr"/);
   assert.match(robots, /OAI-SearchBot/);
   assert.match(robots, /sitemap\.xml/);
   assert.match(sitemap, /listPublishedBlogPosts/);

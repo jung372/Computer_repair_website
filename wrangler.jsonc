@@ -48,7 +48,7 @@
     "TELEGRAM_PII_MODE": "FULL",
     "REQUEST_SUBMISSION_ENABLED": "true",
     // Scheduled runs have no request to derive the admin link from.
-    "PUBLIC_BASE_URL": "https://combaksa-repair.com",
+    "PUBLIC_BASE_URL": "https://combaksa.pe.kr",
     "INDEXNOW_KEY": "d24910fa1c3243f7ac8ae1fe732dd762",
     "NEXT_PUBLIC_NAVER_BLOG_ID": "combaksa_repair"
   },
