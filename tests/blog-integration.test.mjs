@@ -63,7 +63,7 @@ test("RSS recovery parses public Naver entries into the same post contract", () 
 
 test("homepage integration is durable, authenticated, crawlable, and scheduled for RSS recovery", async () => {
   const root = new URL("../", import.meta.url);
-  const [schema, migration, evidenceMigration, route, articlePage, archivePage, home, repository, section, styles, footer, header, worker, wrangler, robots, sitemap] = await Promise.all([
+  const [schema, migration, evidenceMigration, route, articlePage, archivePage, home, repository, section, styles, footer, header, worker, wrangler, robots, sitemap, deployWorkflow] = await Promise.all([
     readFile(new URL("db/schema.ts", root), "utf8"),
     readFile(new URL("drizzle/0014_blog_posts.sql", root), "utf8"),
     readFile(new URL("drizzle/0015_blog_post_evidence.sql", root), "utf8"),
@@ -80,6 +80,7 @@ test("homepage integration is durable, authenticated, crawlable, and scheduled f
     readFile(new URL("wrangler.jsonc", root), "utf8"),
     readFile(new URL("app/robots.ts", root), "utf8"),
     readFile(new URL("app/sitemap.ts", root), "utf8"),
+    readFile(new URL(".github/workflows/deploy.yml", root), "utf8"),
   ]);
   assert.match(schema, /blogPosts/);
   assert.match(migration, /CREATE TABLE `blog_posts`/);
@@ -117,4 +118,7 @@ test("homepage integration is durable, authenticated, crawlable, and scheduled f
   assert.match(robots, /sitemap\.xml/);
   assert.match(sitemap, /listPublishedBlogPosts/);
   assert.match(sitemap, /\/insights\//);
+  assert.match(deployWorkflow, /fetch-depth: 0/);
+  assert.match(deployWorkflow, /id: migration_changes/);
+  assert.match(deployWorkflow, /steps\.migration_changes\.outputs\.required == 'true'/);
 });
