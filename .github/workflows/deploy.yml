@@ -54,10 +54,25 @@ jobs:
             echo "required=true" >> "$GITHUB_OUTPUT"
           elif [[ "${{ github.event.before }}" =~ ^0+$ ]]; then
             echo "required=true" >> "$GITHUB_OUTPUT"
-          elif git diff --quiet "${{ github.event.before }}" "${{ github.sha }}" -- drizzle/; then
-            echo "required=false" >> "$GITHUB_OUTPUT"
           else
-            echo "required=true" >> "$GITHUB_OUTPUT"
+            before_sha="${{ github.event.before }}"
+            current_sha="${{ github.sha }}"
+            modified="$(git diff --diff-filter=M --name-only "$before_sha" "$current_sha" -- 'drizzle/*.sql')"
+            if [[ -n "$modified" ]]; then
+              echo "::error::Applied migration files must not be modified: $modified"
+              exit 1
+            fi
+
+            required=false
+            while IFS= read -r migration; do
+              [[ -z "$migration" ]] && continue
+              if git log --format=%H "$before_sha" -- "$migration" | grep -q .; then
+                echo "Skipping restored historical migration: $migration"
+              else
+                required=true
+              fi
+            done < <(git diff --diff-filter=A --name-only "$before_sha" "$current_sha" -- 'drizzle/*.sql')
+            echo "required=$required" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Apply D1 migrations

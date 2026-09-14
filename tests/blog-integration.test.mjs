@@ -92,7 +92,11 @@ test("homepage integration is durable, authenticated, crawlable, and scheduled f
   assert.match(footer, /컴박사 블로그/);
   assert.match(worker, /syncNaverBlogRss/);
   assert.match(wrangler, /"17 \* \* \* \*"/);
+  assert.doesNotMatch(wrangler, /combaksa-repair\.com/);
   assert.match(deployWorkflow, /fetch-depth: 0/);
   assert.match(deployWorkflow, /id: migration_changes/);
+  assert.match(deployWorkflow, /--diff-filter=M/);
+  assert.match(deployWorkflow, /--diff-filter=A/);
+  assert.match(deployWorkflow, /Skipping restored historical migration/);
   assert.match(deployWorkflow, /steps\.migration_changes\.outputs\.required == 'true'/);
 });
