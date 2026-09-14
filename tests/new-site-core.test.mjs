@@ -126,3 +126,12 @@ test("vinext bundle preserves NewSiteCore only as a named export", () => {
   assert.match(bundle, /export \{ NewSiteCore, .* as default \}/);
   assert.doesNotMatch(bundle, /pathname\.startsWith\(["']\/v1\//);
 });
+
+test("public blog reads use the Cloudflare cache before querying D1", () => {
+  const source = readFileSync(new URL("../worker/new-site-core.ts", import.meta.url), "utf8");
+  assert.match(source, /caches\.open\("combaksa-public-blog-posts"\)/);
+  assert.match(source, /PUBLIC_BLOG_CACHE_SECONDS = 600/);
+  assert.match(source, /public, max-age=\$\{PUBLIC_BLOG_CACHE_SECONDS\}/);
+  assert.match(source, /stale-while-revalidate=86400/);
+  assert.match(source, /invalidatePublicBlogCache/);
+});

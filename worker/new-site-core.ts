@@ -91,6 +91,7 @@ import {
 
 const MAX_JSON_BYTES = 256 * 1024;
 const MAX_RSS_BYTES = 1024 * 1024;
+const PUBLIC_BLOG_CACHE_SECONDS = 600;
 
 type JsonObject = Record<string, unknown>;
 
@@ -103,6 +104,32 @@ function privateHeaders(extra?: HeadersInit) {
 
 function success(data: unknown, status = 200, headers?: HeadersInit) {
   return Response.json({ ok: true, data }, { status, headers: privateHeaders(headers) });
+}
+
+function publicBlogCacheKey(limit: number) {
+  return new Request(`https://combaksa-core-cache.invalid/blog/posts?limit=${limit}`);
+}
+
+async function publicBlogPosts(request: Request) {
+  const url = new URL(request.url);
+  const limit = parsePositiveInteger(url.searchParams.get("limit"), 3, 12);
+  const key = publicBlogCacheKey(limit);
+  const cache = await caches.open("combaksa-public-blog-posts");
+  const cached = await cache.match(key);
+  if (cached) return cached;
+  const response = Response.json({ ok: true, data: { posts: await listPublishedBlogPosts(limit) } }, {
+    headers: {
+      "Cache-Control": `public, max-age=${PUBLIC_BLOG_CACHE_SECONDS}, stale-while-revalidate=86400`,
+    },
+  });
+  await cache.put(key, response.clone());
+  return response;
+}
+
+async function invalidatePublicBlogCache() {
+  const cache = await caches.open("combaksa-public-blog-posts");
+  await Promise.all(Array.from({ length: 12 }, (_, index) =>
+    cache.delete(publicBlogCacheKey(index + 1))));
 }
 
 function failure(code: string, message: string, status: number, fields?: Record<string, string>) {
@@ -526,6 +553,7 @@ async function ingestBlogPost(request: Request) {
   const blogId = getRuntimeString("NEXT_PUBLIC_NAVER_BLOG_ID") || "combaksa_repair";
   const post = normalizePublishedPostInput(body, blogId);
   await upsertPublishedBlogPost(post, "event");
+  await invalidatePublicBlogCache();
   return success({ postId: post.postId });
 }
 
@@ -542,6 +570,7 @@ async function ingestBlogRss(request: Request) {
     });
     for (const post of posts) await upsertPublishedBlogPost(post, "rss");
     await recordBlogSyncSuccess();
+    await invalidatePublicBlogCache();
     return success({ count: posts.length, blogId: configured });
   } catch (error) {
     const message = error instanceof Error ? error.message : "RSS_SYNC_FAILED";
@@ -576,7 +605,7 @@ async function route(request: Request, bindings: Env): Promise<Response> {
   const method = request.method.toUpperCase();
   const path = url.pathname;
   if (method === "GET" && path === "/v1/blog/posts") {
-    return success({ posts: await listPublishedBlogPosts(parsePositiveInteger(url.searchParams.get("limit"), 3, 12)) });
+    return publicBlogPosts(request);
   }
   if (method === "POST" && path === "/v1/requests") return createRequest(request);
   if (method === "POST" && path === "/v1/customer/session") return createCustomerSession(request);
@@ -638,6 +667,7 @@ async function route(request: Request, bindings: Env): Promise<Response> {
     if (!(await setBlogPostVisibility(decodeURIComponent(blogMatch[1]), body.visibility))) {
       throw new CoreHttpError("NOT_FOUND", 404, "게시글을 찾을 수 없습니다.");
     }
+    await invalidatePublicBlogCache();
     return success({ updated: true });
   }
   if (method === "POST" && path === "/v1/blog/posts") return ingestBlogPost(request);

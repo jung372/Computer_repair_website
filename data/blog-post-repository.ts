@@ -1,6 +1,7 @@
 import { ensureDatabase, getD1 } from "@/data/database";
 import type { NormalizedPublishedBlogPost } from "@/lib/blog/post-contract";
 import type { EvidenceCard, PublishedSource } from "@/lib/blog/post-contract";
+import { PublicListCache } from "@/lib/blog/public-list-cache";
 
 export type BlogPostRow = NormalizedPublishedBlogPost & {
   id: string;
@@ -16,6 +17,8 @@ type RawBlogPost = {
   article: string; sources: string; evidence_cards: string; canonical_url: string;
   source: "event" | "rss"; visibility: "PUBLISHED" | "HIDDEN"; synced_at: string;
 };
+
+const publicBlogListCache = new PublicListCache<BlogPostRow[]>();
 
 function parseJsonArray<T>(value: string): T[] {
   try {
@@ -69,6 +72,7 @@ export async function upsertPublishedBlogPost(
       post.contentType, post.district, post.thumbnailUrl, post.publishedAt, post.sourceJobId,
       post.article, JSON.stringify(post.sources), JSON.stringify(post.evidenceCards), post.canonicalUrl,
       source, now).run();
+  publicBlogListCache.clear();
 }
 
 export async function listAllBlogPosts(limit = 100): Promise<BlogPostRow[]> {
@@ -87,6 +91,7 @@ export async function setBlogPostVisibility(
   const result = await getD1().prepare(`
     UPDATE blog_posts SET visibility = ?, synced_at = ? WHERE id = ?
   `).bind(visibility, new Date().toISOString(), id).run();
+  if (result.meta.changes === 1) publicBlogListCache.clear();
   return result.meta.changes === 1;
 }
 
@@ -132,11 +137,14 @@ export async function getBlogSyncState(source = "naver-rss") {
 }
 
 export async function listPublishedBlogPosts(limit = 3): Promise<BlogPostRow[]> {
-  await ensureDatabase();
-  const rows = await getD1().prepare(`SELECT * FROM blog_posts
-    WHERE visibility = 'PUBLISHED' ORDER BY published_at DESC LIMIT ?`)
-    .bind(Math.max(1, Math.min(200, Math.trunc(limit)))).all<RawBlogPost>();
-  return rows.results.map(mapPost);
+  const boundedLimit = Math.max(1, Math.min(200, Math.trunc(limit)));
+  return publicBlogListCache.get(`published:${boundedLimit}`, async () => {
+    await ensureDatabase();
+    const rows = await getD1().prepare(`SELECT * FROM blog_posts
+      WHERE visibility = 'PUBLISHED' ORDER BY published_at DESC LIMIT ?`)
+      .bind(boundedLimit).all<RawBlogPost>();
+    return rows.results.map(mapPost);
+  });
 }
 
 export async function getPublishedBlogPost(postId: string): Promise<BlogPostRow | null> {
@@ -148,10 +156,13 @@ export async function getPublishedBlogPost(postId: string): Promise<BlogPostRow 
 }
 
 export async function listPublishedRepairCases(limit = 3): Promise<BlogPostRow[]> {
-  await ensureDatabase();
-  const rows = await getD1().prepare(`SELECT * FROM blog_posts
-    WHERE visibility = 'PUBLISHED' AND content_type = 'repair_diary'
-    ORDER BY published_at DESC LIMIT ?`)
-    .bind(Math.max(1, Math.min(12, Math.trunc(limit)))).all<RawBlogPost>();
-  return rows.results.map(mapPost);
+  const boundedLimit = Math.max(1, Math.min(12, Math.trunc(limit)));
+  return publicBlogListCache.get(`repair:${boundedLimit}`, async () => {
+    await ensureDatabase();
+    const rows = await getD1().prepare(`SELECT * FROM blog_posts
+      WHERE visibility = 'PUBLISHED' AND content_type = 'repair_diary'
+      ORDER BY published_at DESC LIMIT ?`)
+      .bind(boundedLimit).all<RawBlogPost>();
+    return rows.results.map(mapPost);
+  });
 }
