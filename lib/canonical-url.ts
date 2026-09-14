@@ -1,6 +1,8 @@
-const CANONICAL_HOST = "combaksa.pe.kr";
+const CANONICAL_HOST = "combaksa-repair.com";
 
 const ALIAS_HOSTS = new Set([
+  "www.combaksa-repair.com",
+  "combaksa.pe.kr",
   "www.combaksa.pe.kr",
   "combaksa-computer-repair.jung372.workers.dev",
 ]);
