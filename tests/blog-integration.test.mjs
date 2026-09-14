@@ -4,18 +4,6 @@ import test from "node:test";
 
 import { normalizePublishedPostInput } from "../lib/blog/post-contract.ts";
 import { parseNaverRss } from "../lib/blog/naver-rss.ts";
-import { withPublicReadFallback } from "../lib/blog/public-read-fallback.ts";
-
-test("public pages stay available when the blog database read is temporarily unavailable", async () => {
-  const errors = [];
-  const result = await withPublicReadFallback(
-    async () => { throw new Error("D1 daily row read limit exceeded"); },
-    [],
-    (error) => errors.push(error),
-  );
-  assert.deepEqual(result, []);
-  assert.equal(errors.length, 1);
-});
 
 test("published post contract accepts only the configured Naver blog and removes region from non-repair posts", () => {
   const repair = normalizePublishedPostInput({

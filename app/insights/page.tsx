@@ -3,7 +3,6 @@ import { ArrowRight, BookOpenText, CircuitBoard, HardDrive, ShieldCheck, Wrench 
 import Link from "next/link";
 import { listPublishedBlogPosts } from "@/data/blog-post-repository";
 import { CONTENT_ORIGIN } from "@/lib/blog/post-contract";
-import { withPublicReadFallback } from "@/lib/blog/public-read-fallback";
 
 export const dynamic = "force-dynamic";
 
@@ -32,7 +31,7 @@ function formatDate(value: string) {
 }
 
 export default async function InsightsArchivePage() {
-  const posts = await withPublicReadFallback(() => listPublishedBlogPosts(100), []);
+  const posts = await listPublishedBlogPosts(100);
   return (
     <main id="main-content" className="insight-archive-page">
       <section className="container insight-archive-hero">

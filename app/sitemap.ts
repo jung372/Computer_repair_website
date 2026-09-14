@@ -1,10 +1,9 @@
 import type { MetadataRoute } from "next";
 import { listPublishedBlogPosts } from "@/data/blog-post-repository";
 import { CONTENT_ORIGIN } from "@/lib/blog/post-contract";
-import { withPublicReadFallback } from "@/lib/blog/public-read-fallback";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const posts = await withPublicReadFallback(() => listPublishedBlogPosts(200), []);
+  const posts = await listPublishedBlogPosts(200);
   const staticPaths = ["", "/insights", "/services/desktop", "/services/laptop", "/services/monitor", "/services/apple", "/services/data-recovery"];
   return [
     ...staticPaths.map((pathname) => ({
