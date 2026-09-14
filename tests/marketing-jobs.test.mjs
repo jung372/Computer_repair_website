@@ -13,19 +13,19 @@ test("bridge status writes repair cancellation, deduplicate heartbeats and rejec
     const report = (status, version, received, local = "local") => {
       db.exec("BEGIN");
       db.prepare(eventSql).run(crypto.randomUUID(), status, status, JSON.stringify({ sourceUpdatedAt: version }), received, "remote", local, version, status, version);
-      db.prepare(statusSql).run(status, local, null, received, "remote", local, version);
+      db.prepare(statusSql).run(status, local, null, received, "remote", local, version, status, version);
       db.exec("COMMIT");
     };
     report("CANCELLED", "2026-08-31T07:17:13.375Z", "first");
     assert.equal(db.prepare("SELECT status FROM marketing_jobs").get().status, "CANCELLED");
     report("CANCELLED", "2026-08-31T07:17:13.375Z", "heartbeat");
     assert.equal(db.prepare("SELECT count(*) AS n FROM marketing_job_events").get().n, 1);
-    assert.equal(db.prepare("SELECT updated_at FROM marketing_jobs").get().updated_at, "heartbeat");
+    assert.equal(db.prepare("SELECT updated_at FROM marketing_jobs").get().updated_at, "first");
     report("FAILED", "2026-08-31T04:17:35.001Z", "late");
     report("QUEUED_LOCAL", "", "legacy");
     report("PUBLISHED", "2026-09-05T00:00:00.000Z", "wrong", "other");
     assert.equal(db.prepare("SELECT status FROM marketing_jobs").get().status, "CANCELLED");
-    assert.equal(db.prepare("SELECT updated_at FROM marketing_jobs").get().updated_at, "heartbeat");
+    assert.equal(db.prepare("SELECT updated_at FROM marketing_jobs").get().updated_at, "first");
     report("PUBLISHED", "2026-09-05T00:00:00.000Z", "manual");
     assert.equal(db.prepare("SELECT status FROM marketing_jobs").get().status, "PUBLISHED");
   } finally { db.close(); }

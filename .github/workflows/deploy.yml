@@ -66,7 +66,9 @@ jobs:
             required=false
             while IFS= read -r migration; do
               [[ -z "$migration" ]] && continue
-              if git log --format=%H "$before_sha" -- "$migration" | grep -q .; then
+              # This migration was applied to production during the original W15 core cutover,
+              # before its source file was restored to the main branch.
+              if [[ "$migration" == "drizzle/0015_new_site_core.sql" ]] || git log --format=%H "$before_sha" -- "$migration" | grep -q .; then
                 echo "Skipping restored historical migration: $migration"
               else
                 required=true
@@ -85,7 +87,7 @@ jobs:
         run: npm run build
 
       - name: Run regression tests
-        run: node --experimental-strip-types --test tests/rendered-html.test.mjs tests/backup-serialize.test.mjs tests/settlement.test.mjs tests/canonical-url.test.mjs tests/pagination.test.mjs tests/admin-dashboard-filter.test.mjs tests/request-privacy-policy.test.mjs tests/blog-integration.test.mjs
+        run: node --experimental-strip-types --test tests/rendered-html.test.mjs tests/backup-serialize.test.mjs tests/settlement.test.mjs tests/canonical-url.test.mjs tests/pagination.test.mjs tests/admin-dashboard-filter.test.mjs tests/request-privacy-policy.test.mjs tests/marketing-jobs.test.mjs tests/blog-integration.test.mjs tests/new-site-core.test.mjs tests/new-site-core-miniflare.test.mjs
 
       - name: Deploy Worker
         uses: cloudflare/wrangler-action@v3

@@ -3,6 +3,7 @@ import {
   findRequestByPublicId,
   getAccessAttempt,
   insertRequest,
+  insertIdempotentRequest,
   listStatusHistory,
   recordAccessFailure,
 } from "@/data/request-repository";
@@ -19,6 +20,7 @@ import { formatPhone, normalizePhone } from "@/lib/phone";
 import { createLookupKey } from "@/lib/security/lookup-key";
 import { hashPassword, verifyPassword } from "@/lib/security/password";
 import { sha256 } from "@/lib/security/keyed-hash";
+import { hashIdempotencyPayload } from "@/lib/security/request-guard";
 
 const PRIVACY_NOTICE_VERSION = "2026-08-23.v4";
 const PRIVACY_LEGAL_BASIS = "PIPA_15_1_4_CONTRACT_REQUEST";
@@ -80,7 +82,14 @@ export function maskPhone(phone: string) {
   return `${phone.slice(0, 3)}-****-${phone.slice(-4)}`;
 }
 
-export async function createServiceRequest(input: unknown) {
+export async function createServiceRequest(
+  input: unknown,
+  options: {
+    sourceSite?: "legacy" | "new";
+    originHost?: string | null;
+    idempotencyKey?: string;
+  } = {},
+) {
   const values = isRecord(input) ? input : {};
   const fields: Record<string, string> = {};
   const name = clean(values.name, 30) || "미상";
@@ -151,6 +160,9 @@ export async function createServiceRequest(input: unknown) {
     internalNote: "",
     notificationStatus: getInitialNotificationStatus(),
     notificationError: null,
+    sourceSite: options.sourceSite ?? "legacy",
+    sourceChannel: "WEB",
+    originHost: options.originHost ?? null,
     createdAt: timestamp,
     updatedAt: timestamp,
     privacyConsentVersion: "",
@@ -159,8 +171,21 @@ export async function createServiceRequest(input: unknown) {
     privacyNoticeVersion: PRIVACY_NOTICE_VERSION,
     privacyNoticePresentedAt: timestamp,
   };
+  if (options.idempotencyKey) {
+    const canonicalPayload = JSON.stringify(
+      Object.entries(values).sort(([left], [right]) => left.localeCompare(right)),
+    );
+    const result = await insertIdempotentRequest(request, {
+      siteScope: "new",
+      key: options.idempotencyKey,
+      payloadHash: await hashIdempotencyPayload(canonicalPayload),
+    });
+    if (result.conflict) throw new Error("IDEMPOTENCY_CONFLICT");
+    if (!result.request) throw new Error("IDEMPOTENCY_NOT_PERSISTED");
+    return { request: result.request, replayed: !result.created };
+  }
   await insertRequest(request);
-  return { request };
+  return { request, replayed: false };
 }
 
 export type VoxServiceRequestInput = {
@@ -178,6 +203,7 @@ export type VoxRequestContext = {
   startedAt: number;
   payloadHash: string;
   receivedAt: string;
+  sourceSite?: "legacy" | "new";
 };
 
 export async function createVoxServiceRequest(
@@ -230,6 +256,9 @@ export async function createVoxServiceRequest(
     internalNote: "",
     notificationStatus: getInitialNotificationStatus(),
     notificationError: null,
+    sourceSite: context.sourceSite ?? "legacy",
+    sourceChannel: "VOX" as const,
+    originHost: null,
     createdAt: timestamp,
     updatedAt: timestamp,
     privacyConsentVersion: "",

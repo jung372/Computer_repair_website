@@ -106,11 +106,12 @@ test("homepage integration is durable, authenticated, crawlable, and scheduled f
   assert.match(worker, /syncNaverBlogRss/);
   assert.match(wrangler, /"17 \*\/6 \* \* \*"/);
   assert.match(worker, /BLOG_RSS_CRON = "17 \*\/6 \* \* \*"/);
-  assert.doesNotMatch(wrangler, /combaksa-repair\.com/);
+  assert.doesNotMatch(wrangler, /"pattern": "(?:www\.)?combaksa-repair\.com"/);
   assert.match(deployWorkflow, /fetch-depth: 0/);
   assert.match(deployWorkflow, /id: migration_changes/);
   assert.match(deployWorkflow, /--diff-filter=M/);
   assert.match(deployWorkflow, /--diff-filter=A/);
   assert.match(deployWorkflow, /Skipping restored historical migration/);
+  assert.match(deployWorkflow, /0015_new_site_core\.sql/);
   assert.match(deployWorkflow, /steps\.migration_changes\.outputs\.required == 'true'/);
 });

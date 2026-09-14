@@ -172,9 +172,10 @@ export async function insertVoxRequest(
           access_password_hash, lookup_key, status, preferred_at, internal_note,
           notification_status, privacy_consent_version, privacy_consented_at,
           privacy_legal_basis, privacy_notice_version, privacy_notice_presented_at,
+          source_site, source_channel, origin_host,
           created_at, updated_at
         )
-        SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+        SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
         FROM integration_intakes
         WHERE id = ? AND payload_hash = ? AND status = 'CREATED'
       `)
@@ -203,6 +204,9 @@ export async function insertVoxRequest(
         request.privacyLegalBasis,
         request.privacyNoticeVersion,
         request.privacyNoticePresentedAt,
+        request.sourceSite,
+        request.sourceChannel,
+        request.originHost,
         now,
         now,
         ...guard,

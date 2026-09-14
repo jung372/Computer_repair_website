@@ -34,6 +34,16 @@ function logWebhook(
 }
 
 export async function POST(request: Request) {
+  if (getRuntimeString("LEGACY_VOX_PUBLIC_ENABLED").toLowerCase() === "false") {
+    return json({ received: false, status: "gone" }, 410);
+  }
+  return handleVoxWebhook(request, "legacy");
+}
+
+export async function handleVoxWebhook(
+  request: Request,
+  sourceSite: "legacy" | "new",
+) {
   if (getRuntimeString("VOX_WEBHOOK_ENABLED").toLowerCase() !== "true") {
     logWebhook("warn", "disabled");
     return json({ received: true, status: "disabled" });
@@ -135,6 +145,7 @@ export async function POST(request: Request) {
         startedAt: decision.startedAt,
         payloadHash,
         receivedAt,
+        sourceSite,
       },
     );
     if (result.created) {

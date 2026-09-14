@@ -33,6 +33,7 @@ export async function authenticateCustomerLookup(
   input: { phone?: unknown; password?: unknown },
   clientHash: string,
   phoneHash: string,
+  siteScope: "legacy" | "new" = "legacy",
 ) {
   const phone = normalizePhone(typeof input.phone === "string" ? input.phone : "");
   const password = typeof input.password === "string" ? input.password : "";
@@ -78,11 +79,14 @@ export async function authenticateCustomerLookup(
   }
 
   await clearAccessFailures(attemptKey);
-  return createCustomerLookupSession(requestIds);
+  return createCustomerLookupSession(requestIds, siteScope);
 }
 
-export async function getCustomerLookupRequests(token?: string) {
-  const ids = await getCustomerLookupRequestIds(token);
+export async function getCustomerLookupRequests(
+  token?: string,
+  siteScope: "legacy" | "new" = "legacy",
+) {
+  const ids = await getCustomerLookupRequestIds(token, siteScope);
   return listRequestsByIds(ids);
 }
 

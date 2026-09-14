@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { getRuntimeString } from "@/lib/runtime-config";
 import { headers } from "next/headers";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
@@ -60,7 +61,9 @@ export default function RootLayout({
   return (
     <html lang="ko">
       <head>
-        <link rel="alternate" type="application/rss+xml" title="컴박사 네이버 블로그 RSS" href="https://rss.blog.naver.com/combaksa_repair.xml" />
+        {getRuntimeString("LEGACY_BLOG_PUBLIC_ENABLED").toLowerCase() !== "false" ? (
+          <link rel="alternate" type="application/rss+xml" title="컴박사 네이버 블로그 RSS" href="https://rss.blog.naver.com/combaksa_repair.xml" />
+        ) : null}
       </head>
       <body>
         <script dangerouslySetInnerHTML={{ __html: dropFooterAnchor }} />

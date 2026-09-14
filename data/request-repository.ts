@@ -27,6 +27,9 @@ export type RequestRow = {
   internal_note: string;
   notification_status: string;
   notification_error: string | null;
+  source_site: ServiceRequestRecord["sourceSite"];
+  source_channel: ServiceRequestRecord["sourceChannel"];
+  origin_host: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -37,6 +40,7 @@ export type OutboxRow = {
   attempts: number;
   event_type: "NEW_REQUEST" | "STAFF_ASSIGNED";
   recipient_account_id: string | null;
+  lease_id: string;
 };
 
 export type TelegramDeletionRow = {
@@ -76,6 +80,9 @@ export function mapRequest(row: RequestRow): ServiceRequestRecord {
     internalNote: row.internal_note,
     notificationStatus: row.notification_status,
     notificationError: row.notification_error,
+    sourceSite: row.source_site,
+    sourceChannel: row.source_channel,
+    originHost: row.origin_host,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
@@ -97,8 +104,9 @@ export async function insertRequest(
           access_password_hash, lookup_key, status, preferred_at, internal_note,
           notification_status, privacy_consent_version, privacy_consented_at,
           privacy_legal_basis, privacy_notice_version, privacy_notice_presented_at,
+          source_site, source_channel, origin_host,
           created_at, updated_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, '', ?, ?, ?, ?, ?, ?, ?, ?)
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, '', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `)
       .bind(
         request.id,
@@ -124,6 +132,9 @@ export async function insertRequest(
         request.privacyLegalBasis,
         request.privacyNoticeVersion,
         request.privacyNoticePresentedAt,
+        request.sourceSite,
+        request.sourceChannel,
+        request.originHost,
         now,
         now,
       ),
@@ -152,6 +163,91 @@ export async function insertRequest(
       `)
       .bind(outboxId, request.id, request.notificationStatus, now, now, now),
   ]);
+}
+
+export async function insertIdempotentRequest(
+  request: StoredServiceRequest,
+  idempotency: { siteScope: "new"; key: string; payloadHash: string },
+) {
+  await ensureDatabase();
+  const db = getD1();
+  const now = request.createdAt;
+  const outboxId = crypto.randomUUID();
+  const guard = [idempotency.siteScope, idempotency.key, idempotency.payloadHash, request.id] as const;
+  const results = await db.batch([
+    db.prepare(`
+      INSERT OR IGNORE INTO web_submission_idempotency
+        (site_scope, idempotency_key, payload_hash, request_id, created_at)
+      VALUES (?, ?, ?, ?, ?)
+    `).bind(idempotency.siteScope, idempotency.key, idempotency.payloadHash, request.id, now),
+    db.prepare(`
+      INSERT INTO service_requests (
+        id, public_id, name, phone, postal_code, address1, address2, region_public,
+        device_type, manufacturer_model, symptom, description, visibility,
+        access_password_hash, lookup_key, status, preferred_at, internal_note,
+        notification_status, privacy_consent_version, privacy_consented_at,
+        privacy_legal_basis, privacy_notice_version, privacy_notice_presented_at,
+        source_site, source_channel, origin_host, created_at, updated_at
+      )
+      SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, '', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+      FROM web_submission_idempotency
+      WHERE site_scope = ? AND idempotency_key = ? AND payload_hash = ? AND request_id = ?
+    `).bind(
+      request.id, request.publicId, request.name, request.phone, request.postalCode,
+      request.address1, request.address2, request.regionPublic, request.deviceType,
+      request.manufacturerModel, request.symptom, request.description, request.visibility,
+      request.accessPasswordHash, request.lookupKey, request.status, request.preferredAt,
+      request.notificationStatus, request.privacyConsentVersion, request.privacyConsentedAt,
+      request.privacyLegalBasis, request.privacyNoticeVersion, request.privacyNoticePresentedAt,
+      request.sourceSite, request.sourceChannel, request.originHost, now, now, ...guard,
+    ),
+    db.prepare(`
+      INSERT INTO request_status_history
+        (id, request_id, status, public_note, changed_by, created_at)
+      SELECT ?, ?, 'RECEIVED', '서비스 신청이 정상적으로 접수되었습니다.', 'NEW_SITE', ?
+      FROM web_submission_idempotency
+      WHERE site_scope = ? AND idempotency_key = ? AND payload_hash = ? AND request_id = ?
+    `).bind(crypto.randomUUID(), request.id, now, ...guard),
+    db.prepare(`
+      INSERT INTO request_serials (request_id)
+      SELECT ? FROM web_submission_idempotency
+      WHERE site_scope = ? AND idempotency_key = ? AND payload_hash = ? AND request_id = ?
+    `).bind(request.id, ...guard),
+    db.prepare(`
+      INSERT INTO request_operations
+        (request_id, receipt_type, customer_type, title, received_date, updated_at)
+      SELECT ?, '온라인접수', '신규일반고객', ?, ?, ?
+      FROM web_submission_idempotency
+      WHERE site_scope = ? AND idempotency_key = ? AND payload_hash = ? AND request_id = ?
+    `).bind(request.id, request.symptom || "수리요청", now.slice(0, 10), now, ...guard),
+    db.prepare(`
+      INSERT INTO notification_outbox
+        (id, request_id, channel, status, attempts, next_attempt_at, created_at, updated_at)
+      SELECT ?, ?, 'TELEGRAM', ?, 0, ?, ?, ?
+      FROM web_submission_idempotency
+      WHERE site_scope = ? AND idempotency_key = ? AND payload_hash = ? AND request_id = ?
+    `).bind(outboxId, request.id, request.notificationStatus, now, now, now, ...guard),
+  ]);
+  const existing = await db.prepare(`
+    SELECT keys.payload_hash, requests.*
+    FROM web_submission_idempotency keys
+    INNER JOIN service_requests requests ON requests.id = keys.request_id
+    WHERE keys.site_scope = ? AND keys.idempotency_key = ?
+  `).bind(idempotency.siteScope, idempotency.key).first<RequestRow & { payload_hash: string }>();
+  if (!existing) throw new Error("IDEMPOTENCY_NOT_PERSISTED");
+  if (existing.payload_hash !== idempotency.payloadHash) {
+    return { created: false, conflict: true, request: null };
+  }
+  return { created: results[0]?.meta.changes === 1, conflict: false, request: mapRequest(existing) };
+}
+
+export async function hasNewSiteSubmissionIdempotencyKey(key: string) {
+  await ensureDatabase();
+  const row = await getD1().prepare(`
+    SELECT 1 AS found FROM web_submission_idempotency
+    WHERE site_scope = 'new' AND idempotency_key = ? LIMIT 1
+  `).bind(key).first<{ found: number }>();
+  return Boolean(row);
 }
 
 export async function findRequestByPublicId(publicId: string) {
@@ -261,24 +357,50 @@ export async function updateRequestStatus(
 
 export async function pendingNotifications(limit = 3) {
   await ensureDatabase();
-  const result = await getD1()
-    .prepare(`
-      SELECT id, request_id, attempts, event_type, recipient_account_id
-      FROM notification_outbox
-      WHERE status IN ('PENDING', 'FAILED')
-        AND attempts < 5
-        AND next_attempt_at <= ?
-      ORDER BY created_at ASC
-      LIMIT ?
-    `)
-    .bind(new Date().toISOString(), limit)
-    .all<OutboxRow>();
+  const now = new Date();
+  const leaseId = crypto.randomUUID();
+  const db = getD1();
+  const [, , result] = await db.batch<OutboxRow>([
+    db.prepare(`
+      UPDATE service_requests
+      SET notification_status = 'SEND_UNKNOWN',
+          notification_error = '이전 Telegram 전송 결과를 확인해야 합니다.', updated_at = ?
+      WHERE id IN (
+        SELECT request_id FROM notification_outbox
+        WHERE status = 'SENDING' AND lease_expires_at <= ? AND event_type = 'NEW_REQUEST'
+      )
+    `).bind(now.toISOString(), now.toISOString()),
+    db.prepare(`
+      UPDATE notification_outbox
+      SET status = 'SEND_UNKNOWN', lease_id = NULL, lease_expires_at = NULL,
+          last_error = '이전 Telegram 전송 결과를 확인해야 합니다.', updated_at = ?
+      WHERE status = 'SENDING' AND lease_expires_at <= ?
+    `).bind(now.toISOString(), now.toISOString()),
+    db.prepare(`
+      UPDATE notification_outbox
+      SET status = 'SENDING', lease_id = ?, lease_expires_at = ?, updated_at = ?
+      WHERE id IN (
+        SELECT id FROM notification_outbox
+        WHERE status IN ('PENDING', 'FAILED') AND next_attempt_at <= ?
+          AND attempts < 5
+        ORDER BY created_at ASC
+        LIMIT ?
+      )
+      RETURNING id, request_id, attempts, event_type, recipient_account_id, lease_id
+    `).bind(
+      leaseId,
+      new Date(now.getTime() + 60_000).toISOString(),
+      now.toISOString(),
+      now.toISOString(),
+      limit,
+    ),
+  ]);
   return result.results;
 }
 
 export async function markNotification(
   outbox: OutboxRow,
-  status: "SENT" | "FAILED" | "CONFIG_REQUIRED" | "DISABLED" | "CANCELED",
+  status: "SENT" | "FAILED" | "SEND_UNKNOWN" | "CONFIG_REQUIRED" | "DISABLED" | "CANCELED",
   error?: string,
   telegramMessageId?: string,
   telegramRetention?: { chatIdHash: string; deleteAfter: string },
@@ -294,8 +416,8 @@ export async function markNotification(
             sent_at = ?, updated_at = ?, telegram_message_id = ?,
             telegram_chat_id_hash = ?, telegram_delete_after = ?,
             telegram_deleted_at = NULL, telegram_delete_attempts = 0,
-            telegram_delete_error = NULL
-        WHERE id = ?
+            telegram_delete_error = NULL, lease_id = NULL, lease_expires_at = NULL
+        WHERE id = ? AND lease_id = ?
       `)
       .bind(
         status,
@@ -308,6 +430,7 @@ export async function markNotification(
         telegramRetention?.chatIdHash ?? null,
         telegramRetention?.deleteAfter ?? null,
         outbox.id,
+        outbox.lease_id,
       ),
     ...(outbox.event_type === "NEW_REQUEST"
       ? [getD1()
@@ -409,6 +532,7 @@ export async function resetNotification(publicId: string) {
             telegram_message_id = NULL, telegram_chat_id_hash = NULL,
             telegram_delete_after = NULL, telegram_deleted_at = NULL,
             telegram_delete_attempts = 0, telegram_delete_error = NULL,
+            lease_id = NULL, lease_expires_at = NULL,
             updated_at = ?
         WHERE request_id = ? AND event_type = 'NEW_REQUEST'
       `)
@@ -434,22 +558,25 @@ export async function getAccessAttempt(key: string) {
 
 export async function recordAccessFailure(key: string) {
   const now = new Date();
-  const attempt = await getAccessAttempt(key);
-  const withinWindow =
-    attempt && now.getTime() - new Date(attempt.updated_at).getTime() < 15 * 60 * 1000;
-  const failures = (withinWindow ? Number(attempt.failures) : 0) + 1;
-  const blockedUntil =
-    failures >= 5 ? new Date(now.getTime() + 15 * 60 * 1000).toISOString() : null;
   await getD1()
     .prepare(`
       INSERT INTO access_attempts (key, failures, blocked_until, updated_at)
-      VALUES (?, ?, ?, ?)
+      VALUES (?, 1, NULL, ?)
       ON CONFLICT(key) DO UPDATE SET
-        failures = excluded.failures,
-        blocked_until = excluded.blocked_until,
+        failures = CASE
+          WHEN julianday(excluded.updated_at) - julianday(access_attempts.updated_at) < (15.0 / 1440.0)
+            THEN access_attempts.failures + 1
+          ELSE 1
+        END,
+        blocked_until = CASE
+          WHEN julianday(excluded.updated_at) - julianday(access_attempts.updated_at) < (15.0 / 1440.0)
+            AND access_attempts.failures + 1 >= 5
+            THEN strftime('%Y-%m-%dT%H:%M:%fZ', excluded.updated_at, '+15 minutes')
+          ELSE NULL
+        END,
         updated_at = excluded.updated_at
     `)
-    .bind(key, failures, blockedUntil, now.toISOString())
+    .bind(key, now.toISOString())
     .run();
 }
 

@@ -20,7 +20,7 @@ import { sha256 } from "@/lib/security/keyed-hash";
 
 const TELEGRAM_PII_RETENTION_MS = 24 * 60 * 60 * 1000;
 
-export async function processPendingNotifications(origin: string, limit = 3) {
+export async function processPendingNotifications(_origin: string, limit = 3) {
   const pending = await pendingNotifications(limit);
   for (const outbox of pending) {
     const request = await getRequestById(outbox.request_id);
@@ -28,14 +28,13 @@ export async function processPendingNotifications(origin: string, limit = 3) {
       await markNotification(outbox, "FAILED", "접수 정보를 찾을 수 없습니다.");
       continue;
     }
-    await sendRequestNotification(outbox, request, origin);
+    await sendRequestNotification(outbox, request);
   }
 }
 
 async function sendRequestNotification(
   outbox: OutboxRow,
   request: ServiceRequestRecord,
-  origin: string,
 ) {
   const token = getRuntimeString("TELEGRAM_BOT_TOKEN");
   let chatId = "";
@@ -66,7 +65,13 @@ async function sendRequestNotification(
     chatId = getRuntimeString("TELEGRAM_CHAT_ID");
   }
 
-  const baseUrl = getRuntimeString("PUBLIC_BASE_URL") || origin;
+  const baseUrl = request.sourceSite === "new"
+    ? getRuntimeString("NEW_SITE_PUBLIC_BASE_URL")
+    : getRuntimeString("PUBLIC_BASE_URL");
+  if (!baseUrl || !isAllowedNotificationBaseUrl(baseUrl)) {
+    await markNotification(outbox, "CONFIG_REQUIRED", "접수 사이트 관리자 URL 설정이 필요합니다.");
+    return;
+  }
   const isOwnerNotification = outbox.event_type === "NEW_REQUEST";
   if (isOwnerNotification) {
     const fullMode = getRuntimeString("TELEGRAM_PII_MODE").toUpperCase() === "FULL";
@@ -93,24 +98,41 @@ async function sendRequestNotification(
   const text = isOwnerNotification
     ? buildOwnerRequestNotificationText(request, baseUrl)
     : buildStaffAssignmentNotificationText(request, baseUrl);
+  let messageId: string;
   try {
-    const messageId = await sendTelegramMessage(token, chatId, text, isOwnerNotification);
-    const retention = isOwnerNotification && messageId
-      ? {
-          chatIdHash: await sha256(chatId),
-          deleteAfter: new Date(Date.now() + TELEGRAM_PII_RETENTION_MS).toISOString(),
-        }
-      : undefined;
-    await markNotification(outbox, "SENT", undefined, messageId, retention);
+    messageId = await sendTelegramMessage(token, chatId, text, isOwnerNotification);
   } catch (error) {
     const message = error instanceof Error ? error.message : "알림 전송 실패";
-    await markNotification(outbox, "FAILED", message);
+    await markNotification(
+      outbox,
+      error instanceof TelegramDeliveryUnknownError ? "SEND_UNKNOWN" : "FAILED",
+      message,
+    );
+    return;
+  }
+  const retention = isOwnerNotification
+    ? {
+        chatIdHash: await sha256(chatId),
+        deleteAfter: new Date(Date.now() + TELEGRAM_PII_RETENTION_MS).toISOString(),
+      }
+    : undefined;
+  try {
+    await markNotification(outbox, "SENT", undefined, messageId, retention);
+  } catch (error) {
+    // Telegram accepted the message. A persistence failure must never turn it
+    // back into an automatically retried FAILED state.
+    await markNotification(
+      outbox,
+      "SEND_UNKNOWN",
+      error instanceof Error ? error.message : "Telegram 전송 결과 저장 실패",
+    ).catch(() => undefined);
   }
 }
 
 export function buildOwnerRequestNotificationText(request: ServiceRequestRecord, baseUrl: string) {
   return [
     "🔧 신규 서비스 신청",
+    `출처: ${requestSourceLabel(request)}`,
     `접수번호: ${request.publicId}`,
     `기기: ${DEVICE_LABELS[request.deviceType]}`,
     `기본주소: ${request.address1}`,
@@ -126,10 +148,28 @@ export function buildStaffAssignmentNotificationText(
 ) {
   return [
     "🔧 서비스 접수 담당자 배정",
+    `출처: ${requestSourceLabel(request)}`,
     `접수번호: ${request.publicId}`,
     `기기: ${DEVICE_LABELS[request.deviceType]}`,
     `직원 메뉴에서 확인: ${baseUrl}/admin/requests/${request.publicId}`,
   ].join("\n");
+}
+
+function requestSourceLabel(request: ServiceRequestRecord) {
+  if (request.sourceSite === "new" && request.sourceChannel === "VOX") return "신규 사이트 / Vox";
+  if (request.sourceSite === "new") return "신규 사이트 / 웹";
+  if (request.sourceSite === "legacy" && request.sourceChannel === "WEB") return "기존 사이트 / 웹";
+  return "기존 사이트 / 출처 미확인";
+}
+
+function isAllowedNotificationBaseUrl(value: string) {
+  try {
+    const url = new URL(value);
+    return url.protocol === "https:" && url.username === "" && url.password === "" &&
+      url.pathname === "/" && url.search === "" && url.hash === "";
+  } catch {
+    return false;
+  }
 }
 
 async function sendTelegramMessage(
@@ -138,30 +178,45 @@ async function sendTelegramMessage(
   text: string,
   protectContent = false,
 ) {
-  const response = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
-    method: "POST",
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify({
-      chat_id: chatId,
-      text,
-      protect_content: protectContent,
-      link_preview_options: { is_disabled: true },
-    }),
-    signal: AbortSignal.timeout(5_000),
-  });
-  if (!response.ok) throw new Error(`Telegram HTTP ${response.status}`);
-  const payload: unknown = await response.json();
-  if (
-    typeof payload !== "object" || payload === null || !("result" in payload) ||
-    typeof payload.result !== "object" || payload.result === null ||
-    !("message_id" in payload.result)
-  ) throw new Error("Telegram 응답에서 메시지 ID를 확인할 수 없습니다.");
-  const messageId = payload.result.message_id;
-  if (typeof messageId !== "number" && typeof messageId !== "string") {
-    throw new Error("Telegram 응답의 메시지 ID 형식이 올바르지 않습니다.");
+  let response: Response;
+  try {
+    response = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        chat_id: chatId,
+        text,
+        protect_content: protectContent,
+        link_preview_options: { is_disabled: true },
+      }),
+      signal: AbortSignal.timeout(5_000),
+    });
+  } catch (error) {
+    throw new TelegramDeliveryUnknownError(
+      error instanceof Error ? error.message : "Telegram 전송 결과를 확인할 수 없습니다.",
+    );
   }
-  return String(messageId);
+  if (!response.ok) throw new Error(`Telegram HTTP ${response.status}`);
+  try {
+    const payload: unknown = await response.json();
+    if (
+      typeof payload !== "object" || payload === null || !("result" in payload) ||
+      typeof payload.result !== "object" || payload.result === null ||
+      !("message_id" in payload.result)
+    ) throw new Error("Telegram 응답에서 메시지 ID를 확인할 수 없습니다.");
+    const messageId = payload.result.message_id;
+    if (typeof messageId !== "number" && typeof messageId !== "string") {
+      throw new Error("Telegram 응답의 메시지 ID 형식이 올바르지 않습니다.");
+    }
+    return String(messageId);
+  } catch (error) {
+    throw new TelegramDeliveryUnknownError(
+      error instanceof Error ? error.message : "Telegram 응답을 확인할 수 없습니다.",
+    );
+  }
 }
+
+class TelegramDeliveryUnknownError extends Error {}
 
 async function isPrivateTelegramChat(token: string, chatId: string) {
   try {

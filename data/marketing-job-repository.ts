@@ -149,6 +149,13 @@ export async function getMarketingJobBridgeIdentity(jobId: string) {
     .bind(jobId).first<{ id: string; local_job_id: string | null }>();
 }
 
+export async function getMarketingJobByIdempotencyKey(idempotencyKey: string) {
+  await ensureDatabase();
+  const row = await getD1().prepare("SELECT * FROM marketing_jobs WHERE idempotency_key = ?")
+    .bind(idempotencyKey).first<RawJob>();
+  return row ? mapJob(row) : null;
+}
+
 // D1 batch is transactional. A source timestamp orders retries and prevents stale delivery.
 export const BRIDGE_EVENT_SQL = `INSERT INTO marketing_job_events
   (id, job_id, status, actor, message, metadata, created_at)
@@ -164,7 +171,10 @@ export const BRIDGE_STATUS_SQL = `UPDATE marketing_jobs
   SET status = ?, local_job_id = ?, failure_code = ?, updated_at = ?
   WHERE id = ? AND (local_job_id IS NULL OR local_job_id = ?)
   AND NOT EXISTS (SELECT 1 FROM marketing_job_events e WHERE e.job_id = marketing_jobs.id
-    AND e.actor = 'local-bridge' AND COALESCE(json_extract(e.metadata, '$.sourceUpdatedAt'), '') > ?)`;
+    AND e.actor = 'local-bridge' AND COALESCE(json_extract(e.metadata, '$.sourceUpdatedAt'), '') > ?)
+  AND (status <> ? OR local_job_id IS NULL OR NOT EXISTS (
+    SELECT 1 FROM marketing_job_events e WHERE e.job_id = marketing_jobs.id
+    AND e.actor = 'local-bridge' AND COALESCE(json_extract(e.metadata, '$.sourceUpdatedAt'), '') = ?))`;
 
 export async function recordBridgeMarketingJobStatus(jobId: string, status: string, message: string,
   options: { localJobId: string; sourceUpdatedAt: string; failureCode?: string }) {
@@ -175,7 +185,7 @@ export async function recordBridgeMarketingJobStatus(jobId: string, status: stri
     db.prepare(BRIDGE_EVENT_SQL).bind(`marketing_event_${crypto.randomUUID()}`, status, message,
       JSON.stringify({ sourceUpdatedAt }), now, jobId, localJobId, sourceUpdatedAt, status, sourceUpdatedAt),
     db.prepare(BRIDGE_STATUS_SQL).bind(status, localJobId, options.failureCode || null, now,
-      jobId, localJobId, sourceUpdatedAt),
+      jobId, localJobId, sourceUpdatedAt, status, sourceUpdatedAt),
   ]);
 }
 

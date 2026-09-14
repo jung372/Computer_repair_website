@@ -16,15 +16,24 @@ export function assertSameOrigin(request: Request) {
 
 export async function hashClientAddress(request: Request) {
   const address =
-    request.headers.get("cf-connecting-ip") ??
-    request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
-    "unknown";
+    request.headers.get("cf-connecting-ip") ?? "unknown";
   return hmacSha256(
     rateLimitSecret(),
     lengthDelimited([
       ["version", "v1"],
       ["scope", "client-ip"],
       ["value", address],
+    ]),
+  );
+}
+
+export function hashIdempotencyPayload(canonicalPayload: string) {
+  return hmacSha256(
+    rateLimitSecret(),
+    lengthDelimited([
+      ["version", "v1"],
+      ["scope", "new-site-request-idempotency"],
+      ["payload", canonicalPayload],
     ]),
   );
 }

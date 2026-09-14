@@ -201,6 +201,9 @@ export type ServiceRequestRecord = {
   internalNote: string;
   notificationStatus: string;
   notificationError: string | null;
+  sourceSite: "legacy" | "new" | "unknown";
+  sourceChannel: "WEB" | "VOX" | "UNKNOWN";
+  originHost: string | null;
   createdAt: string;
   updatedAt: string;
 };

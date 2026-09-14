@@ -1,9 +1,11 @@
 import { Clock3, Mail, MapPin, Phone } from "lucide-react";
 import Link from "next/link";
 import { getSiteConfig } from "@/lib/site-config";
+import { getRuntimeString } from "@/lib/runtime-config";
 
 export function SiteFooter() {
   const config = getSiteConfig();
+  const blogEnabled = getRuntimeString("LEGACY_BLOG_PUBLIC_ENABLED").toLowerCase() !== "false";
   return (
     <footer className="site-footer" id="contact">
       <div className="container footer-grid">
@@ -22,7 +24,9 @@ export function SiteFooter() {
         </div>
         <div className="footer-links">
           <Link href="/#repair-cases">수리사례</Link>
-          <a href={config.naverBlogUrl} target="_blank" rel="noopener noreferrer">컴박사 블로그</a>
+          {blogEnabled ? (
+            <a href={config.naverBlogUrl} target="_blank" rel="noopener noreferrer">컴박사 블로그</a>
+          ) : null}
           <Link href="/privacy">개인정보 처리방침</Link>
           <Link href="/requests">내 신청 조회</Link>
           <Link href="/admin/login">운영자 로그인</Link>
