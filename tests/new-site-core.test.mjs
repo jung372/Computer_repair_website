@@ -134,4 +134,6 @@ test("public blog reads use the Cloudflare cache before querying D1", () => {
   assert.match(source, /public, max-age=\$\{PUBLIC_BLOG_CACHE_SECONDS\}/);
   assert.match(source, /stale-while-revalidate=86400/);
   assert.match(source, /invalidatePublicBlogCache/);
+  assert.match(source, /PUBLIC_BLOG_DEGRADED_CACHE_SECONDS = 30/);
+  assert.match(source, /degraded: true/);
 });

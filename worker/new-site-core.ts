@@ -92,6 +92,7 @@ import {
 const MAX_JSON_BYTES = 256 * 1024;
 const MAX_RSS_BYTES = 1024 * 1024;
 const PUBLIC_BLOG_CACHE_SECONDS = 600;
+const PUBLIC_BLOG_DEGRADED_CACHE_SECONDS = 30;
 
 type JsonObject = Record<string, unknown>;
 
@@ -117,11 +118,25 @@ async function publicBlogPosts(request: Request) {
   const cache = await caches.open("combaksa-public-blog-posts");
   const cached = await cache.match(key);
   if (cached) return cached;
-  const response = Response.json({ ok: true, data: { posts: await listPublishedBlogPosts(limit) } }, {
-    headers: {
-      "Cache-Control": `public, max-age=${PUBLIC_BLOG_CACHE_SECONDS}, stale-while-revalidate=86400`,
-    },
-  });
+  let response: Response;
+  try {
+    response = Response.json({ ok: true, data: { posts: await listPublishedBlogPosts(limit) } }, {
+      headers: {
+        "Cache-Control": `public, max-age=${PUBLIC_BLOG_CACHE_SECONDS}, stale-while-revalidate=86400`,
+      },
+    });
+  } catch (error) {
+    console.warn(JSON.stringify({
+      message: "Public blog list temporarily degraded",
+      error: error instanceof Error ? error.message.slice(0, 120) : "UNKNOWN_ERROR",
+    }));
+    response = Response.json({ ok: true, data: { posts: [], degraded: true } }, {
+      headers: {
+        "Cache-Control": `public, max-age=${PUBLIC_BLOG_DEGRADED_CACHE_SECONDS}`,
+        "X-Combaksa-Data": "degraded",
+      },
+    });
+  }
   await cache.put(key, response.clone());
   return response;
 }
