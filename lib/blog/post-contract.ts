@@ -19,25 +19,6 @@ export type PublishedBlogPostInput = {
   thumbnailUrl?: string;
   publishedAt?: string;
   sourceJobId?: string;
-  article?: string;
-  sources?: unknown[];
-  evidenceCards?: unknown[];
-  originUrl?: string;
-};
-
-export type PublishedSource = {
-  sourceId: string;
-  title: string;
-  url: string;
-  publisher: string;
-  checkedAt: string;
-};
-
-export type EvidenceCard = {
-  sourceId: string;
-  claim: string;
-  supportingText: string;
-  sourceType: string;
 };
 
 export type NormalizedPublishedBlogPost = {
@@ -52,13 +33,7 @@ export type NormalizedPublishedBlogPost = {
   thumbnailUrl: string;
   publishedAt: string;
   sourceJobId: string;
-  article: string;
-  sources: PublishedSource[];
-  evidenceCards: EvidenceCard[];
-  canonicalUrl: string;
 };
-
-export const CONTENT_ORIGIN = "https://combaksa-repair.com";
 
 function cleanText(value: unknown, maxLength: number) {
   return String(value || "")
@@ -93,47 +68,11 @@ function naverPostIdentity(rawUrl: string) {
   throw new Error("네이버 블로그 게시물 주소 형식을 확인해 주세요.");
 }
 
-function normalizeHttpsUrl(value: unknown, maxLength = 1600) {
-  try {
-    const url = new URL(String(value || ""));
-    return url.protocol === "https:" ? url.toString().slice(0, maxLength) : "";
-  } catch {
-    return "";
-  }
-}
-
-function normalizeSources(values: unknown): PublishedSource[] {
-  return (Array.isArray(values) ? values : []).slice(0, 12).flatMap((value, index) => {
-    const item = value && typeof value === "object" ? value as Record<string, unknown> : {};
-    const url = normalizeHttpsUrl(item.url);
-    const title = cleanText(item.title, 240);
-    return url && title ? [{
-      sourceId: cleanText(item.sourceId || `source-${index + 1}`, 120),
-      title,
-      url,
-      publisher: cleanText(item.publisher, 200),
-      checkedAt: cleanText(item.checkedAt, 40),
-    }] : [];
-  });
-}
-
-function normalizeEvidenceCards(values: unknown, sourceIds: Set<string>): EvidenceCard[] {
-  return (Array.isArray(values) ? values : []).slice(0, 12).flatMap((value, index) => {
-    const item = value && typeof value === "object" ? value as Record<string, unknown> : {};
-    const sourceId = cleanText(item.sourceId || `source-${index + 1}`, 120);
-    const claim = cleanText(item.claim, 360);
-    const supportingText = cleanText(item.supportingText, 800);
-    if (!sourceIds.has(sourceId) || !claim || !supportingText) return [];
-    return [{ sourceId, claim, supportingText, sourceType: cleanText(item.sourceType || "web", 80) }];
-  });
-}
-
 export function normalizePublishedPostInput(
   input: PublishedBlogPostInput,
   configuredBlogId: string,
 ): NormalizedPublishedBlogPost {
-  const schemaVersion = Number(input.schemaVersion || 1);
-  if (![1, 2].includes(schemaVersion)) throw new Error("지원하지 않는 게시물 스키마입니다.");
+  if (Number(input.schemaVersion || 1) !== 1) throw new Error("지원하지 않는 게시물 스키마입니다.");
   if (String(input.platform || "naver").toLowerCase() !== "naver") throw new Error("네이버 게시물만 등록할 수 있습니다.");
   const allowedBlogId = cleanText(configuredBlogId, 120);
   const identity = naverPostIdentity(String(input.postUrl || ""));
@@ -149,11 +88,6 @@ export function normalizePublishedPostInput(
   const date = new Date(String(input.publishedAt || ""));
   if (Number.isNaN(date.getTime())) throw new Error("게시물 발행 시각이 올바르지 않습니다.");
   const district = contentType === "repair_diary" ? cleanText(input.district, 40) : "";
-  const sources = schemaVersion >= 2 ? normalizeSources(input.sources) : [];
-  const evidenceCards = schemaVersion >= 2
-    ? normalizeEvidenceCards(input.evidenceCards, new Set(sources.map((source) => source.sourceId)))
-    : [];
-  const article = schemaVersion >= 2 ? String(input.article || "").replace(/\u0000/g, "").trim().slice(0, 40_000) : "";
   return {
     platform: "naver",
     blogId: allowedBlogId,
@@ -166,10 +100,6 @@ export function normalizePublishedPostInput(
     thumbnailUrl: cleanText(input.thumbnailUrl, 1000),
     publishedAt: date.toISOString(),
     sourceJobId: cleanText(input.sourceJobId, 160),
-    article,
-    sources,
-    evidenceCards,
-    canonicalUrl: `${CONTENT_ORIGIN}/insights/${identity.postId}`,
   };
 }
 

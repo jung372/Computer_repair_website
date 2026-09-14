@@ -5,7 +5,7 @@ import { getSiteConfig } from "@/lib/site-config";
 
 const nav = [
   { href: "/services", label: "수리 서비스" },
-  { href: "/insights", label: "수리·정보" },
+  { href: "/#repair-cases", label: "수리 사례" },
   { href: "/requests/new", label: "서비스 신청" },
   { href: "/requests", label: "내 신청 조회" },
   { href: "/#process", label: "이용 안내" },

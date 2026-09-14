@@ -17,7 +17,7 @@ import Link from "next/link";
 import { BlogNotesSection } from "@/components/blog-notes-section";
 import { DeviceIcon } from "@/components/device-icon";
 import { QuickRequestPanel } from "@/components/quick-request-panel";
-import { listPublishedBlogPosts } from "@/data/blog-post-repository";
+import { listPublishedRepairCases } from "@/data/blog-post-repository";
 import { serviceGuideList } from "@/lib/service-content";
 import { getSiteConfig } from "@/lib/site-config";
 
@@ -26,7 +26,7 @@ export const dynamic = "force-dynamic";
 export default async function Home() {
   const config = getSiteConfig();
   const phoneHref = `tel:${config.phone.replace(/\D/g, "")}`;
-  const blogPosts = await listPublishedBlogPosts(6);
+  const blogPosts = await listPublishedRepairCases(3);
 
   return (
     <main id="main-content">
