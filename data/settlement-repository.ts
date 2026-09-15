@@ -7,6 +7,7 @@ export type SettlementFilters = {
   assignee?: string;
   paymentMethods?: string[];
   statuses?: string[];
+  sourceSite?: string;
   page?: number;
   pageSize?: number;
 };
@@ -24,6 +25,7 @@ export type SettlementRecord = {
   vatAmount: number;
   income: number;
   status: RequestStatus;
+  sourceSite: "legacy" | "new" | "unknown";
 };
 
 export type SettlementTotals = {
@@ -48,6 +50,7 @@ type SettlementRow = {
   vat_amount: number;
   income: number;
   status: RequestStatus;
+  source_site: SettlementRecord["sourceSite"];
 };
 
 function settlementConditions(
@@ -87,6 +90,10 @@ function settlementConditions(
     clauses.push(`requests.status IN (${statuses.map(() => "?").join(", ")})`);
     values.push(...statuses);
   }
+  if (["legacy", "new", "unknown"].includes(filters.sourceSite ?? "")) {
+    clauses.push("requests.source_site = ?");
+    values.push(filters.sourceSite);
+  }
   return { clauses, values };
 }
 
@@ -112,7 +119,7 @@ export async function getSettlementReport(
              operations.material_cost,
              operations.vat_amount + operations.material_vat_amount AS vat_amount,
              operations.technician_income AS income,
-             requests.status
+             requests.status, requests.source_site
       FROM service_requests requests
       INNER JOIN request_operations operations ON operations.request_id = requests.id
       INNER JOIN request_serials serial ON serial.request_id = requests.id
@@ -155,6 +162,7 @@ export async function getSettlementReport(
     vatAmount: Number(row.vat_amount),
     income: Number(row.income),
     status: row.status,
+    sourceSite: row.source_site,
   }));
   const totals: SettlementTotals = {
     count: Number(aggregate?.total_count ?? 0),

@@ -127,6 +127,14 @@ test("vinext bundle preserves NewSiteCore only as a named export", () => {
   assert.doesNotMatch(bundle, /pathname\.startsWith\(["']\/v1\//);
 });
 
+test("legacy production keeps the bound new-site Core active without switching Vox ownership", () => {
+  const config = readFileSync(new URL("../wrangler.jsonc", import.meta.url), "utf8");
+  assert.match(config, /"NEW_CORE_ENABLED": "true"/);
+  assert.match(config, /"NEW_SITE_PUBLIC_BASE_URL": "https:\/\/www\.combaksa-repair\.com"/);
+  assert.match(config, /"NEW_SITE_VOX_PROCESSING_ENABLED": "false"/);
+  assert.match(config, /"LEGACY_VOX_PUBLIC_ENABLED": "true"/);
+});
+
 test("isolated staging config cannot bind the legacy Worker data plane or public routes", () => {
   const config = readFileSync(new URL("../wrangler.new-site-staging.jsonc", import.meta.url), "utf8");
   assert.match(config, /"name": "combaksa-repair-core-staging"/);

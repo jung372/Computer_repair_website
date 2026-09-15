@@ -493,6 +493,146 @@ test("setup bootstraps an isolated database once while owner-only marketing and 
   }
 });
 
+test("admin request and settlement contracts preserve canonical dashboard and account scopes", async () => {
+  const { mf, db, edge } = await createFixture();
+  try {
+    await insertAdmin(db, {
+      id: "fixture-owner",
+      loginName: "admin",
+      displayName: "가상운영자",
+      role: "OWNER",
+      password: "fixture-owner-password-123",
+    });
+    await insertAdmin(db, {
+      id: "fixture-staff",
+      loginName: "staff01",
+      displayName: "가상직원",
+      role: "STAFF",
+      password: "2468",
+    });
+    await db.prepare("UPDATE admins SET slot_serial_no = 1 WHERE id = 'fixture-staff'").run();
+
+    const fixtures = {};
+    for (const name of ["unassigned", "staff-unresolved", "owner-unresolved", "legacy-settlement", "new-settlement"]) {
+      const created = await post(edge, "/v1/requests", requestBody({
+        name: `가상-${name}`,
+        symptom: `가상-${name}-증상`,
+      }), `fixture-admin-contract-${name}`);
+      assert.equal(created.status, 201);
+      const publicId = (await created.json()).data.publicId;
+      const row = await db.prepare("SELECT id FROM service_requests WHERE public_id = ?")
+        .bind(publicId).first();
+      fixtures[name] = { id: row.id, publicId };
+    }
+
+    await db.prepare(`
+      UPDATE request_operations SET assignee_account_id = 'fixture-staff'
+      WHERE request_id = ?
+    `).bind(fixtures["staff-unresolved"].id).run();
+    await db.prepare(`
+      UPDATE service_requests SET status = 'CONSULTING' WHERE id = ?
+    `).bind(fixtures["staff-unresolved"].id).run();
+
+    await db.prepare(`
+      UPDATE request_operations SET assignee_account_id = 'fixture-owner'
+      WHERE request_id = ?
+    `).bind(fixtures["owner-unresolved"].id).run();
+    await db.prepare(`
+      UPDATE service_requests SET status = 'REPAIRING', source_site = 'legacy' WHERE id = ?
+    `).bind(fixtures["owner-unresolved"].id).run();
+
+    await db.prepare(`
+      UPDATE request_operations
+      SET assignee_account_id = 'fixture-staff', completed_date = '2026-09-10',
+          payment_method = '카드결제', total_amount = 220000, material_cost = 50000,
+          vat_amount = 10000, material_vat_amount = 5000, technician_income = 80000
+      WHERE request_id = ?
+    `).bind(fixtures["legacy-settlement"].id).run();
+    await db.prepare(`
+      UPDATE service_requests SET status = 'ONSITE_COMPLETED', source_site = 'legacy' WHERE id = ?
+    `).bind(fixtures["legacy-settlement"].id).run();
+
+    await db.prepare(`
+      UPDATE request_operations
+      SET assignee_account_id = 'fixture-owner', completed_date = '2026-09-11',
+          payment_method = '현금결제', total_amount = 110000, material_cost = 20000,
+          vat_amount = 5000, material_vat_amount = 2000, technician_income = 40000
+      WHERE request_id = ?
+    `).bind(fixtures["new-settlement"].id).run();
+    await db.prepare(`
+      UPDATE service_requests SET status = 'ONSITE_COMPLETED', source_site = 'new' WHERE id = ?
+    `).bind(fixtures["new-settlement"].id).run();
+
+    const ownerCookie = await adminCookie(edge, "admin", "fixture-owner-password-123");
+    const staffCookie = await adminCookie(edge, "staff01", "2468");
+
+    const ownerRequests = await edge.fetch(
+      "https://fixture.test/v1/admin/requests?dashboard=unassigned&assignee=fixture-staff&status=COMPLETED",
+      { headers: { cookie: ownerCookie } },
+    );
+    assert.equal(ownerRequests.status, 200);
+    const ownerRequestData = (await ownerRequests.json()).data;
+    assert.deepEqual(Object.keys(ownerRequestData).sort(), [
+      "assignmentOptions", "counts", "filterOptions", "pagination", "requests", "user",
+    ]);
+    assert.deepEqual(ownerRequestData.requests.map((row) => row.publicId), [fixtures.unassigned.publicId]);
+    assert.deepEqual(ownerRequestData.counts, {
+      unassigned: 1,
+      totalUnresolved: 3,
+      unresolved: 1,
+    });
+    assert.equal(ownerRequestData.user.role, "OWNER");
+    assert.ok(ownerRequestData.filterOptions.customerTypes.includes("신규일반고객"));
+    assert.ok(ownerRequestData.assignmentOptions.some((option) => option.accountId === "fixture-staff"));
+
+    const staffRequests = await edge.fetch(
+      "https://fixture.test/v1/admin/requests?dashboard=my-unresolved&assignee=fixture-owner&status=COMPLETED",
+      { headers: { cookie: staffCookie } },
+    );
+    assert.equal(staffRequests.status, 200);
+    const staffRequestData = (await staffRequests.json()).data;
+    assert.deepEqual(staffRequestData.requests.map((row) => row.publicId), [fixtures["staff-unresolved"].publicId]);
+    assert.deepEqual(staffRequestData.counts, {
+      unassigned: 0,
+      totalUnresolved: 0,
+      unresolved: 1,
+    });
+    assert.deepEqual(staffRequestData.assignmentOptions, []);
+    assert.equal(staffRequestData.user.role, "STAFF");
+
+    const ownerSettlements = await edge.fetch(
+      "https://fixture.test/v1/admin/settlements?from=2026-09-01&to=2026-09-30&sourceSite=legacy",
+      { headers: { cookie: ownerCookie } },
+    );
+    assert.equal(ownerSettlements.status, 200);
+    const ownerSettlementData = (await ownerSettlements.json()).data;
+    assert.deepEqual(Object.keys(ownerSettlementData).sort(), [
+      "filterOptions", "page", "pageSize", "records", "totals", "user",
+    ]);
+    assert.deepEqual(ownerSettlementData.records.map((row) => ({
+      publicId: row.publicId,
+      sourceSite: row.sourceSite,
+    })), [{ publicId: fixtures["legacy-settlement"].publicId, sourceSite: "legacy" }]);
+    assert.equal(ownerSettlementData.totals.count, 1);
+    assert.equal(ownerSettlementData.user.role, "OWNER");
+    assert.ok(ownerSettlementData.filterOptions.paymentMethods.includes("카드결제"));
+    assert.ok(ownerSettlementData.filterOptions.assignees.some((option) => option.id === "fixture-staff"));
+
+    const staffSettlements = await edge.fetch(
+      "https://fixture.test/v1/admin/settlements?from=2026-09-01&to=2026-09-30&sourceSite=new&assignee=fixture-owner",
+      { headers: { cookie: staffCookie } },
+    );
+    assert.equal(staffSettlements.status, 200);
+    const staffSettlementData = (await staffSettlements.json()).data;
+    assert.deepEqual(staffSettlementData.records, []);
+    assert.equal(staffSettlementData.totals.count, 0);
+    assert.deepEqual(staffSettlementData.filterOptions.assignees, []);
+    assert.equal(staffSettlementData.user.role, "STAFF");
+  } finally {
+    await mf.dispose();
+  }
+});
+
 test("Vox processing is globally idempotent across ten new calls and legacy-to-new replay", async () => {
   const { mf, db, edge, core } = await createFixture();
   try {
