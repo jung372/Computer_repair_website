@@ -88,6 +88,17 @@ test("ignores other agents and receiving numbers", () => {
   );
 });
 
+test("acknowledges the signed Vox webhook test event without requiring call data", () => {
+  const result = analyzeVoxWebhookPayload({
+    event_type: "webhook.test",
+    test_id: "fixture-test-id",
+    scope: "agent",
+    webhook_version: "v2",
+    timestamp: "2026-09-19T06:11:09.131736+00:00",
+  }, expected);
+  assert.deepEqual(result, { kind: "ignored", reason: "UNRELATED_EVENT" });
+});
+
 test("verifies the timestamped raw-body HMAC and rejects replay", async () => {
   const secret = "test-secret";
   const rawBody = JSON.stringify(payload());

@@ -84,6 +84,9 @@ export function analyzeVoxWebhookPayload(
   if (payload.webhook_version !== "v2") {
     return { kind: "bad_request", reason: "UNSUPPORTED_VERSION" };
   }
+  if (payload.event_type === "webhook.test") {
+    return { kind: "ignored", reason: "UNRELATED_EVENT" };
+  }
   if (!isRecord(payload.call)) return { kind: "bad_request", reason: "INVALID_PAYLOAD" };
 
   const call = payload.call;
