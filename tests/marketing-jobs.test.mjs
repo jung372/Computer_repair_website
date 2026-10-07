@@ -90,7 +90,7 @@ test("repair diary intake requires the minimum fact ledger and explicit photo pr
     causeUnknown: "true",
     actionsTaken: "메모리 재장착",
     verificationResult: "정상 부팅 확인",
-    district: "강남구",
+    district: "제주시",
     photoConsent: "true",
     privacyReviewed: "true",
   }), /서비스 지역/);
@@ -106,7 +106,13 @@ test("repair diary intake requires the minimum fact ledger and explicit photo pr
   });
   assert.equal(input.causeUnknown, true);
   assert.equal(input.diagnosedCause, "");
-  assert.deepEqual(MARKETING_DISTRICTS, ["광진구", "성동구", "동대문구"]);
+  assert.deepEqual(MARKETING_DISTRICTS.slice(0, 3), ["광진구", "성동구", "동대문구"]);
+  assert.equal(MARKETING_DISTRICTS.length, 56);
+  assert.equal(new Set(MARKETING_DISTRICTS).size, 56);
+  for (const district of MARKETING_DISTRICTS) {
+    const regionalInput = normalizeMarketingJobInput({ ...input, district });
+    assert.equal(regionalInput.district, district);
+  }
 });
 
 test("JPEG sanitization removes EXIF APP1 metadata before R2 storage", () => {

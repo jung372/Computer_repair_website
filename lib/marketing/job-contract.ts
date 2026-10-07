@@ -1,4 +1,13 @@
-export const MARKETING_DISTRICTS = ["광진구", "성동구", "동대문구"] as const;
+export const MARKETING_DISTRICTS = [
+  "광진구", "성동구", "동대문구",
+  "강남구", "강동구", "강북구", "강서구", "관악구", "구로구", "금천구",
+  "노원구", "도봉구", "동작구", "마포구", "서대문구", "서초구", "성북구",
+  "송파구", "양천구", "영등포구", "용산구", "은평구", "종로구", "중구", "중랑구",
+  "가평군", "고양시", "과천시", "광명시", "광주시", "구리시", "군포시", "김포시",
+  "남양주시", "동두천시", "부천시", "성남시", "수원시", "시흥시", "안산시", "안성시",
+  "안양시", "양주시", "양평군", "여주시", "연천군", "오산시", "용인시", "의왕시",
+  "의정부시", "이천시", "파주시", "평택시", "포천시", "하남시", "화성시",
+] as const;
 export const MAX_MARKETING_PHOTO_BYTES = 8 * 1024 * 1024;
 export const MAX_MARKETING_PHOTOS = 6;
 export const MAX_MARKETING_UPLOAD_BYTES = 30 * 1024 * 1024;
@@ -30,7 +39,7 @@ export function normalizeMarketingJobInput(source: Record<string, FormValue>) {
   }
   const district = text(source.district, "서비스 지역", 20, true);
   if (!MARKETING_DISTRICTS.includes(district as (typeof MARKETING_DISTRICTS)[number])) {
-    throw new Error("서비스 지역은 광진구, 성동구, 동대문구 중에서 선택해 주세요.");
+    throw new Error("서비스 지역은 서울시의 구 또는 경기도의 시·군 중에서 선택해 주세요.");
   }
   return {
     symptom: text(source.symptom, "접수 증상", 2000, true),
