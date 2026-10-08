@@ -182,6 +182,83 @@ function multipartBody(fields, file) {
   };
 }
 
+test("settlements reuse request provenance and apply site/receipt filters to scoped rows and totals", async () => {
+  const { mf, db, edge } = await createFixture();
+  try {
+    for (const [id, role] of [["settlement-owner", "OWNER"], ["settlement-staff", "STAFF"]]) {
+      await insertAdmin(db, { id, loginName: id, displayName: `가상 ${role}`, role, password: "fixture-password-123" });
+    }
+    const ownerCookie = await adminCookie(edge, "settlement-owner", "fixture-password-123");
+    const staffCookie = await adminCookie(edge, "settlement-staff", "fixture-password-123");
+    const now = "2026-10-07T00:00:00.000Z";
+    const fixtures = [
+      ["new-online-1", "new", "온라인접수", "settlement-staff", 100, "ONSITE_COMPLETED"],
+      ["new-online-2", "new", "온라인접수", "settlement-owner", 200, "COMPANY_UNPAID"],
+      ["new-call", "new", "콜센터접수", "settlement-staff", 400, "ONSITE_COMPLETED"],
+      ["legacy-online", "legacy", "온라인접수", "settlement-staff", 800, "ONSITE_COMPLETED"],
+      ["unknown-other", "unknown", "기타접수", null, 1600, "ONSITE_COMPLETED"],
+    ];
+    for (const [id, site, receipt, assignee, amount, status] of fixtures) {
+      await db.prepare(`INSERT INTO service_requests
+        (id, public_id, phone, name, postal_code, address1, address2, region_public,
+         device_type, symptom, description, visibility, status, notification_status,
+         privacy_consent_version, privacy_consented_at, source_site, source_channel, created_at, updated_at)
+        VALUES (?, ?, '010-0000-0000', '가상 신청자', '', '가상 주소', '', '가상 지역',
+                'desktop', '가상 증상', '가상 테스트', 'PRIVATE', ?, 'DISABLED',
+                'fixture-v1', '2026-10-07', ?, 'WEB', ?, ?)`)
+        .bind(id, `R-${id}`, status, site, now, now).run();
+      await db.prepare("INSERT INTO request_serials (request_id) VALUES (?)").bind(id).run();
+      await db.prepare(`INSERT INTO request_operations
+        (request_id, receipt_type, assignee_account_id, received_date, completed_date, payment_method,
+         total_amount, technician_income, updated_at)
+        VALUES (?, ?, ?, '2026-10-07', '2026-10-07', '현금결제', ?, ?, ?)`)
+        .bind(id, receipt, assignee, amount, amount / 2, now).run();
+    }
+    async function report(query = "", cookie = ownerCookie) {
+      const response = await edge.fetch(`https://fixture.test/v1/admin/settlements?from=2026-10-01&to=2026-10-31${query}`, { headers: { cookie } });
+      assert.equal(response.status, 200);
+      assert.match(response.headers.get("cache-control"), /private.*no-store/);
+      assert.match(response.headers.get("x-robots-tag"), /noindex/);
+      return (await response.json()).data;
+    }
+    const all = await report();
+    assert.equal(all.totals.count, 5);
+    assert.equal(all.user.role, "OWNER");
+    assert.ok(all.filterOptions.receiptTypes.includes("온라인접수"));
+    for (const [id, site, receipt] of fixtures) {
+      const record = all.records.find((item) => item.publicId === `R-${id}`);
+      const detail = await edge.fetch(`https://fixture.test/v1/admin/requests/R-${id}`, { headers: { cookie: ownerCookie } });
+      const request = (await detail.json()).data.request;
+      assert.equal(record.sourceSite, site);
+      assert.equal(record.sourceSite, request.sourceSite);
+      assert.equal(record.receiptType, receipt);
+      assert.equal(record.receiptType, request.receiptType);
+    }
+    const combined = await report("&sourceSite=new&receiptType=" + encodeURIComponent("온라인접수") + "&pageSize=1");
+    assert.equal(combined.records.length, 1);
+    assert.equal(combined.totals.count, 2);
+    assert.equal(combined.totals.totalAmount, 300);
+    assert.equal(combined.totals.income, 150);
+    assert.equal(combined.totals.outstandingAmount, 200);
+    const second = await report("&sourceSite=new&receiptType=" + encodeURIComponent("온라인접수") + "&pageSize=1&page=2");
+    assert.equal(second.totals.count, 2);
+    assert.notEqual(second.records[0].publicId, combined.records[0].publicId);
+    const scoped = await report("&sourceSite=new&receiptType=" + encodeURIComponent("온라인접수") + "&assignee=settlement-owner", staffCookie);
+    assert.deepEqual(scoped.records.map((record) => record.publicId), ["R-new-online-1"]);
+    assert.equal(scoped.totals.totalAmount, 100);
+    assert.equal(scoped.user.role, "STAFF");
+    const empty = await report("&sourceSite=legacy&receiptType=" + encodeURIComponent("콜센터접수"));
+    assert.equal(empty.totals.count, 0);
+    assert.equal(empty.totals.totalAmount, 0);
+    const invalid = await edge.fetch("https://fixture.test/v1/admin/settlements?from=2026-10-01&to=2026-10-31&sourceSite=bogus", { headers: { cookie: ownerCookie } });
+    assert.equal(invalid.status, 400);
+    const anonymous = await edge.fetch("https://fixture.test/v1/admin/settlements?from=2026-10-01&to=2026-10-31");
+    assert.equal(anonymous.status, 401);
+  } finally {
+    await mf.dispose();
+  }
+});
+
 function voxPayload(callId) {
   return {
     event: "call_analyzed",

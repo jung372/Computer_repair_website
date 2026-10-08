@@ -7,6 +7,8 @@ export type SettlementFilters = {
   assignee?: string;
   paymentMethods?: string[];
   statuses?: string[];
+  sourceSite?: "legacy" | "new" | "unknown";
+  receiptType?: string;
   page?: number;
   pageSize?: number;
 };
@@ -24,6 +26,8 @@ export type SettlementRecord = {
   vatAmount: number;
   income: number;
   status: RequestStatus;
+  sourceSite: "legacy" | "new" | "unknown";
+  receiptType: string;
 };
 
 export type SettlementTotals = {
@@ -48,6 +52,8 @@ type SettlementRow = {
   vat_amount: number;
   income: number;
   status: RequestStatus;
+  source_site: SettlementRecord["sourceSite"];
+  receipt_type: string;
 };
 
 function settlementConditions(
@@ -61,6 +67,15 @@ function settlementConditions(
     "operations.completed_date <= ?",
   ];
   const values: unknown[] = [filters.from, filters.to];
+
+  if (filters.sourceSite) {
+    clauses.push("requests.source_site = ?");
+    values.push(filters.sourceSite);
+  }
+  if (filters.receiptType?.trim()) {
+    clauses.push("operations.receipt_type = ?");
+    values.push(filters.receiptType.trim().slice(0, 40));
+  }
 
   if (assignedAccountId) {
     clauses.push("operations.assignee_account_id = ?");
@@ -112,7 +127,7 @@ export async function getSettlementReport(
              operations.material_cost,
              operations.vat_amount + operations.material_vat_amount AS vat_amount,
              operations.technician_income AS income,
-             requests.status
+             requests.status, requests.source_site, operations.receipt_type
       FROM service_requests requests
       INNER JOIN request_operations operations ON operations.request_id = requests.id
       INNER JOIN request_serials serial ON serial.request_id = requests.id
@@ -155,6 +170,8 @@ export async function getSettlementReport(
     vatAmount: Number(row.vat_amount),
     income: Number(row.income),
     status: row.status,
+    sourceSite: row.source_site,
+    receiptType: row.receipt_type,
   }));
   const totals: SettlementTotals = {
     count: Number(aggregate?.total_count ?? 0),
@@ -170,7 +187,7 @@ export async function getSettlementReport(
 export async function getSettlementFilterOptions() {
   await ensureDatabase();
   const db = getD1();
-  const [payments, assignees] = await Promise.all([
+  const [payments, assignees, receipts] = await Promise.all([
     db.prepare(`
       SELECT DISTINCT payment_method AS value
       FROM request_operations
@@ -193,9 +210,14 @@ export async function getSettlementFilterOptions() {
       slot_serial_no: number | null;
       is_active: number;
     }>(),
+    db.prepare(`
+      SELECT DISTINCT receipt_type AS value FROM request_operations
+      WHERE receipt_type <> '' ORDER BY receipt_type
+    `).all<{ value: string }>(),
   ]);
   return {
     paymentMethods: payments.results.map((row) => row.value),
+    receiptTypes: receipts.results.map((row) => row.value),
     assignees: assignees.results.map((row) => ({
       id: row.id,
       label: row.role === "OWNER"

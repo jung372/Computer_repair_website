@@ -12,7 +12,7 @@ import {
   assignAdminRequest,
 } from "../data/admin-request-repository";
 import { listAssignmentOptions, listStaffSlots } from "../data/staff-slot-repository";
-import { getSettlementReport } from "../data/settlement-repository";
+import { getSettlementFilterOptions, getSettlementReport } from "../data/settlement-repository";
 import {
   listAllBlogPosts,
   listPublishedBlogPosts,
@@ -445,15 +445,22 @@ async function settlements(request: Request) {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(from) || !/^\d{4}-\d{2}-\d{2}$/.test(to)) {
     throw new CoreHttpError("INVALID_REQUEST", 400, "조회 기간을 확인해 주세요.");
   }
-  return success(await getSettlementReport({
+  const sourceSite = url.searchParams.get("sourceSite") || undefined;
+  if (sourceSite !== undefined && sourceSite !== "legacy" && sourceSite !== "new" && sourceSite !== "unknown") {
+    throw new CoreHttpError("INVALID_REQUEST", 400, "접수 사이트를 확인해 주세요.");
+  }
+  const [report, filterOptions] = await Promise.all([getSettlementReport({
     from,
     to,
     assignee: url.searchParams.get("assignee") ?? undefined,
     paymentMethods: url.searchParams.getAll("paymentMethod").slice(0, 20),
     statuses: url.searchParams.getAll("status").slice(0, 20),
+    sourceSite,
+    receiptType: url.searchParams.get("receiptType")?.trim().slice(0, 40),
     page: parsePositiveInteger(url.searchParams.get("page"), 1, 100000),
     pageSize: parsePositiveInteger(url.searchParams.get("pageSize"), 50, 100),
-  }, admin.role === "STAFF" ? admin.id : undefined));
+  }, admin.role === "STAFF" ? admin.id : undefined), getSettlementFilterOptions()]);
+  return success({ ...report, filterOptions, user: admin });
 }
 
 async function mutateStaff(request: Request) {
