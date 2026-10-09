@@ -243,6 +243,40 @@ test("settlements reuse request provenance and apply site/receipt filters to sco
     const second = await report("&sourceSite=new&receiptType=" + encodeURIComponent("온라인접수") + "&pageSize=1&page=2");
     assert.equal(second.totals.count, 2);
     assert.notEqual(second.records[0].publicId, combined.records[0].publicId);
+    const multipleReceipts = await report("&receiptType=" + encodeURIComponent("온라인접수") + "&receiptType=" + encodeURIComponent("콜센터접수"));
+    assert.equal(multipleReceipts.totals.count, 4);
+    assert.equal(multipleReceipts.totals.totalAmount, 1500);
+    assert.equal(multipleReceipts.records.length, 4);
+    const profitUrl = "https://fixture.test/v1/admin/profit-shares?from=2026-10-01&to=2026-10-31";
+    const profitResponse = await edge.fetch(profitUrl, { headers: { cookie: ownerCookie } });
+    assert.equal(profitResponse.status, 200);
+    assert.match(profitResponse.headers.get("cache-control"), /private.*no-store/);
+    assert.match(profitResponse.headers.get("x-robots-tag"), /noindex/);
+    const profit = (await profitResponse.json()).data;
+    assert.equal(profit.policyVersion, "2026-10-09-v1");
+    assert.equal(profit.totals.count, 5);
+    assert.equal(profit.totals.income, 1550);
+    assert.equal(profit.totals.ownerAmount, 1033);
+    assert.equal(profit.totals.staffAmount, 325);
+    assert.equal(profit.totals.advertisingAmount, 192);
+    assert.equal(profit.totals.pendingCount, 0);
+    assert.deepEqual(
+      profit.records.find((item) => item.publicId === "R-unknown-other"),
+      {
+        publicId: "R-unknown-other", serialNumber: all.records.find((item) => item.publicId === "R-unknown-other").serialNumber,
+        completedDate: "2026-10-07", receiptType: "기타접수", income: 800,
+        performerName: "운영자", performerRole: "OWNER", allocationStatus: "ALLOCATED",
+        ownerAmount: 800, staffAmount: 0, advertisingAmount: 0,
+      },
+    );
+    assert.equal((await edge.fetch(profitUrl, { headers: { cookie: staffCookie } })).status, 403);
+    assert.equal((await edge.fetch(profitUrl)).status, 401);
+    assert.equal((await edge.fetch("https://fixture.test/v1/admin/profit-shares?from=2026-10-31&to=2026-10-01", { headers: { cookie: ownerCookie } })).status, 400);
+    await db.prepare("UPDATE request_operations SET receipt_type = '온라인접수' WHERE request_id = 'unknown-other'").run();
+    const pendingProfit = (await (await edge.fetch(profitUrl, { headers: { cookie: ownerCookie } })).json()).data;
+    assert.equal(pendingProfit.totals.pendingCount, 1);
+    assert.equal(pendingProfit.totals.pendingIncome, 800);
+    assert.equal(pendingProfit.totals.ownerAmount + pendingProfit.totals.staffAmount + pendingProfit.totals.advertisingAmount, 750);
     const scoped = await report("&sourceSite=new&receiptType=" + encodeURIComponent("온라인접수") + "&assignee=settlement-owner", staffCookie);
     assert.deepEqual(scoped.records.map((record) => record.publicId), ["R-new-online-1"]);
     assert.equal(scoped.totals.totalAmount, 100);

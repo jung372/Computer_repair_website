@@ -8,7 +8,7 @@ export type SettlementFilters = {
   paymentMethods?: string[];
   statuses?: string[];
   sourceSite?: "legacy" | "new" | "unknown";
-  receiptType?: string;
+  receiptTypes?: string[];
   page?: number;
   pageSize?: number;
 };
@@ -72,9 +72,12 @@ function settlementConditions(
     clauses.push("requests.source_site = ?");
     values.push(filters.sourceSite);
   }
-  if (filters.receiptType?.trim()) {
-    clauses.push("operations.receipt_type = ?");
-    values.push(filters.receiptType.trim().slice(0, 40));
+  const receiptTypes = [...new Set(
+    (filters.receiptTypes ?? []).map((value) => value.trim().slice(0, 40)).filter(Boolean),
+  )].slice(0, 20);
+  if (receiptTypes.length) {
+    clauses.push(`operations.receipt_type IN (${receiptTypes.map(() => "?").join(", ")})`);
+    values.push(...receiptTypes);
   }
 
   if (assignedAccountId) {

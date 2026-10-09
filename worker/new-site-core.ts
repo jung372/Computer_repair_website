@@ -13,6 +13,7 @@ import {
 } from "../data/admin-request-repository";
 import { listAssignmentOptions, listStaffSlots } from "../data/staff-slot-repository";
 import { getSettlementFilterOptions, getSettlementReport } from "../data/settlement-repository";
+import { getProfitShareReport } from "../data/profit-share-repository";
 import {
   listAllBlogPosts,
   listPublishedBlogPosts,
@@ -456,11 +457,28 @@ async function settlements(request: Request) {
     paymentMethods: url.searchParams.getAll("paymentMethod").slice(0, 20),
     statuses: url.searchParams.getAll("status").slice(0, 20),
     sourceSite,
-    receiptType: url.searchParams.get("receiptType")?.trim().slice(0, 40),
+    receiptTypes: url.searchParams.getAll("receiptType").slice(0, 20),
     page: parsePositiveInteger(url.searchParams.get("page"), 1, 100000),
     pageSize: parsePositiveInteger(url.searchParams.get("pageSize"), 50, 100),
   }, admin.role === "STAFF" ? admin.id : undefined), getSettlementFilterOptions()]);
   return success({ ...report, filterOptions, user: admin });
+}
+
+async function profitShares(request: Request) {
+  const admin = await requireAdmin(request);
+  if (admin.role !== "OWNER") throw new CoreHttpError("FORBIDDEN", 403, "운영자 권한이 필요합니다.");
+  const url = new URL(request.url);
+  const from = url.searchParams.get("from") ?? "";
+  const to = url.searchParams.get("to") ?? "";
+  const validDate = (value: string) =>
+    /^\d{4}-\d{2}-\d{2}$/.test(value) &&
+    !Number.isNaN(Date.parse(value)) &&
+    new Date(value).toISOString().slice(0, 10) === value;
+  if (!validDate(from) || !validDate(to) || from > to ||
+      Date.parse(to) - Date.parse(from) > 366 * 86400000) {
+    throw new CoreHttpError("INVALID_REQUEST", 400, "조회 기간은 366일 이내로 선택해 주세요.");
+  }
+  return success(await getProfitShareReport(from, to));
 }
 
 async function mutateStaff(request: Request) {
@@ -673,6 +691,7 @@ async function route(request: Request, bindings: Env): Promise<Response> {
   }
   if (method === "GET" && path === "/v1/admin/integrations/vox") return adminVoxStatus(request);
   if (method === "GET" && path === "/v1/admin/settlements") return settlements(request);
+  if (method === "GET" && path === "/v1/admin/profit-shares") return profitShares(request);
   if (method === "GET" && path === "/v1/admin/blog/posts") {
     const admin = await requireAdmin(request);
     if (admin.role !== "OWNER") throw new CoreHttpError("FORBIDDEN", 403, "운영자 권한이 필요합니다.");
